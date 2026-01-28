@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: fewwords-postgres
+    restart: unless-stopped
+    ports:
+      # Using 5433 to avoid conflict with system PostgreSQL on 5432
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: fewwords
+      POSTGRES_PASSWORD: fewwords_dev_password
+      POSTGRES_DB: fewwords
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fewwords -d fewwords"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Performance tuning for development
+    command: [
+      "postgres",
+      "-c", "shared_buffers=256MB",
+      "-c", "max_connections=200",
+      "-c", "work_mem=4MB"
+    ]
+
+volumes:
+  postgres_data:
+    driver: local
