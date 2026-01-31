@@ -46,6 +46,7 @@
     "marked": "^17.0.1",
     "nanoid": "^5.1.6",
     "nuxt": "^4.3.0",
+    "nuxt-toastify": "1.1.0",
     "postgres": "^3.4.8",
     "reka-ui": "^2.7.0",
     "shadcn-nuxt": "2.4.3",
@@ -56,6 +57,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@nuxtjs/color-mode": "^4.0.0",
     "@radya/nuxt-dompurify": "^1.0.5",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.18",

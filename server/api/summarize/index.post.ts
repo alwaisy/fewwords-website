@@ -2,6 +2,7 @@ import { summarize as summarizeArticle } from '../../services/article'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summaries } from '~~/db/schema'
+import { eq } from 'drizzle-orm'
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
   const urlObj = new URL(url)
@@ -21,9 +22,13 @@ export default defineEventHandler(async (event) => {
   const db = await useDb(event)
   const startTime = Date.now()
 
+  let updateSummaryId: string | undefined
+  let url: string | undefined
+
   try {
     const body = await readBody(event)
-    const { url } = body
+    updateSummaryId = body.updateSummaryId
+    url = body.url
 
     if (!url) {
       throw createError({
@@ -49,7 +54,33 @@ export default defineEventHandler(async (event) => {
 
     const responseTimeMs = Date.now() - startTime
 
-    // Save to database
+    // If updateSummaryId provided, update existing record (for pending summaries)
+    if (updateSummaryId) {
+      await db.update(summaries)
+        .set({
+          title: result.title,
+          summary: result.summary,
+          model: result.model,
+          promptTokens: result.usage?.promptTokens,
+          completionTokens: result.usage?.completionTokens,
+          totalTokens: result.usage?.totalTokens,
+          responseTimeMs,
+          status: 'completed',
+          completedAt: new Date(),
+        })
+        .where(eq(summaries.summaryId, updateSummaryId))
+
+      return {
+        summaryId: updateSummaryId,
+        url: result.url,
+        type: essence,
+        title: result.title,
+        summary: result.summary,
+        model: result.model,
+      }
+    }
+
+    // Otherwise create new record (original flow)
     const insertResult = await db.insert(summaries).values({
       source: url,
       essence,
@@ -60,6 +91,7 @@ export default defineEventHandler(async (event) => {
       completionTokens: result.usage?.completionTokens,
       totalTokens: result.usage?.totalTokens,
       responseTimeMs,
+      status: 'completed',
     }).returning({ summaryId: summaries.summaryId })
 
     const summaryId = insertResult[0]?.summaryId
@@ -75,6 +107,20 @@ export default defineEventHandler(async (event) => {
   }
   catch (error: unknown) {
     console.error('Summarize API error:', error)
+
+    // If updating an existing pending record, mark it as failed
+    if (updateSummaryId) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'Failed to process URL'
+
+      await db.update(summaries)
+        .set({
+          status: 'failed',
+          errorMessage,
+        })
+        .where(eq(summaries.summaryId, updateSummaryId))
+    }
 
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error

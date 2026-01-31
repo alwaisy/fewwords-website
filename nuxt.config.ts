@@ -14,7 +14,7 @@ export default defineNuxtConfig({
 
   nitro: {
     imports: {
-      dirs: ['server/db'],
+      dirs: ["server/db"],
     },
   },
 
@@ -24,12 +24,28 @@ export default defineNuxtConfig({
     "@nuxt/hints",
     "@nuxt/icon",
     "@nuxt/image",
-    '@nuxt/content',
+    // '@nuxt/content',
     "@nuxt/scripts",
     "shadcn-nuxt",
     "@radya/nuxt-dompurify",
     "@nuxtjs/mdc",
+    "@nuxtjs/color-mode",
+    "nuxt-toastify",
   ],
+
+  toastify: {
+    autoClose: 4000,
+    position: "top-center",
+    theme: "colored",
+    pauseOnHover: false,
+    hideProgressBar: true,
+    transition: "slide",
+  },
+
+  colorMode: {
+    classSuffix: "",
+    fallback: "light",
+  },
 
   css: ["~/assets/css/global.css"],
   vite: {
@@ -49,5 +65,14 @@ export default defineNuxtConfig({
      * @default "@/components/ui"
      */
     componentDir: "@/components/ui",
+  },
+
+  mdc: {
+    headings: {
+      anchorLinks: false, // Disable anchor links
+    },
+    components: {
+      prose: false, // Disable predefined prose components
+    },
   },
 });

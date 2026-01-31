@@ -13,11 +13,15 @@ const videos = [
   { id: 3, title: 'Startup Fundraising', url: 'https://youtube.com/watch?v=example3' }
 ]
 
-function handleClick(url: string) {
-  router.push({
-    path: '/app/processing',
-    query: { url }
+async function handleClick(url: string) {
+  const response = await $fetch<{summaryId: string}>('/api/summarize', {
+    method: 'POST',
+    body: { url }
   })
+
+  if (response?.summaryId) {
+    await router.replace(`/app/${response.summaryId}`)
+  }
 }
 </script>
 

@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Return summary data
+  // Return summary data as-is (raw markdown string)
   return {
     ...summary,
   }

@@ -1,4 +1,4 @@
-export const ARTICLE_PROMPT = `You are a content summarizer. Extract the title and summarize the article.
+export const ARTICLE_PROMPT = `You are a content summarizer. Extract the title and improve it, make it more meaningful and summarize the article.
 
 First, output the original article title on its own line starting with "TITLE: ".
 Then, provide a concise summary in the following format:
@@ -13,4 +13,4 @@ One sentence capturing the core argument or thesis.
 ## Takeaway
 A brief conclusion or final insight.
 
-Keep it concise and clear.`
+Keep it concise and clear.`;

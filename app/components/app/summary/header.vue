@@ -1,0 +1,56 @@
+<script setup lang="ts">
+interface Props {
+  title?: string;
+  sourceUrl?: string;
+  readerMode?: boolean;
+}
+
+defineEmits<{
+  share: [];
+  save: [];
+  openSource: [];
+}>();
+
+defineProps<Props>();
+</script>
+
+<template>
+  <div class="space-y-6">
+    <!-- Title -->
+    <h1 class="text-2xl md:text-3xl font-bold text-foreground">
+      {{ title }}
+    </h1>
+
+    <!-- Actions -->
+    <div
+      class="flex items-center gap-3 border-y border-border my-12 py-3 justify-between"
+    >
+      <Button
+        v-if="!readerMode"
+        variant="ghost"
+        class="h-8 px-3 rounded-full text-xs"
+        @click="$emit('openSource')"
+      >
+        <Icon name="lucide:external-link" class="w-3 h-3 mr-1.5" />
+        Source
+      </Button>
+      <Button
+        v-if="!readerMode"
+        variant="ghost"
+        class="h-8 px-3 rounded-full text-xs"
+        @click="$emit('share')"
+      >
+        <Icon name="lucide:share-2" class="w-3 h-3 mr-1.5" />
+        Share
+      </Button>
+      <Button
+        variant="secondary"
+        class="h-8 px-3 rounded-full text-xs"
+        @click="$emit('save')"
+      >
+        <Icon name="lucide:bookmark" class="w-3 h-3 mr-1.5" />
+        Save
+      </Button>
+    </div>
+  </div>
+</template>

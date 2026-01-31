@@ -25,6 +25,7 @@ const { isLoggedIn, logout } = useAuth()
         >
           About
         </NuxtLink>
+        <ThemeToggle />
         <Button variant="default" size="sm" as-child>
           <NuxtLink to="/app">Try It Free</NuxtLink>
         </Button>
@@ -44,6 +45,7 @@ const { isLoggedIn, logout } = useAuth()
         >
           About
         </NuxtLink>
+        <ThemeToggle />
 
         <!-- Avatar dropdown -->
         <DropdownMenu>

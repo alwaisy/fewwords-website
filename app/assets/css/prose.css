@@ -1,0 +1,156 @@
+/**
+ * Typography styles for markdown content
+ * Based on shadcn-vue Typography: https://www.shadcn-vue.com/docs/components/typography
+ *
+ * These styles use CSS properties with CSS variables to style markdown elements.
+ * This replaces the @tailwindcss/typography plugin approach.
+ */
+
+.prose {
+  width: 100%;
+}
+
+/* Headings */
+.prose :deep(h1) {
+  scroll-margin-top: 5rem;
+  text-align: center;
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.prose :deep(h2) {
+  scroll-margin-top: 5rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+  color: var(--color-foreground);
+}
+
+.prose :deep(h3) {
+  scroll-margin-top: 5rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.prose :deep(h4) {
+  scroll-margin-top: 5rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Paragraphs */
+.prose :deep(p) {
+  line-height: 1.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose :deep(h2 + p) {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 2.5rem;
+}
+
+/* Blockquotes */
+.prose :deep(blockquote) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 2px solid var(--color-border);
+  padding-left: 1.5rem;
+  font-style: italic;
+}
+
+/* Lists */
+.prose :deep(ul) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.prose :deep(ul li) {
+  margin-top: 0.5rem;
+}
+
+.prose :deep(ol) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.prose :deep(ol li) {
+  margin-top: 0.5rem;
+}
+
+/* Tables */
+.prose :deep(table) {
+  width: 100%;
+}
+
+.prose :deep(th) {
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+.prose :deep(th[align="center"]) {
+  text-align: center;
+}
+
+.prose :deep(th[align="right"]) {
+  text-align: right;
+}
+
+.prose :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+  text-align: left;
+}
+
+.prose :deep(td[align="center"]) {
+  text-align: center;
+}
+
+.prose :deep(td[align="right"]) {
+  text-align: right;
+}
+
+.prose :deep(tr) {
+  margin: 0;
+  border-top: 1px solid var(--color-border);
+  padding: 0;
+}
+
+.prose :deep(tr:nth-child(even)) {
+  background-color: var(--color-muted);
+}
+
+/* Inline code */
+.prose :deep(code) {
+  position: relative;
+  border-radius: 0.25rem;
+  background-color: var(--color-muted);
+  padding: 0.2rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Links */
+.prose :deep(a) {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

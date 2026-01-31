@@ -1,25 +1,17 @@
 <script setup lang="ts">
 const router = useRouter()
 const inputUrl = ref('')
-const isProcessing = ref(false)
 
-interface SummarizeResponse {
+interface CreatePendingResponse {
   summaryId: string
-  url: string
-  type: string
-  title?: string
-  summary: string
-  model: string
 }
 
 async function handleSubmit() {
   if (!inputUrl.value) return
 
-  isProcessing.value = true
-
   try {
-    // Call API directly and get summaryId
-    const response = await $fetch<SummarizeResponse>('/api/summarize', {
+    // Create pending record
+    const response = await $fetch<CreatePendingResponse>('/api/summarize/create-pending', {
       method: 'POST',
       body: { url: inputUrl.value }
     })
@@ -30,8 +22,6 @@ async function handleSubmit() {
   } catch (err) {
     console.error('Error:', err)
     // TODO: Show error to user
-  } finally {
-    isProcessing.value = false
   }
 }
 </script>
@@ -44,18 +34,10 @@ async function handleSubmit() {
         type="url"
         placeholder="Paste article or video URL..."
         class="flex-1"
-        :disabled="isProcessing"
         required
       />
-      <Button
-        type="submit"
-        variant="default"
-        size="lg"
-        class="text-lg whitespace-nowrap"
-        :disabled="isProcessing"
-      >
-        <Icon v-if="isProcessing" name="lucide:loader-2" class="w-5 h-5 animate-spin" />
-        <span v-else>Go</span>
+      <Button type="submit" variant="default" size="lg" class="text-lg whitespace-nowrap">
+        Go
       </Button>
     </form>
   </div>
