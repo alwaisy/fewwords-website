@@ -1,15 +1,38 @@
 <script setup lang="ts">
 const router = useRouter()
 const inputUrl = ref('')
+const isProcessing = ref(false)
 
-function handleSubmit() {
+interface SummarizeResponse {
+  summaryId: string
+  url: string
+  type: string
+  title?: string
+  summary: string
+  model: string
+}
+
+async function handleSubmit() {
   if (!inputUrl.value) return
 
-  // Redirect to processing page with URL
-  router.push({
-    path: '/app/processing',
-    query: { url: inputUrl.value }
-  })
+  isProcessing.value = true
+
+  try {
+    // Call API directly and get summaryId
+    const response = await $fetch<SummarizeResponse>('/api/summarize', {
+      method: 'POST',
+      body: { url: inputUrl.value }
+    })
+
+    if (response?.summaryId) {
+      await router.replace(`/app/${response.summaryId}`)
+    }
+  } catch (err) {
+    console.error('Error:', err)
+    // TODO: Show error to user
+  } finally {
+    isProcessing.value = false
+  }
 }
 </script>
 
@@ -21,10 +44,18 @@ function handleSubmit() {
         type="url"
         placeholder="Paste article or video URL..."
         class="flex-1"
+        :disabled="isProcessing"
         required
       />
-      <Button type="submit" variant="default" size="lg" class="text-lg whitespace-nowrap">
-        Go
+      <Button
+        type="submit"
+        variant="default"
+        size="lg"
+        class="text-lg whitespace-nowrap"
+        :disabled="isProcessing"
+      >
+        <Icon v-if="isProcessing" name="lucide:loader-2" class="w-5 h-5 animate-spin" />
+        <span v-else>Go</span>
       </Button>
     </form>
   </div>

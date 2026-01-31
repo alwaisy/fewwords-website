@@ -8,13 +8,22 @@ const route = useRoute()
 const router = useRouter()
 const url = route.query.url as string
 
+interface SummarizeResponse {
+  summaryId: string
+  url: string
+  type: string
+  title?: string
+  summary: string
+  model: string
+}
+
 // Steps for processing
-const steps = [
-  { id: 1, label: 'Fetching content...', status: 'pending' },
-  { id: 2, label: 'Analyzing with AI...', status: 'pending' },
-  { id: 3, label: 'Generating summary...', status: 'pending' },
-  { id: 4, label: 'Almost there...', status: 'pending' },
-] as const
+type StepStatus = 'pending' | 'active' | 'complete'
+const steps = ref([
+  { id: 1, label: 'Fetching content...', status: 'pending' as StepStatus },
+  { id: 2, label: 'Analyzing with AI...', status: 'pending' as StepStatus },
+  { id: 3, label: 'Generating summary...', status: 'pending' as StepStatus },
+])
 
 const currentStep = ref(0)
 const error = ref<string | null>(null)
@@ -25,43 +34,40 @@ onMounted(async () => {
     return
   }
 
-  // Simulate processing steps
-  // In real app, this would be WebSocket or polling
-  const processSteps = async () => {
+  try {
     // Step 1: Fetching
-    steps[0].status = 'active'
-    await sleep(2000)
-    steps[0].status = 'complete'
-    currentStep.value = 1
+    if (steps.value[0]) steps.value[0].status = 'active'
+    currentStep.value = 0
+
+    // Call the summarize API
+    const response = await $fetch<SummarizeResponse>('/api/summarize', {
+      method: 'POST',
+      body: { url }
+    })
+
+    if (steps.value[0]) steps.value[0].status = 'complete'
 
     // Step 2: Analyzing
-    steps[1].status = 'active'
-    await sleep(3000)
-    steps[1].status = 'complete'
-    currentStep.value = 2
+    if (steps.value[1]) steps.value[1].status = 'active'
+    currentStep.value = 1
+    await sleep(1000)
+    if (steps.value[1]) steps.value[1].status = 'complete'
 
     // Step 3: Generating
-    steps[2].status = 'active'
-    await sleep(2500)
-    steps[2].status = 'complete'
-    currentStep.value = 3
+    if (steps.value[2]) steps.value[2].status = 'active'
+    currentStep.value = 2
+    await sleep(800)
+    if (steps.value[2]) steps.value[2].status = 'complete'
 
-    // Step 4: Almost done
-    steps[3].status = 'active'
-    await sleep(1500)
-    steps[3].status = 'complete'
-    currentStep.value = 4
-
-    // Redirect to summary
-    setTimeout(() => {
-      router.push('/app/demo-summary')
-    }, 500)
-  }
-
-  try {
-    await processSteps()
+    // Get summaryId and redirect
+    if (response?.summaryId) {
+      await router.push(`/app/${response.summaryId}`)
+    } else {
+      error.value = 'Failed to generate summary'
+    }
   } catch (err) {
-    error.value = 'Something went wrong'
+    console.error('Processing error:', err)
+    error.value = err instanceof Error ? err.message : 'Failed to process URL'
   }
 })
 
@@ -104,7 +110,7 @@ function goBack() {
             Processing...
           </h1>
           <p class="text-muted-foreground mb-8">
-            This usually takes about 30 seconds
+            This usually takes about 15-20 seconds
           </p>
 
           <!-- Progress Steps -->

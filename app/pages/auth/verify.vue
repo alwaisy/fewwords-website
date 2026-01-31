@@ -42,7 +42,7 @@ onMounted(async () => {
     setTimeout(() => {
       router.push('/app')
     }, 2000)
-  } catch (error) {
+  } catch {
     status.value = 'error'
     errorMessage.value = 'Invalid or expired link'
   }

@@ -5,15 +5,30 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
 
+  runtimeConfig: {
+    private: {
+      jinaAiKey: process.env.JINA_AI_API_KEY,
+      openrouterKey: process.env.OPENROUTER_API_KEY,
+    },
+  },
+
+  nitro: {
+    imports: {
+      dirs: ['server/db'],
+    },
+  },
+
   modules: [
     "@nuxt/eslint",
     "@nuxt/fonts",
     "@nuxt/hints",
     "@nuxt/icon",
     "@nuxt/image",
-    // '@nuxt/content'
+    '@nuxt/content',
     "@nuxt/scripts",
     "shadcn-nuxt",
+    "@radya/nuxt-dompurify",
+    "@nuxtjs/mdc",
   ],
 
   css: ["~/assets/css/global.css"],
