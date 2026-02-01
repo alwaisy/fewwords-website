@@ -1,12 +1,34 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { createOpenAI } from '@ai-sdk/openai'
+import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
-import type { LLMModel } from './types'
+import type { LLMModel, LLMProvider } from './types'
 import { WRITING_GUIDELINES } from '../../prompts/system'
 
+// Provider instances
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: 'https://openrouter.ai/api/v1',
+  headers: {
+    'HTTP-Referer': 'https://fewwords.app',
+    'X-Title': 'Fewwords - Content Summarizer',
+  },
 })
+
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+})
+
+// Provider registry
+const providers = {
+  openrouter,
+  openai,
+  anthropic,
+} as const
 
 export interface LLMOptions {
   model: LLMModel
@@ -14,6 +36,7 @@ export interface LLMOptions {
   content?: string
   temperature?: number
   maxTokens?: number
+  provider?: LLMProvider  // New: optional provider override
 }
 
 export interface LLMResult {
@@ -27,7 +50,14 @@ export interface LLMResult {
 }
 
 export async function callLLM(options: LLMOptions): Promise<LLMResult> {
-  const { model, prompt, content, temperature = 0.7, maxTokens = 1000 } = options
+  const {
+    model,
+    prompt,
+    content,
+    temperature = 0.7,
+    maxTokens = 1000,
+    provider = 'openrouter',  // Default to OpenRouter
+  } = options
 
   // Build user message
   let userMessage = prompt
@@ -37,7 +67,7 @@ export async function callLLM(options: LLMOptions): Promise<LLMResult> {
 
   try {
     const response = await generateText({
-      model: openrouter(model),
+      model: providers[provider](model),
       messages: [
         { role: 'system', content: WRITING_GUIDELINES },
         { role: 'user', content: userMessage },

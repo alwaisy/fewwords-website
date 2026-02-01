@@ -1,4 +1,4 @@
-import * as v1_1 from "./v1.1";
+import * as v1_2 from "./v1.2";
 
-export const ARTICLE_PROMPT = v1_1.ARTICLE_PROMPT;
-export const PROMPT_META = v1_1.PROMPT_META;
+export const ARTICLE_PROMPT = v1_2.ARTICLE_PROMPT;
+export const PROMPT_META = v1_2.PROMPT_META;

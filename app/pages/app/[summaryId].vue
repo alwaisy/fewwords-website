@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useErrorMessage } from "./composables/use-error-message";
+import { useSummaryProcessing } from "./composables/use-summary-processing";
+
 const route = useRoute();
 const router = useRouter();
 const summaryId = route.params.summaryId as string;
@@ -24,28 +27,13 @@ const displayTitle = computed(() => {
 });
 
 // Get user-friendly error message
-const friendlyErrorMessage = computed(() => {
-  const raw = summary.value?.errorMessage || "";
+const { getFriendlyErrorMessage } = useErrorMessage();
+const friendlyErrorMessage = computed(() =>
+  getFriendlyErrorMessage(summary.value?.errorMessage || ""),
+);
 
-  // Jina API errors
-  if (raw.includes("500") || raw.includes("Internal Server Error")) {
-    return "The content is temporarily unavailable. Please try again.";
-  }
-  if (raw.includes("Failed to fetch")) {
-    return "Could not retrieve the content. The URL may be invalid or inaccessible.";
-  }
-  if (raw.includes("timeout") || raw.includes("timed out")) {
-    return "Request took too long. Please try again.";
-  }
-
-  // YouTube errors
-  if (raw.includes("YouTube") || raw.includes("video")) {
-    return "Could not process this video. It may be private or unavailable.";
-  }
-
-  // Generic fallback
-  return "Something went wrong. Please try again with a different URL.";
-});
+// Summary processing logic
+const { currentMessage, startProcessing, watchStatusChanges } = useSummaryProcessing(summary, refresh);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -98,59 +86,6 @@ function doAnother() {
   router.push("/app");
 }
 
-// Loading messages for processing state
-const loadingMessages = [
-  "Thinking...",
-  "Researching...",
-  "Reading...",
-  "Extracting...",
-  "Writing...",
-  "Analyzing...",
-  "Processing...",
-  "Synthesizing...",
-  "Comprehending...",
-  "Summarizing...",
-  "Digesting...",
-  "Understanding...",
-  "Evaluating...",
-  "Structuring...",
-];
-
-const currentMessage = ref<string>("");
-
-function getRandomMessage(): string {
-  const index = Math.floor(Math.random() * loadingMessages.length);
-  return loadingMessages[index]!;
-}
-
-// Function to start processing
-async function startProcessing() {
-  if (!summary.value?.source || !summary.value?.summaryId) return;
-
-  currentMessage.value = getRandomMessage();
-
-  // Cycle messages
-  const interval = setInterval(() => {
-    currentMessage.value = getRandomMessage();
-  }, 1500);
-
-  try {
-    await $fetch("/api/summarize", {
-      method: "POST",
-      body: {
-        url: summary.value.source,
-        updateSummaryId: summary.value.summaryId,
-      },
-    });
-    clearInterval(interval);
-    await refresh();
-  } catch (err) {
-    console.error("Summarize API error:", err);
-    clearInterval(interval);
-    await refresh();
-  }
-}
-
 // Start processing on mount if pending
 onMounted(() => {
   if (summary.value?.status === "pending") {
@@ -159,21 +94,7 @@ onMounted(() => {
 });
 
 // Watch for status changes (for poll/retry scenarios)
-watch(() => summary.value?.status, (newStatus) => {
-  if (newStatus === "pending") {
-    startProcessing();
-  } else if (newStatus === "processing") {
-    // Poll for updates every 2 seconds
-    const pollInterval = setInterval(async () => {
-      await refresh();
-      if (summary.value?.status !== "processing") {
-        clearInterval(pollInterval);
-      }
-    }, 2000);
-
-    onUnmounted(() => clearInterval(pollInterval));
-  }
-});
+watchStatusChanges();
 </script>
 
 <template>

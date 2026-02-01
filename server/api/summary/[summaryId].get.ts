@@ -38,6 +38,7 @@ export default defineEventHandler(async (event) => {
     title: summary.title,
     summary: summary.summary,
     status: summary.status,
+    errorMessage: summary.errorMessage,
     createdAt: summary.createdAt,
     completedAt: summary.completedAt,
   }

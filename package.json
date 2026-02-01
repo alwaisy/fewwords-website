@@ -23,6 +23,8 @@
     "db:seed": "tsx db/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.35",
+    "@ai-sdk/openai": "^3.0.25",
     "@nuxt/content": "3.11.0",
     "@nuxt/eslint": "1.13.0",
     "@nuxt/fonts": "0.13.0",

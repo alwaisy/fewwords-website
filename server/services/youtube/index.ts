@@ -19,6 +19,7 @@ export interface YouTubeResult {
 export async function summarize(url: string): Promise<YouTubeResult> {
   // Step 1: Call LLM directly (no fetcher for YouTube)
   const llmResult = await callLLM({
+    provider: YOUTUBE_CONFIG.provider,
     model: YOUTUBE_CONFIG.model,
     prompt: `${YOUTUBE_PROMPT}\n\nURL: ${url}`,
     temperature: YOUTUBE_CONFIG.temperature,

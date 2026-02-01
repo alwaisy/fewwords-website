@@ -23,6 +23,7 @@ export async function summarize(url: string): Promise<ArticleResult> {
 
   // Step 2: Call LLM
   const llmResult = await callLLM({
+    provider: ARTICLE_CONFIG.provider,
     model: ARTICLE_CONFIG.model,
     prompt: ARTICLE_PROMPT,
     content,
