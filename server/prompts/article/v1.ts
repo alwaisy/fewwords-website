@@ -14,3 +14,10 @@ One sentence capturing the core argument or thesis.
 A brief conclusion or final insight.
 
 Keep it concise and clear.`;
+
+export const PROMPT_META = {
+  NAME: "Article Summarizer",
+  DESCRIPTION: "Basic, regular, first version of article summarizer prompt.",
+  ID: "article-prompt-v1",
+  ESSENCE: "article",
+};

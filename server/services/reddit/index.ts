@@ -1,5 +1,5 @@
 import { REDDIT_CONFIG } from './config'
-import { REDDIT_PROMPT } from '../../prompts/reddit/default'
+import { REDDIT_PROMPT, PROMPT_META } from '../../prompts/reddit'
 import { callLLM } from '../shared/llm'
 
 export interface RedditResult {
@@ -8,6 +8,7 @@ export interface RedditResult {
   title?: string
   summary: string
   model: string
+  promptId: string
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -29,6 +30,7 @@ export async function summarize(url: string): Promise<RedditResult> {
     type: 'reddit',
     summary: llmResult.content,
     model: llmResult.model,
+    promptId: PROMPT_META.ID,
     usage: llmResult.usage,
   }
 }

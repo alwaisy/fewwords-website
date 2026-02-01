@@ -1,6 +1,6 @@
 import { ARTICLE_CONFIG } from './config'
 import { fetchWithJina } from './fetcher'
-import { ARTICLE_PROMPT } from '../../prompts/article/default'
+import { ARTICLE_PROMPT, PROMPT_META } from '../../prompts/article'
 import { callLLM } from '../shared/llm'
 
 export interface ArticleResult {
@@ -9,6 +9,7 @@ export interface ArticleResult {
   title?: string
   summary: string
   model: string
+  promptId: string
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -29,12 +30,15 @@ export async function summarize(url: string): Promise<ArticleResult> {
     maxTokens: ARTICLE_CONFIG.maxTokens,
   })
 
-  // Extract title from LLM response (TITLE: ...)
-  const titleMatch = llmResult.content.match(/^TITLE:\s*(.+)$/m)
+  // Extract title from LLM response (handles both TITLE: and **TITLE:** formats)
+  const titleMatch = llmResult.content.match(/^\*\*TITLE:\*\*\s*(.+)$/m) || llmResult.content.match(/^TITLE:\s*(.+)$/m)
   const title = titleMatch ? titleMatch[1]?.trim() : undefined
 
-  // Remove TITLE line from summary for display
-  const summary = llmResult.content.replace(/^TITLE:\s*.+\n?/m, '').trim()
+  // Remove TITLE line from summary for display (handles both formats)
+  const summary = llmResult.content
+    .replace(/^\*\*TITLE:\*\*\s*.+\n?/m, '')
+    .replace(/^TITLE:\s*.+\n?/m, '')
+    .trim()
 
   return {
     url,
@@ -42,6 +46,7 @@ export async function summarize(url: string): Promise<ArticleResult> {
     title,
     summary,
     model: llmResult.model,
+    promptId: PROMPT_META.ID,
     usage: llmResult.usage,
   }
 }

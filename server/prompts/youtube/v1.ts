@@ -13,4 +13,11 @@ Key moments mentioned (if applicable).
 ## Takeaway
 A brief conclusion or action item.
 
-Keep it concise and practical.`
+Keep it concise and practical.`;
+
+export const PROMPT_META = {
+  NAME: "YouTube Summarizer",
+  DESCRIPTION: "Basic, regular, first version of YouTube summarizer prompt.",
+  ID: "youtube-prompt-v1",
+  ESSENCE: "youtube",
+};

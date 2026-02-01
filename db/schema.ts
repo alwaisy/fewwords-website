@@ -31,6 +31,7 @@ export const summaries = pgTable(
     title: text("title"),
     summary: text("summary"),  // Made optional for pending records
     model: text("model"),
+    promptId: text("promptId"),  // Track which prompt version was used
     promptTokens: integer("promptTokens"),
     completionTokens: integer("completionTokens"),
     totalTokens: integer("totalTokens"),

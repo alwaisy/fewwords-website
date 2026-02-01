@@ -197,13 +197,11 @@ watchEffect(async () => {
             />
           </div>
 
-          <h1 class="text-2xl font-bold text-foreground mb-2">Processing...</h1>
+          <h1 class="text-2xl font-bold text-foreground mb-2 animate-pulse">
+            {{ currentMessage }}
+          </h1>
           <p class="text-muted-foreground mb-8">
             This usually takes about 15-20 seconds
-          </p>
-
-          <p class="text-lg font-medium text-primary animate-pulse">
-            {{ currentMessage }}
           </p>
         </div>
 

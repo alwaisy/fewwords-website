@@ -1,5 +1,5 @@
 import { YOUTUBE_CONFIG } from './config'
-import { YOUTUBE_PROMPT } from '../../prompts/youtube/default'
+import { YOUTUBE_PROMPT, PROMPT_META } from '../../prompts/youtube'
 import { callLLM } from '../shared/llm'
 
 export interface YouTubeResult {
@@ -8,6 +8,7 @@ export interface YouTubeResult {
   title?: string
   summary: string
   model: string
+  promptId: string
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -29,6 +30,7 @@ export async function summarize(url: string): Promise<YouTubeResult> {
     type: 'youtube',
     summary: llmResult.content,
     model: llmResult.model,
+    promptId: PROMPT_META.ID,
     usage: llmResult.usage,
   }
 }

@@ -13,4 +13,11 @@ What most people seem to agree on (if any).
 ## Notable Counter-opinions
 Any dissenting views that are worth noting.
 
-Keep it balanced and representative of the discussion.`
+Keep it balanced and representative of the discussion.`;
+
+export const PROMPT_META = {
+  NAME: "Reddit Summarizer",
+  DESCRIPTION: "Basic, regular, first version of Reddit summarizer prompt.",
+  ID: "reddit-prompt-v1",
+  ESSENCE: "reddit",
+};

@@ -1,15 +1,45 @@
 <script setup lang="ts">
+import { computed } from "vue";
+
 interface Props {
   content?: string;
 }
-defineProps<Props>();
+
+const props = defineProps<Props>();
+
+// Transform "Final Take:" and "Takeaway:" into blockquote for special styling
+const transformedContent = computed(() => {
+  if (!props.content) return "";
+
+  let content = props.content;
+
+  // Strip the label and wrap content in blockquote
+  const patterns: Array<[RegExp, string]> = [
+    // **Final Take:** content (bold format)
+    [/^\*\*Final Take:\*\*\s*/gm, "> "],
+    // Final Take: content (plain format)
+    [/^Final Take:\s*/gm, "> "],
+    // ## Takeaway content (header format)
+    [/^##\s*Takeaway\s*[\n\r]+/gm, "> "],
+    // **Takeaway:** content (bold format)
+    [/^\*\*Takeaway:\*\*\s*/gm, "> "],
+    // Takeaway: content (plain format)
+    [/^Takeaway:\s*/gm, "> "],
+  ];
+
+  for (const [pattern, replacement] of patterns) {
+    content = content.replace(pattern, replacement);
+  }
+
+  return content;
+});
 </script>
 
 <template>
   <div class="summary-wrapper">
     <MDC
-      v-if="content"
-      :value="content"
+      v-if="transformedContent"
+      :value="transformedContent"
       class="prose prose-lime prose-xl dark:prose-invert max-w-none p-2"
     />
     <div v-else class="flex items-center justify-center h-full">
@@ -115,16 +145,35 @@ defineProps<Props>();
 }
 
 /* Blockquote */
-.summary-wrapper :deep(blockquote) {
+/* .summary-wrapper :deep(blockquote) {
   border-left: 3px solid currentColor;
   padding-left: 1rem;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
   font-style: normal;
+} */
+
+.summary-wrapper :deep(blockquote) {
+  color: var(--muted-foreground);
 }
 
-.summary-wrapper :deep(blockquote p) {
+/* .summary-wrapper :deep(blockquote p) {
   margin: 0;
+} */
+
+/* Special styling for Final Take blockquotes */
+.summary-wrapper :deep(blockquote:has(strong)) {
+  border-left: 4px solid hsl(var(--primary));
+  background: hsl(var(--muted) / 0.3);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+}
+
+.summary-wrapper :deep(blockquote strong) {
+  color: hsl(var(--primary));
+  font-weight: 600;
 }
 
 /* Tables */
