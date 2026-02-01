@@ -123,36 +123,46 @@ function getRandomMessage(): string {
   return loadingMessages[index]!;
 }
 
-// Watch for status changes and handle pending/processing
-watchEffect(async () => {
-  if (
-    summary.value?.status === "pending" &&
-    summary.value?.source &&
-    summary.value?.summaryId
-  ) {
-    // Start processing - call the original API
+// Function to start processing
+async function startProcessing() {
+  if (!summary.value?.source || !summary.value?.summaryId) return;
+
+  currentMessage.value = getRandomMessage();
+
+  // Cycle messages
+  const interval = setInterval(() => {
     currentMessage.value = getRandomMessage();
+  }, 1500);
 
-    // Cycle messages
-    const interval = setInterval(() => {
-      currentMessage.value = getRandomMessage();
-    }, 1500);
+  try {
+    await $fetch("/api/summarize", {
+      method: "POST",
+      body: {
+        url: summary.value.source,
+        updateSummaryId: summary.value.summaryId,
+      },
+    });
+    clearInterval(interval);
+    await refresh();
+  } catch (err) {
+    console.error("Summarize API error:", err);
+    clearInterval(interval);
+    await refresh();
+  }
+}
 
-    try {
-      await $fetch("/api/summarize", {
-        method: "POST",
-        body: {
-          url: summary.value.source,
-          updateSummaryId: summary.value.summaryId,
-        },
-      });
-      clearInterval(interval);
-      await refresh(); // Refresh to get updated data
-    } catch {
-      clearInterval(interval);
-      await refresh(); // Refresh even on error to show failed status
-    }
-  } else if (summary.value?.status === "processing") {
+// Start processing on mount if pending
+onMounted(() => {
+  if (summary.value?.status === "pending") {
+    startProcessing();
+  }
+});
+
+// Watch for status changes (for poll/retry scenarios)
+watch(() => summary.value?.status, (newStatus) => {
+  if (newStatus === "pending") {
+    startProcessing();
+  } else if (newStatus === "processing") {
     // Poll for updates every 2 seconds
     const pollInterval = setInterval(async () => {
       await refresh();
@@ -161,7 +171,6 @@ watchEffect(async () => {
       }
     }, 2000);
 
-    // Cleanup on unmount
     onUnmounted(() => clearInterval(pollInterval));
   }
 });

@@ -73,11 +73,8 @@ export default defineEventHandler(async (event) => {
 
       return {
         summaryId: updateSummaryId,
-        url: result.url,
-        type: essence,
         title: result.title,
         summary: result.summary,
-        model: result.model,
       }
     }
 
@@ -100,11 +97,8 @@ export default defineEventHandler(async (event) => {
 
     return {
       summaryId,
-      url: result.url,
-      type: essence,
       title: result.title,
       summary: result.summary,
-      model: result.model,
     }
   }
   catch (error: unknown) {

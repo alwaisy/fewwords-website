@@ -30,8 +30,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Return summary data as-is (raw markdown string)
+  // Return public fields - hide only internal implementation details
   return {
-    ...summary,
+    summaryId: summary.summaryId,
+    source: summary.source,
+    essence: summary.essence,
+    title: summary.title,
+    summary: summary.summary,
+    status: summary.status,
+    createdAt: summary.createdAt,
+    completedAt: summary.completedAt,
   }
 })
