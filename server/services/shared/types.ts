@@ -1,21 +1,15 @@
 // Provider selection
-export type LLMProvider = 'openrouter' | 'openai' | 'anthropic'
+export type LLMProvider = "openrouter" | "openai" | "anthropic";
 
-// OpenRouter models (uses provider/model format)
-export type LLMModel =
-  | 'google/gemini-3-flash-preview'
-  | 'openai/gpt-4.1-mini'
-  | 'anthropic/claude-3-5-haiku'
-  | 'deepseek/deepseek-chat'
+// All supported models (any provider/model format)
+export type OpenRouterModel =
+  | "google/gemini-3-flash-preview"
+  | "anthropic/claude-haiku-4-5-20251001";
 
 // OpenAI models (for direct OpenAI provider)
-export type OpenAIModel =
-  | 'gpt-4o'
-  | 'gpt-4o-mini'
-  | 'gpt-4-turbo'
-  | 'gpt-3.5-turbo'
+export type OpenAIModel = "gpt-5-mini-2025-08-07" | "gpt-4.1-2025-04-14";
 
-// Anthropic models (for direct Anthropic provider)
-export type AnthropicModel =
-  | 'claude-3-5-sonnet-20241022'
-  | 'claude-3-haiku-20240307'
+// Anthropic models (for direct Anthropic provider - no prefix)
+export type AnthropicModel = "claude-haiku-4-5-20251001";
+
+export type LLMModel = OpenRouterModel | OpenAIModel | AnthropicModel;

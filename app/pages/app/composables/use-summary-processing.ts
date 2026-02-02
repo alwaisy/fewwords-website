@@ -1,4 +1,22 @@
-export function useSummaryProcessing(summary: Ref<any>, refresh: () => Promise<void>) {
+type SummaryStatus = "pending" | "processing" | "completed" | "failed";
+type Essence = "article" | "youtube" | "reddit";
+
+interface SummaryData {
+  source: string;
+  summaryId: string;
+  essence: Essence;
+  title: string | null;
+  summary: string | null;
+  status: SummaryStatus;
+  errorMessage: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export function useSummaryProcessing(
+  summary: Ref<SummaryData | null | undefined>,
+  refresh: () => Promise<void>
+) {
   const loadingMessages = [
     "Thinking...",
     "Researching...",

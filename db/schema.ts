@@ -32,6 +32,7 @@ export const summaries = pgTable(
     summary: text("summary"),  // Made optional for pending records
     model: text("model"),
     promptId: text("promptId"),  // Track which prompt version was used
+    reasoning: text("reasoning"),  // Classifier's reasoning for category selection (article only)
     promptTokens: integer("promptTokens"),
     completionTokens: integer("completionTokens"),
     totalTokens: integer("totalTokens"),

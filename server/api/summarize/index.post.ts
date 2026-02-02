@@ -54,6 +54,9 @@ export default defineEventHandler(async (event) => {
 
     const responseTimeMs = Date.now() - startTime
 
+    // Extract reasoning (only articles have it)
+    const reasoning = essence === 'article' && 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
+
     // If updateSummaryId provided, update existing record (for pending summaries)
     if (updateSummaryId) {
       await db.update(summaries)
@@ -62,6 +65,7 @@ export default defineEventHandler(async (event) => {
           summary: result.summary,
           model: result.model,
           promptId: result.promptId,
+          reasoning,
           promptTokens: result.usage?.promptTokens,
           completionTokens: result.usage?.completionTokens,
           totalTokens: result.usage?.totalTokens,
@@ -86,6 +90,7 @@ export default defineEventHandler(async (event) => {
       summary: result.summary,
       model: result.model,
       promptId: result.promptId,
+      reasoning,
       promptTokens: result.usage?.promptTokens,
       completionTokens: result.usage?.completionTokens,
       totalTokens: result.usage?.totalTokens,

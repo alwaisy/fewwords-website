@@ -1,6 +1,7 @@
 import { ARTICLE_CONFIG } from './config'
 import { fetchWithJina } from './fetcher'
-import { ARTICLE_PROMPT, PROMPT_META } from '../../prompts/article'
+import { classifyArticle } from './classifier'
+import { getPrompt, getPromptMeta } from '../../prompts/article'
 import { callLLM } from '../shared/llm'
 
 export interface ArticleResult {
@@ -10,6 +11,7 @@ export interface ArticleResult {
   summary: string
   model: string
   promptId: string
+  reasoning?: string // Classifier's reasoning for category selection
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -21,11 +23,22 @@ export async function summarize(url: string): Promise<ArticleResult> {
   // Step 1: Fetch article content
   const { content } = await fetchWithJina(url)
 
-  // Step 2: Call LLM
+  // Step 2: Classify article to select best prompt version
+  const { category: _category, version, reasoning } = await classifyArticle(content)
+
+  // Step 3: Get the appropriate prompt for this category
+  const prompt = getPrompt(version)
+  const promptMeta = getPromptMeta(version)
+
+  if (!prompt || !promptMeta) {
+    throw new Error(`Prompt version ${version} not found`)
+  }
+
+  // Step 4: Call LLM with selected prompt
   const llmResult = await callLLM({
     provider: ARTICLE_CONFIG.provider,
     model: ARTICLE_CONFIG.model,
-    prompt: ARTICLE_PROMPT,
+    prompt,
     content,
     temperature: ARTICLE_CONFIG.temperature,
     maxTokens: ARTICLE_CONFIG.maxTokens,
@@ -47,7 +60,8 @@ export async function summarize(url: string): Promise<ArticleResult> {
     title,
     summary,
     model: llmResult.model,
-    promptId: PROMPT_META.ID,
+    promptId: promptMeta.ID,
+    reasoning,
     usage: llmResult.usage,
   }
 }

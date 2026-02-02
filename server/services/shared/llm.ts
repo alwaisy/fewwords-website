@@ -36,7 +36,7 @@ export interface LLMOptions {
   content?: string
   temperature?: number
   maxTokens?: number
-  provider?: LLMProvider  // New: optional provider override
+  provider?: LLMProvider
 }
 
 export interface LLMResult {
@@ -56,7 +56,7 @@ export async function callLLM(options: LLMOptions): Promise<LLMResult> {
     content,
     temperature = 0.7,
     maxTokens = 1000,
-    provider = 'openrouter',  // Default to OpenRouter
+    provider = 'openrouter',
   } = options
 
   // Build user message
