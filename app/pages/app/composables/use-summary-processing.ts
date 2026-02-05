@@ -17,61 +17,38 @@ export function useSummaryProcessing(
   summary: Ref<SummaryData | null | undefined>,
   refresh: () => Promise<void>
 ) {
-  const loadingMessages = [
-    "Thinking...",
-    "Researching...",
-    "Reading...",
-    "Extracting...",
-    "Writing...",
-    "Analyzing...",
-    "Processing...",
-    "Synthesizing...",
-    "Comprehending...",
-    "Summarizing...",
-    "Digesting...",
-    "Understanding...",
-    "Evaluating...",
-    "Structuring...",
-  ] as const;
+  const currentMessage = computed(() => {
+    if (!summary.value) return "";
 
-  const currentMessage = ref<string>("");
-  const currentStage = ref<number>(1); // 1, 2, 3 for YouTube stages
-  const stageInfo = ref<string>("");
+    switch (summary.value.essence) {
+      case "youtube":
+        return "Watching your video...";
+      case "article":
+        return "Reading your article...";
+      case "reddit":
+        return "Reading your post...";
+      default:
+        return "Processing...";
+    }
+  });
 
-  const getRandomMessage = (): string => {
-    const index = Math.floor(Math.random() * loadingMessages.length);
-    return loadingMessages[index]!;
-  };
+  const currentIcon = computed(() => {
+    if (!summary.value) return "lucide:loader-2";
+
+    switch (summary.value.essence) {
+      case "youtube":
+        return "lucide:play-circle";
+      case "article":
+        return "lucide:book-open";
+      case "reddit":
+        return "lucide:message-circle";
+      default:
+        return "lucide:loader-2";
+    }
+  });
 
   const startProcessing = async () => {
     if (!summary.value?.source || !summary.value?.summaryId) return;
-
-    // YouTube-specific stages
-    if (summary.value.essence === "youtube") {
-      currentStage.value = 1;
-      stageInfo.value = "Fetching video metadata...";
-      currentMessage.value = "🎬 Watching this video...";
-    } else {
-      currentMessage.value = getRandomMessage();
-    }
-
-    // Cycle messages
-    const interval = setInterval(() => {
-      if (summary.value?.essence === "youtube") {
-        // YouTube stage progression
-        if (currentStage.value === 1) {
-          currentStage.value = 2;
-          stageInfo.value = "Analyzing content & classification...";
-          currentMessage.value = "🧠 Analyzing what this video is about...";
-        } else if (currentStage.value === 2) {
-          currentStage.value = 3;
-          stageInfo.value = "Generating summary...";
-          currentMessage.value = "✍️ Writing the summary...";
-        }
-      } else {
-        currentMessage.value = getRandomMessage();
-      }
-    }, 3000); // Slower cycling for YouTube stages
 
     try {
       await $fetch("/api/summarize", {
@@ -81,11 +58,9 @@ export function useSummaryProcessing(
           updateSummaryId: summary.value.summaryId,
         },
       });
-      clearInterval(interval);
       await refresh();
     } catch (err) {
       console.error("Summarize API error:", err);
-      clearInterval(interval);
       await refresh();
     }
   };
@@ -97,7 +72,6 @@ export function useSummaryProcessing(
         if (newStatus === "pending") {
           startProcessing();
         } else if (newStatus === "processing") {
-          // Poll for updates every 2 seconds
           const pollInterval = setInterval(async () => {
             await refresh();
             if (summary.value?.status !== "processing") {
@@ -113,8 +87,7 @@ export function useSummaryProcessing(
 
   return {
     currentMessage,
-    currentStage,
-    stageInfo,
+    currentIcon,
     startProcessing,
     watchStatusChanges,
   };

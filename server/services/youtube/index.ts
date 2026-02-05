@@ -25,6 +25,7 @@ export async function summarize(
   db?: any, // Drizzle database instance
   summaryId?: string
 ): Promise<YouTubeResult> {
+
   // Extract videoId from URL for database
   const extractVideoId = (url: string): string | null => {
     const patterns = [
