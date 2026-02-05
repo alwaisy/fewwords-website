@@ -179,7 +179,10 @@ watchStatusChanges();
             @open-source="openSource"
             @save="saveSummary"
           />
-          <AppSummaryContent :content="summary.summary ?? ''" />
+          <AppSummaryContent
+            :content="summary.summary ?? ''"
+            :source-url="summary.source"
+          />
           <AppSummaryFooter
             :reader-mode="isReaderMode"
             @do-another="doAnother"

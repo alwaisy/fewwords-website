@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { convertYoutubeTimestamps } from "~/utils/markdown";
 
 interface Props {
   content?: string;
+  sourceUrl?: string;
 }
 
 const props = defineProps<Props>();
@@ -12,6 +14,11 @@ const transformedContent = computed(() => {
   if (!props.content) return "";
 
   let content = props.content;
+
+  // Convert YouTube timestamps to clickable links if source URL is provided
+  if (props.sourceUrl) {
+    content = convertYoutubeTimestamps(content, props.sourceUrl);
+  }
 
   // Strip the label and wrap content in blockquote
   const patterns: Array<[RegExp, string]> = [
@@ -62,6 +69,7 @@ const transformedContent = computed(() => {
   padding-bottom: 0;
   border-bottom: none;
   color: hsl(var(--foreground) / 0.6);
+  text-transform: lowercase;
 }
 
 /* Headings - MANIPULATED SIZES */
