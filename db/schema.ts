@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   index,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -87,7 +88,7 @@ export const youtube = pgTable(
     videoId: text("video_id").notNull(),
     originalTitle: text("original_title").notNull(),
     description: text("description"),
-    duration: integer("duration"), // Duration in minutes
+    duration: numeric("duration", { precision: 5, scale: 2 }), // Duration in minutes (supports decimals like 26.5)
     tags: text("tags"), // JSON array of tags
     isAgeRestricted: boolean("is_age_restricted"),
     viewCount: text("view_count"),

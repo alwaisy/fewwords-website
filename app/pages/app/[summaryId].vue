@@ -33,7 +33,7 @@ const friendlyErrorMessage = computed(() =>
 );
 
 // Summary processing logic
-const { currentMessage, startProcessing, watchStatusChanges } = useSummaryProcessing(summary, refresh);
+const { currentMessage, currentStage, stageInfo, startProcessing, watchStatusChanges } = useSummaryProcessing(summary, refresh);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -106,8 +106,18 @@ watchStatusChanges();
 
         <!-- Error State -->
         <div v-else-if="error" class="text-center py-20">
-          <p class="text-destructive mb-4">Failed to load summary</p>
-          <Button variant="outline" @click="doAnother">Go back</Button>
+          <div
+            class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
+          >
+            <Icon name="lucide:ghost" class="w-10 h-10 text-primary" />
+          </div>
+          <h1 class="text-2xl font-bold text-foreground mb-3">
+            Well, this is awkward
+          </h1>
+          <p class="text-muted-foreground mb-8 max-w-md mx-auto">
+            The summary went into hiding. Maybe it exists in another dimension?
+          </p>
+          <Button variant="outline" @click="doAnother">Try another URL</Button>
         </div>
 
         <!-- Processing State (pending or processing) -->
@@ -118,21 +128,79 @@ watchStatusChanges();
           "
           class="text-center py-20"
         >
-          <div
-            class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
-          >
-            <Icon
-              name="lucide:loader-2"
-              class="w-10 h-10 text-primary animate-spin"
-            />
+          <!-- YouTube-specific 3-stage loading -->
+          <div v-if="summary.essence === 'youtube'" class="space-y-8">
+            <!-- Stage indicators -->
+            <div class="flex justify-center gap-3 mb-8">
+              <div
+                v-for="stage in 3"
+                :key="stage"
+                class="w-3 h-3 rounded-full transition-all duration-500"
+                :class="
+                  stage <= currentStage
+                    ? 'bg-primary scale-110'
+                    : 'bg-muted'
+                "
+              />
+            </div>
+
+            <!-- Animated icon -->
+            <div
+              class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
+            >
+              <Icon
+                :name="
+                  currentStage === 1
+                    ? 'lucide:play-circle'
+                    : currentStage === 2
+                      ? 'lucide:brain'
+                      : 'lucide:sparkles'
+                "
+                class="w-10 h-10 text-primary"
+                :class="{ 'animate-pulse': currentStage < 3 }"
+              />
+            </div>
+
+            <h1 class="text-2xl font-bold text-foreground mb-2">
+              {{ currentMessage }}
+            </h1>
+
+            <p class="text-muted-foreground mb-4">
+              {{ stageInfo }}
+            </p>
+
+            <!-- Stage descriptions -->
+            <div class="max-w-md mx-auto text-sm text-muted-foreground space-y-2">
+              <p v-if="currentStage === 1" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                Stage 1 of 3: Getting video info from YouTube
+              </p>
+              <p v-else-if="currentStage === 2" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                Stage 2 of 3: Watching and classifying the content
+              </p>
+              <p v-else-if="currentStage === 3" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                Stage 3 of 3: Writing your summary
+              </p>
+            </div>
           </div>
 
-          <h1 class="text-2xl font-bold text-foreground mb-2 animate-pulse">
-            {{ currentMessage }}
-          </h1>
-          <p class="text-muted-foreground mb-8">
-            This usually takes about 15-20 seconds
-          </p>
+          <!-- Article/Reddit generic loading -->
+          <div v-else class="space-y-6">
+            <div
+              class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
+            >
+              <Icon
+                name="lucide:loader-2"
+                class="w-10 h-10 text-primary animate-spin"
+              />
+            </div>
+
+            <h1 class="text-2xl font-bold text-foreground mb-2 animate-pulse">
+              {{ currentMessage }}
+            </h1>
+            <p class="text-muted-foreground">
+              This usually takes about 15-20 seconds
+            </p>
+          </div>
         </div>
 
         <!-- Failed State -->
@@ -141,15 +209,19 @@ watchStatusChanges();
           class="text-center py-20"
         >
           <div
-            class="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center"
+            class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
           >
-            <Icon name="lucide:alert-circle" class="w-8 h-8 text-destructive" />
+            <Icon name="lucide:zap-off" class="w-10 h-10 text-primary" />
           </div>
-          <h1 class="text-xl font-bold text-foreground mb-2">
-            Processing Failed
+          <h1 class="text-2xl font-bold text-foreground mb-3">
+            Well, that didn't work
           </h1>
-          <p class="text-muted-foreground mb-6">{{ friendlyErrorMessage }}</p>
-          <Button variant="outline" @click="doAnother">Try again</Button>
+          <p class="text-muted-foreground mb-8 max-w-md mx-auto">
+            {{ friendlyErrorMessage }}
+          </p>
+          <div class="flex gap-3 justify-center">
+            <Button variant="outline" @click="doAnother">Try another URL</Button>
+          </div>
         </div>
 
         <!-- Completed State -->

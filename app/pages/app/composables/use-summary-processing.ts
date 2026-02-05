@@ -35,6 +35,8 @@ export function useSummaryProcessing(
   ] as const;
 
   const currentMessage = ref<string>("");
+  const currentStage = ref<number>(1); // 1, 2, 3 for YouTube stages
+  const stageInfo = ref<string>("");
 
   const getRandomMessage = (): string => {
     const index = Math.floor(Math.random() * loadingMessages.length);
@@ -44,12 +46,32 @@ export function useSummaryProcessing(
   const startProcessing = async () => {
     if (!summary.value?.source || !summary.value?.summaryId) return;
 
-    currentMessage.value = getRandomMessage();
+    // YouTube-specific stages
+    if (summary.value.essence === "youtube") {
+      currentStage.value = 1;
+      stageInfo.value = "Fetching video metadata...";
+      currentMessage.value = "🎬 Watching this video...";
+    } else {
+      currentMessage.value = getRandomMessage();
+    }
 
     // Cycle messages
     const interval = setInterval(() => {
-      currentMessage.value = getRandomMessage();
-    }, 1500);
+      if (summary.value?.essence === "youtube") {
+        // YouTube stage progression
+        if (currentStage.value === 1) {
+          currentStage.value = 2;
+          stageInfo.value = "Analyzing content & classification...";
+          currentMessage.value = "🧠 Analyzing what this video is about...";
+        } else if (currentStage.value === 2) {
+          currentStage.value = 3;
+          stageInfo.value = "Generating summary...";
+          currentMessage.value = "✍️ Writing the summary...";
+        }
+      } else {
+        currentMessage.value = getRandomMessage();
+      }
+    }, 3000); // Slower cycling for YouTube stages
 
     try {
       await $fetch("/api/summarize", {
@@ -91,6 +113,8 @@ export function useSummaryProcessing(
 
   return {
     currentMessage,
+    currentStage,
+    stageInfo,
     startProcessing,
     watchStatusChanges,
   };

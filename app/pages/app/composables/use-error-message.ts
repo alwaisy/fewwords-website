@@ -9,6 +9,14 @@ export function useErrorMessage() {
       "Well, that was awkward. Want to try a different URL?",
       "The website's not in the mood. Maybe another link?",
       "Oops! This one's being stubborn. Try another?",
+      "This link is in a committed relationship with error messages.",
+      "The content went out for milk and never came back.",
+      "404: Summary not found (but we checked everywhere).",
+      "This URL is having an existential crisis.",
+      "The website's guard dog wouldn't let us in.",
+      "This one's confused about its life choices.",
+      "The content is metaphorically in Canada.",
+      "We tried, but the website was not impressed.",
     ];
 
     const message = messages[Math.floor(Math.random() * messages.length)];
