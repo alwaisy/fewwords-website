@@ -1,7 +1,7 @@
 import { summarize as summarizeArticle } from '../../services/article'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 import { summarize as summarizeReddit } from '../../services/reddit'
-import { summaries } from '~~/db/schema'
+import { summaries, youtube } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
@@ -54,10 +54,8 @@ export default defineEventHandler(async (event) => {
 
     const responseTimeMs = Date.now() - startTime
 
-    // Extract reasoning (only articles have it)
     const reasoning = essence === 'article' && 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
 
-    // If updateSummaryId provided, update existing record (for pending summaries)
     if (updateSummaryId) {
       await db.update(summaries)
         .set({
@@ -82,7 +80,6 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Otherwise create new record (original flow)
     const insertResult = await db.insert(summaries).values({
       source: url,
       essence,
@@ -96,9 +93,10 @@ export default defineEventHandler(async (event) => {
       totalTokens: result.usage?.totalTokens,
       responseTimeMs,
       status: 'completed',
-    }).returning({ summaryId: summaries.summaryId })
+    }).returning({ id: summaries.id, summaryId: summaries.summaryId })
 
-    const summaryId = insertResult[0]?.summaryId
+    const insertedRecord = insertResult[0]
+    const summaryId = insertedRecord?.summaryId
 
     return {
       summaryId,
@@ -109,7 +107,6 @@ export default defineEventHandler(async (event) => {
   catch (error: unknown) {
     console.error('Summarize API error:', error)
 
-    // If updating an existing pending record, mark it as failed
     if (updateSummaryId) {
       const errorMessage = error && typeof error === 'object' && 'message' in error
         ? String(error.message)
@@ -121,15 +118,13 @@ export default defineEventHandler(async (event) => {
           errorMessage,
         })
         .where(eq(summaries.summaryId, updateSummaryId))
+
+      throw createError({
+        statusCode: 500,
+        statusMessage: errorMessage,
+      })
     }
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      throw error
-    }
-
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to process URL',
-    })
+    throw error
   }
 })

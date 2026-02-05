@@ -7,6 +7,8 @@ export interface VideoMetadata {
   channel: string;
   duration: number;
   videoUrl: string; // YouTube URL to pass to Gemini for video analysis
+  tags?: string[]; // Video tags
+  isAgeRestricted?: boolean; // Age-restriction flag
 }
 
 export interface ClassifierResult {
@@ -24,6 +26,7 @@ export interface ClassifierResult {
   focus_points: string[];
   is_worth_it: boolean;
   reasoning: string;
+  metadata: VideoMetadata; // Include original metadata for Stage 3
 }
 
 const CLASSIFIER_PROMPT = `You are the "fewwords" Metadata Architect and Content Classifier. Your goal is to act as a high-fidelity filter between raw data and a specialized summarizer.
@@ -129,7 +132,10 @@ export async function classifyVideo(
       parsed = JSON.parse(content);
     }
 
-    return parsed as ClassifierResult;
+    return {
+      ...parsed,
+      metadata, // Include original metadata
+    } as ClassifierResult;
   } catch {
     console.error("Failed to parse classifier response:", result.content);
     throw new Error("Classifier returned invalid JSON");
