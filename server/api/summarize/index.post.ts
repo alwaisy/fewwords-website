@@ -1,7 +1,7 @@
 import { summarize as summarizeArticle } from '../../services/article'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 import { summarize as summarizeReddit } from '../../services/reddit'
-import { summaries, youtube } from '~~/db/schema'
+import { summaries } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
         result = await summarizeArticle(url)
         break
       case 'youtube':
-        result = await summarizeYouTube(url)
+        result = await summarizeYouTube(url, db, updateSummaryId)
         break
       case 'reddit':
         result = await summarizeReddit(url)
