@@ -33,7 +33,8 @@ const friendlyErrorMessage = computed(() =>
 );
 
 // Summary processing logic
-const { currentMessage, currentIcon, startProcessing, watchStatusChanges } = useSummaryProcessing(summary, refresh);
+const { currentMessage, currentIcon, startProcessing, watchStatusChanges } =
+  useSummaryProcessing(summary, refresh);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -133,7 +134,8 @@ watchStatusChanges();
           >
             <Icon
               :name="currentIcon"
-              class="w-8 h-8 text-primary animate-pulse"
+              size="2rem"
+              class="text-primary animate-pulse"
             />
           </div>
 

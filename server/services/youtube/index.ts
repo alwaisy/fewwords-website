@@ -3,6 +3,7 @@ import { classifyVideo } from './classifier'
 import { summarizeVideo } from './summarizer'
 import { summaries, youtube } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
+import { YOUTUBE_PROMPTS, type YouTubeVideoType } from '../../prompts/youtube'
 
 export interface YouTubeResult {
   url: string
@@ -150,13 +151,21 @@ export async function summarize(
   }
 
   // Stage 3: Summarize with enriched context
+  // Get prompt ID from the actual prompt file
+  const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let promptId = 'youtube-unknown-v1'
+
+  if (promptGetter) {
+    const promptModule = await promptGetter()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    promptId = (promptModule as any).PROMPT_META?.ID || `youtube-${classifier.category.toLowerCase()}-v1`
+  }
+
   const summaryText = await summarizeVideo({
     videoUrl: url,
     classifier,
   })
-
-  // Extract prompt ID from category
-  const promptId = `youtube-${classifier.category.toLowerCase()}-v1`
 
   return {
     url,
