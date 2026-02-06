@@ -16,22 +16,22 @@ interface SummaryData {
   completedAt: string | null;
 }
 
-// Stage configurations for YouTube
+// Stage configurations for YouTube (fallback defaults)
 const YOUTUBE_STAGES = {
   metadata: {
-    message: "Fetching video info...",
+    message: "I'm checking the video...",
     icon: "lucide:info",
   },
   classifying: {
-    message: "AI is analyzing the video...",
+    message: "I'm analyzing what's in this video...",
     icon: "lucide:brain-circuit",
   },
   summarizing: {
-    message: "AI is generating summary...",
+    message: "I'm watching the full video and taking notes...",
     icon: "lucide:file-text",
   },
   completed: {
-    message: "Completed!",
+    message: "All done! Here's your summary.",
     icon: "lucide:check-circle",
   },
 } as const;
@@ -86,13 +86,6 @@ export function useSummaryProcessing(
       default:
         return "lucide:loader-2";
     }
-  });
-
-  const stageProgress = computed(() => {
-    if (!currentStage.value || currentStage.value === "completed") return 100;
-    const stages: readonly ["metadata", "classifying", "summarizing"] = ["metadata", "classifying", "summarizing"];
-    const index = stages.indexOf(currentStage.value as "metadata" | "classifying" | "summarizing");
-    return index >= 0 ? ((index + 1) / stages.length) * 100 : 0;
   });
 
   const getStages = computed(() => {
@@ -225,7 +218,6 @@ export function useSummaryProcessing(
     currentMessage,
     currentIcon,
     currentStage,
-    stageProgress,
     getStages,
     getCurrentStageIndex,
     startProcessing,
