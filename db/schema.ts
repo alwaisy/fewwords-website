@@ -55,6 +55,7 @@ export const summaries = pgTable(
     isPublic: boolean("is_public").notNull().default(true),
     responseTimeMs: integer("response_time_ms"),
     status: text("status", { enum: statusEnum }).notNull().default("pending"),
+    stage: text("stage"), // Temporary field for multi-stage loading (metadata, classifying, summarizing)
     errorMessage: text("error_message"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
