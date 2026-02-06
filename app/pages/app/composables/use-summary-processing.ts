@@ -105,29 +105,9 @@ export function useSummaryProcessing(
     return getStages.value.findIndex((s) => s.stage === currentStage.value);
   });
 
-  const updateStageBasedOnTime = () => {
-    if (!processingStartTime.value) return;
+  // Stage progress is now updated by polling the stage endpoint
 
-    const elapsed = (Date.now() - processingStartTime.value) / 1000; // seconds
-
-    // Determine current stage based on elapsed time
-    if (elapsed < YOUTUBE_STAGES.metadata.maxTime) {
-      currentStage.value = "metadata";
-      stageProgress.value = (elapsed / YOUTUBE_STAGES.metadata.maxTime) * 100;
-    } else if (elapsed < YOUTUBE_STAGES.classifying.maxTime) {
-      currentStage.value = "classifying";
-      const stageElapsed = elapsed - YOUTUBE_STAGES.classifying.minTime;
-      const stageDuration = YOUTUBE_STAGES.classifying.maxTime - YOUTUBE_STAGES.classifying.minTime;
-      stageProgress.value = (stageElapsed / stageDuration) * 100;
-    } else if (elapsed < YOUTUBE_STAGES.summarizing.maxTime) {
-      currentStage.value = "summarizing";
-      const stageElapsed = elapsed - YOUTUBE_STAGES.summarizing.minTime;
-      const stageDuration = YOUTUBE_STAGES.summarizing.maxTime - YOUTUBE_STAGES.summarizing.minTime;
-      stageProgress.value = Math.min(100, (stageElapsed / stageDuration) * 100);
-    }
-  };
-
-  const watchStatusChanges = () => {
+  const startProcessing = async () => {
     if (!summary.value?.source || !summary.value?.summaryId) return;
 
     try {
@@ -152,15 +132,52 @@ export function useSummaryProcessing(
         if (newStatus === "pending") {
           startProcessing();
         } else if (newStatus === "processing") {
-          // Poll for updates (for articles/reddit)
-          const pollInterval = setInterval(async () => {
-            await refresh();
-            if (summary.value?.status !== "processing") {
-              clearInterval(pollInterval);
-            }
-          }, 2000);
+          // For YouTube: poll stage endpoint for real-time progress
+          if (summary.value?.essence === "youtube") {
+            const stagePollInterval = setInterval(async () => {
+              if (!summary.value?.summaryId) return;
 
-          onUnmounted(() => clearInterval(pollInterval));
+              try {
+                const stageData = await $fetch<{ stage: YouTubeStage | null }>(
+                  `/api/summary/${summary.value.summaryId}/stage`
+                );
+
+                if (stageData?.stage) {
+                  currentStage.value = stageData.stage;
+
+                  // Calculate progress based on stage position
+                  const stages = Object.values(YOUTUBE_STAGES);
+                  const stageIndex = stages.findIndex((s) => s.stage === stageData.stage);
+
+                  if (stageIndex >= 0) {
+                    const totalStages = stages.length;
+                    const progress = ((stageIndex + 1) / totalStages) * 100;
+                    stageProgress.value = progress;
+                  }
+                }
+
+                // Stop polling if no longer processing
+                if (summary.value?.status !== "processing") {
+                  clearInterval(stagePollInterval);
+                  currentStage.value = null;
+                }
+              } catch (err) {
+                console.error("Stage poll error:", err);
+              }
+            }, 1000); // Poll every 1 second for stage updates
+
+            onUnmounted(() => clearInterval(stagePollInterval));
+          } else {
+            // For articles/reddit: poll summary status
+            const pollInterval = setInterval(async () => {
+              await refresh();
+              if (summary.value?.status !== "processing") {
+                clearInterval(pollInterval);
+              }
+            }, 2000);
+
+            onUnmounted(() => clearInterval(pollInterval));
+          }
         }
       },
     );
