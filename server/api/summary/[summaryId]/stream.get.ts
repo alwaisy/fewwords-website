@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
       // Helper to send SSE message
       const sendEvent = (data: unknown) => {
         const message = `data: ${JSON.stringify(data)}\n\n`;
+        console.log(`[SSE] → Sending message: ${message.trim()}`);
         controller.enqueue(encoder.encode(message));
       };
 
@@ -38,28 +39,42 @@ export default defineEventHandler(async (event) => {
       };
 
       try {
+        // Send initial stage immediately
+        console.log(`[SSE] Fetching initial stage for ${summaryId}...`);
+        const initialStage = (await redis.get(`summary:${summaryId}:stage`)) as string | null;
+        console.log(`[SSE] Initial stage: ${initialStage}`);
+        lastStage = initialStage;
+        sendEvent({ stage: initialStage });
+
         // Poll Redis for stage changes every 500ms
+        console.log(`[SSE] Starting poll loop for ${summaryId} (500ms interval)`);
+        let pollCount = 0;
         pollInterval = setInterval(async () => {
+          pollCount++;
           try {
             const currentStage = (await redis.get(`summary:${summaryId}:stage`)) as string | null;
+            console.log(`[SSE] Poll #${pollCount} for ${summaryId}: currentStage=${currentStage}, lastStage=${lastStage}`);
 
             // Only send update if stage changed
             if (currentStage !== lastStage) {
-              console.log(`[SSE] Stage update for ${summaryId}: ${lastStage} → ${currentStage}`);
+              console.log(`[SSE] ✓ STAGE CHANGED for ${summaryId}: ${lastStage} → ${currentStage}`);
               lastStage = currentStage;
               sendEvent({ stage: currentStage });
 
               // Stop polling if completed
               if (currentStage === "completed") {
+                console.log(`[SSE] ✓ COMPLETED - stopping poll for ${summaryId}`);
                 if (pollInterval) {
                   clearInterval(pollInterval);
                   pollInterval = null;
                 }
                 controller.close();
               }
+            } else {
+              console.log(`[SSE] - No change (stage still: ${currentStage})`);
             }
           } catch (error) {
-            console.error(`[SSE] Error polling Redis for ${summaryId}:`, error);
+            console.error(`[SSE] ✗ Error polling Redis for ${summaryId}:`, error);
           }
         }, 500);
 

@@ -29,15 +29,21 @@ type YouTubeStage = "metadata" | "classifying" | "summarizing" | "completed";
 
 // Helper function to set stage in Redis and trigger SSE update
 async function setStage(summaryId: string, stage: YouTubeStage) {
-  if (!summaryId) return;
+  if (!summaryId) {
+    console.log(`[YouTube Stage] ⚠ No summaryId, skipping setStage(${stage})`);
+    return;
+  }
 
   try {
-    // Store stage with 1 hour expiration
-    await redis.set(`summary:${summaryId}:stage`, stage, { ex: 3600 });
+    const key = `summary:${summaryId}:stage`;
+    console.log(`[YouTube Stage] → Setting ${key} = "${stage}"`);
+    await redis.set(key, stage, { ex: 3600 });
 
-    console.log(`[YouTube Stage] ${summaryId}: ${stage}`);
+    // Verify it was set
+    const verify = await redis.get(key);
+    console.log(`[YouTube Stage] ✓ Verified: ${key} = "${verify}"`);
   } catch (error) {
-    console.error("[YouTube Stage] Failed to set stage:", error);
+    console.error(`[YouTube Stage] ✗ Failed to set stage "${stage}" for ${summaryId}:`, error);
   }
 }
 
