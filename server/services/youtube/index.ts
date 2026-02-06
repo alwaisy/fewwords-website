@@ -14,6 +14,8 @@ export interface YouTubeResult {
   model: string;
   promptId: string;
   reasoning: string;
+  reasoning_effort?: string;
+  reasoning_tokens?: number;
   usage?: {
     promptTokens: number;
     completionTokens: number;
@@ -192,6 +194,8 @@ export async function summarize(
     model: YOUTUBE_SUMMARIZER_CONFIG.model,
     promptId,
     reasoning: classifier.reasoning,
+    reasoning_effort: YOUTUBE_SUMMARIZER_CONFIG.reasoning?.effort as string,
+    reasoning_tokens: summaryResult.usage?.reasoningTokens,
     usage: summaryResult.usage || {
       promptTokens: 0,
       completionTokens: 0,
