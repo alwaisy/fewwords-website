@@ -126,9 +126,59 @@ export function useSummaryProcessing(
   };
 
   const watchStatusChanges = () => {
+    // Check immediately if already processing
+    if (summary.value?.status === "processing" && summary.value?.essence === "youtube") {
+      console.log("[Stage Poll] Already in processing state, starting polling immediately");
+      // Start polling for YouTube
+      if (summary.value?.summaryId) {
+        const stagePollInterval = setInterval(async () => {
+          if (!summary.value?.summaryId) return;
+
+          try {
+            console.log(`[Stage Poll] Fetching stage for ${summary.value.summaryId}`);
+            const stageData = await $fetch<{ stage: YouTubeStage | null }>(
+              `/api/summary/${summary.value.summaryId}/stage`
+            );
+
+            console.log("[Stage Poll] Stage response:", stageData);
+
+            if (stageData?.stage) {
+              console.log("[Stage Poll] Updating currentStage to:", stageData.stage);
+              currentStage.value = stageData.stage;
+
+              const stages = Object.values(YOUTUBE_STAGES);
+              const stageIndex = stages.findIndex((s) => s.stage === stageData.stage);
+
+              if (stageIndex >= 0) {
+                const totalStages = stages.length;
+                const progress = ((stageIndex + 1) / totalStages) * 100;
+                console.log("[Stage Poll] Stage index:", stageIndex, "Progress:", progress);
+                stageProgress.value = progress;
+              }
+            }
+
+            if (summary.value?.status !== "processing") {
+              console.log("[Stage Poll] No longer processing, stopping poll");
+              clearInterval(stagePollInterval);
+              currentStage.value = null;
+            }
+          } catch (err) {
+            console.error("[Stage Poll] Error fetching stage:", err);
+          }
+        }, 1000);
+
+        onUnmounted(() => {
+          console.log("[Stage Poll] Component unmounted, clearing interval");
+          clearInterval(stagePollInterval);
+        });
+      }
+    }
+
     watch(
       () => summary.value?.status,
       (newStatus) => {
+        console.log("[Stage Poll] Status changed to:", newStatus);
+
         if (newStatus === "pending") {
           startProcessing();
         } else if (newStatus === "processing") {
