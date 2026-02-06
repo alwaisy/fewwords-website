@@ -189,31 +189,31 @@ export function useSummaryProcessing(
 
         if (newStatus === "pending") {
           startProcessing();
-        } else if (newStatus === "processing") {
-          // Connect SSE for YouTube videos
-          if (summary.value?.essence === "youtube") {
-            console.log(`[Status] → YouTube video detected, connecting SSE stream...`);
-            connectStageStream();
-          } else {
-            console.log(`[Status] → Not YouTube (${summary.value?.essence}), skipping SSE`);
-          }
+        }
 
-          // Keep polling for status changes (articles/reddit)
+        // Connect SSE for YouTube videos immediately, regardless of status
+        if (summary.value?.essence === "youtube" && !eventSource) {
+          console.log(`[Status] → YouTube video detected, connecting SSE stream immediately...`);
+          connectStageStream();
+        }
+
+        // Keep polling for status changes (articles/reddit)
+        if (newStatus === "processing" && summary.value?.essence !== "youtube") {
           const pollInterval = setInterval(async () => {
             await refresh();
             if (summary.value?.status !== "processing") {
               clearInterval(pollInterval);
-              disconnectStageStream();
             }
           }, 2000);
 
           onUnmounted(() => {
             clearInterval(pollInterval);
-            disconnectStageStream();
           });
-        } else if (newStatus === "completed" || newStatus === "failed") {
+        }
+
+        // Disconnect SSE when completed/failed
+        if ((newStatus === "completed" || newStatus === "failed") && eventSource) {
           console.log(`[Status] → Processing finished (${newStatus}), disconnecting SSE`);
-          // Disconnect SSE when done
           disconnectStageStream();
         }
       },
