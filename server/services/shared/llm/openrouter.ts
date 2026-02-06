@@ -2,6 +2,8 @@ import { OpenRouter } from "@openrouter/sdk";
 
 const client = new OpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,
+  xTitle: "Fewwords",
+  httpReferer: "https://fewwords.app",
 });
 
 // Define a local interface for the SDK's message structure
@@ -35,7 +37,11 @@ export interface VideoPart {
 }
 
 // SDK transforms video_url → input_video internally, so we support both in type
-export type ContentPart = TextPart | ImagePart | VideoPart | { type: "input_video"; videoUrl: { url: string } };
+export type ContentPart =
+  | TextPart
+  | ImagePart
+  | VideoPart
+  | { type: "input_video"; videoUrl: { url: string } };
 
 export interface Message {
   role: Role;
@@ -163,7 +169,8 @@ export async function callOpenRouter(
         promptTokens: completion.usage?.promptTokens || 0,
         completionTokens: completion.usage?.completionTokens || 0,
         totalTokens: completion.usage?.totalTokens || 0,
-        reasoningTokens: (completion.usage as { reasoningTokens?: number })?.reasoningTokens,
+        reasoningTokens: (completion.usage as { reasoningTokens?: number })
+          ?.reasoningTokens,
       },
     };
   } catch (error: unknown) {

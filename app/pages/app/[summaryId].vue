@@ -145,7 +145,7 @@ watchStatusChanges();
             <div
               class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin"
             />
-            <Icon :name="currentIcon" size="3rem" class="text-primary" />
+            <Icon :name="currentIcon" size="2.5rem" class="text-primary" />
           </div>
 
           <h1 class="text-xl font-medium text-foreground mb-8">
@@ -153,17 +153,6 @@ watchStatusChanges();
           </h1>
 
           <!-- Current Stage Message for YouTube (shows one at a time) -->
-          <div
-            v-if="summary.essence === 'youtube' && currentStage && getCurrentStageIndex >= 0"
-            class="flex items-center justify-center gap-2 text-sm text-muted-foreground"
-          >
-            <Icon
-              :name="(getStages[getCurrentStageIndex] || { icon: 'lucide:loader-2' }).icon"
-              size="1rem"
-              class="animate-spin"
-            />
-            <span>{{ (getStages[getCurrentStageIndex] || { message: 'Processing...' }).message }}</span>
-          </div>
         </div>
 
         <!-- Failed State -->
