@@ -172,7 +172,7 @@ export async function summarize(
     type: 'youtube',
     title: classifier.clean_title,
     summary: summaryText,
-    model: 'google/gemini-3-flash-preview',
+    model: YOUTUBE_SUMMARIZER_CONFIG.model,
     promptId,
     reasoning: classifier.reasoning,
     usage: {
