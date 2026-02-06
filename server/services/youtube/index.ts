@@ -109,6 +109,16 @@ export async function summarize(
 
   const videoId = extractVideoId(url);
 
+  // Clear any old stage data before starting
+  if (summaryId) {
+    try {
+      await redis.del(`summary:${summaryId}:stage`);
+      console.log(`[YouTube Stage] ✓ Cleared old stage data for ${summaryId}`);
+    } catch (error) {
+      console.error(`[YouTube Stage] Failed to clear old stage:`, error);
+    }
+  }
+
   // Stage 1: Set metadata stage
   await setStage(summaryId || "", "metadata");
 
