@@ -2,7 +2,8 @@ import { ARTICLE_CONFIG } from './config'
 import { fetchWithJina } from './fetcher'
 import { classifyArticle } from './classifier'
 import { getPrompt, getPromptMeta } from '../../prompts/article'
-import { callLLM } from '../shared/llm'
+import { callOpenRouter } from '../shared/llm'
+import { WRITING_GUIDELINES } from '../../prompts/system'
 
 export interface ArticleResult {
   url: string
@@ -35,24 +36,28 @@ export async function summarize(url: string): Promise<ArticleResult> {
   }
 
   // Step 4: Call LLM with selected prompt
-  const llmResult = await callLLM({
-    provider: ARTICLE_CONFIG.provider,
+  const llmResult = await callOpenRouter({
     model: ARTICLE_CONFIG.model,
-    prompt,
-    content,
-    temperature: ARTICLE_CONFIG.temperature,
-    maxTokens: ARTICLE_CONFIG.maxTokens,
+    messages: [
+      { role: "system", content: WRITING_GUIDELINES },
+      {
+        role: "user",
+        content: `${prompt}\n\nContent:\n\n${content}`,
+      },
+    ],
   })
 
   // Extract title from LLM response (handles both TITLE: and **TITLE:** formats)
-  const titleMatch = llmResult.content.match(/^\*\*TITLE:\*\*\s*(.+)$/m) || llmResult.content.match(/^TITLE:\s*(.+)$/m)
+  const titleMatch = llmResult.content ? llmResult.content.match(/^\*\*TITLE:\*\*\s*(.+)$/m) || llmResult.content.match(/^TITLE:\s*(.+)$/m) : null
   const title = titleMatch ? titleMatch[1]?.trim() : undefined
 
   // Remove TITLE line from summary for display (handles both formats)
   const summary = llmResult.content
-    .replace(/^\*\*TITLE:\*\*\s*.+\n?/m, '')
-    .replace(/^TITLE:\s*.+\n?/m, '')
-    .trim()
+    ? llmResult.content
+        .replace(/^\*\*TITLE:\*\*\s*.+\n?/m, '')
+        .replace(/^TITLE:\s*.+\n?/m, '')
+        .trim()
+    : ""
 
   return {
     url,
@@ -62,6 +67,10 @@ export async function summarize(url: string): Promise<ArticleResult> {
     model: llmResult.model,
     promptId: promptMeta.ID,
     reasoning,
-    usage: llmResult.usage,
+    usage: llmResult.usage ? {
+      promptTokens: llmResult.usage.promptTokens,
+      completionTokens: llmResult.usage.completionTokens,
+      totalTokens: llmResult.usage.totalTokens,
+    } : undefined,
   }
 }

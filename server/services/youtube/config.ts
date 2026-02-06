@@ -1,6 +1,5 @@
 // Stage 2: Classifier (Fast model)
 export const YOUTUBE_CLASSIFIER_CONFIG = {
-  provider: "openrouter" as const,
   model: "google/gemini-3-flash-preview" as const,
   temperature: 0.3,
   maxTokens: 500,
@@ -11,7 +10,6 @@ export const YOUTUBE_CLASSIFIER_CONFIG = {
 
 // Stage 3: Summarizer (Smart model with reasoning + tools)
 export const YOUTUBE_SUMMARIZER_CONFIG = {
-  provider: "openrouter" as const,
   model: "google/gemini-3-flash-preview" as const,
   temperature: 0.7,
   maxTokens: 4000,
@@ -22,7 +20,7 @@ export const YOUTUBE_SUMMARIZER_CONFIG = {
     // Google Search tool for context
     googleSearch: {
       description: "Search the web for additional context",
-      parameters: {
+      inputSchema: {
         type: "object",
         properties: {
           query: {
@@ -36,7 +34,7 @@ export const YOUTUBE_SUMMARIZER_CONFIG = {
     // URL context tool for video analysis
     urlContext: {
       description: "Analyze content from a URL",
-      parameters: {
+      inputSchema: {
         type: "object",
         properties: {
           url: {

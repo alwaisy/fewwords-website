@@ -100,23 +100,33 @@ export async function summarize(
     const internalId = summaryRecord[0]?.id;
 
     if (internalId) {
-      await db.insert(youtube).values({
-        summaryId: internalId,
-        videoId,
-        originalTitle: video.title,
-        description: video.description,
-        duration: video.durationMinutes,
-        tags: video.tags.length > 0 ? JSON.stringify(video.tags) : null,
-        isAgeRestricted: video.isAgeRestricted,
-        viewCount: video.statistics.viewCount,
-        likeCount: video.statistics.likeCount,
-        commentCount: video.statistics.commentCount,
-        channelTitle: channel.title,
-        channelDescription: channel.description,
-        channelSubscriberCount: channel.subscriberCount,
-        channelVideoCount: channel.videoCount,
-        channelKeywords: channel.keywords || null,
-      });
+      // Check if YouTube record already exists for this summaryId
+      const existing = await db
+        .select()
+        .from(youtube)
+        .where(eq(youtube.summaryId, internalId))
+        .limit(1);
+
+      if (existing.length === 0) {
+        // Only insert if it doesn't exist
+        await db.insert(youtube).values({
+          summaryId: internalId,
+          videoId,
+          originalTitle: video.title,
+          description: video.description,
+          duration: video.durationMinutes,
+          tags: video.tags.length > 0 ? JSON.stringify(video.tags) : null,
+          isAgeRestricted: video.isAgeRestricted,
+          viewCount: video.statistics.viewCount,
+          likeCount: video.statistics.likeCount,
+          commentCount: video.statistics.commentCount,
+          channelTitle: channel.title,
+          channelDescription: channel.description,
+          channelSubscriberCount: channel.subscriberCount,
+          channelVideoCount: channel.videoCount,
+          channelKeywords: channel.keywords || null,
+        });
+      }
     }
   }
 
@@ -228,7 +238,7 @@ export async function summarize(
     promptId,
     reasoning: classifier.reasoning,
     reasoning_effort: YOUTUBE_SUMMARIZER_CONFIG.reasoning?.effort as string,
-    reasoning_tokens: summaryResult.usage?.reasoningTokens,
+    reasoning_tokens: (summaryResult.usage as { reasoningTokens?: number })?.reasoningTokens,
     usage: summaryResult.usage || {
       promptTokens: 0,
       completionTokens: 0,

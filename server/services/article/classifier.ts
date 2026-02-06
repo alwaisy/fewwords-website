@@ -1,4 +1,4 @@
-import { callLLM } from "../shared/llm";
+import { callOpenAI } from "../shared/llm";
 import { PROMPT_VERSIONS, type PromptCategory } from "../../prompts/article";
 
 const CLASSIFIER_PROMPT = `### ROLE
@@ -46,13 +46,15 @@ export interface ClassifierResult {
 export async function classifyArticle(
   content: string,
 ): Promise<ClassifierResult> {
-  const llmResult = await callLLM({
-    provider: "openai",
-    model: "gpt-4.1-2025-04-14", // GPT-5 Mini (reasoning model - no temperature support)
-    prompt: CLASSIFIER_PROMPT,
-    content,
-    // Note: temperature not supported for reasoning models
-    maxTokens: 100, // Increased to accommodate reasoning
+  const llmResult = await callOpenAI({
+    model: "gpt-4.1-2025-04-14", // GPT-5 Mini (reasoning model)
+    messages: [
+      { role: "system", content: "You are a content classifier." },
+      {
+        role: "user",
+        content: `${CLASSIFIER_PROMPT}\n\nContent:\n\n${content}`,
+      },
+    ],
   });
 
   console.log("=== CLASSIFIER RAW RESPONSE ===");

@@ -1,5 +1,6 @@
-import { callLLM } from "../shared/llm";
+import { callOpenRouter } from "../shared/llm";
 import { YOUTUBE_CLASSIFIER_CONFIG } from "./config";
+import { WRITING_GUIDELINES } from "../../prompts/system";
 
 export interface VideoMetadata {
   title: string;
@@ -105,21 +106,25 @@ export async function classifyVideo(
     .replace("{yt_channel}", metadata.channel)
     .replace("{yt_duration}", metadata.duration.toString());
 
-  const result = await callLLM({
-    provider: YOUTUBE_CLASSIFIER_CONFIG.provider,
+  const result = await callOpenRouter({
     model: YOUTUBE_CLASSIFIER_CONFIG.model,
-    prompt,
-    reasoning: YOUTUBE_CLASSIFIER_CONFIG.reasoning, // Use reasoning from config
-    temperature: YOUTUBE_CLASSIFIER_CONFIG.temperature,
-    maxTokens: YOUTUBE_CLASSIFIER_CONFIG.maxTokens,
-    // @ts-expect-error - files is not in core types but supported by Gemini via OpenRouter
-    files: [
+    messages: [
       {
-        name: "video",
-        mimeType: "video/*",
-        url: metadata.videoUrl,
+        role: "system",
+        content: WRITING_GUIDELINES,
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          {
+            type: "input_video",
+            videoUrl: { url: metadata.videoUrl },
+          },
+        ],
       },
     ],
+    reasoning: YOUTUBE_CLASSIFIER_CONFIG.reasoning,
   });
 
   try {

@@ -25,4 +25,5 @@ export const PROMPT_META = {
   ID: "youtube-opinion-v1.1",
   ESSENCE: "youtube",
   TYPE: "OPINION",
+  NOTES: "Refined structure for opinion-based content",
 };

@@ -24,4 +24,5 @@ export const PROMPT_META = {
   ID: "youtube-review-v1",
   ESSENCE: "youtube",
   TYPE: "REVIEW",
+  NOTES: "Initial version",
 };
