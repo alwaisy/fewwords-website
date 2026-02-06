@@ -1,9 +1,6 @@
 type SummaryStatus = "pending" | "processing" | "completed" | "failed";
 type Essence = "article" | "youtube" | "reddit";
 
-// YouTube processing stages
-type YouTubeStage = "metadata" | "classifying" | "summarizing";
-
 interface SummaryData {
   source: string;
   summaryId: string;
@@ -16,52 +13,12 @@ interface SummaryData {
   completedAt: string | null;
 }
 
-interface StageProgress {
-  stage: YouTubeStage;
-  message: string;
-  icon: string;
-  minTime: number; // seconds - minimum time before this stage
-  maxTime: number; // seconds - maximum time for this stage
-}
-
-const YOUTUBE_STAGES: Record<YouTubeStage, StageProgress> = {
-  metadata: {
-    stage: "metadata",
-    message: "Fetching video metadata...",
-    icon: "lucide:info",
-    minTime: 0,
-    maxTime: 5, // 0-5s
-  },
-  classifying: {
-    stage: "classifying",
-    message: "AI is analyzing the video (77s for long videos)...",
-    icon: "lucide:brain-circuit",
-    minTime: 5,
-    maxTime: 82, // 5-82s (5 + 77)
-  },
-  summarizing: {
-    stage: "summarizing",
-    message: "AI is generating summary (177s for long videos)...",
-    icon: "lucide:file-text",
-    minTime: 82,
-    maxTime: 259, // 82-259s (82 + 177)
-  },
-};
-
 export function useSummaryProcessing(
   summary: Ref<SummaryData | null | undefined>,
   refresh: () => Promise<void>
 ) {
-  const currentStage = ref<YouTubeStage | null>(null);
-  const stageProgress = ref(0); // 0-100 for current stage
-
   const currentMessage = computed(() => {
     if (!summary.value) return "";
-
-    // Show stage-specific message for YouTube
-    if (summary.value.essence === "youtube" && currentStage.value) {
-      return YOUTUBE_STAGES[currentStage.value].message;
-    }
 
     switch (summary.value.essence) {
       case "youtube":
@@ -78,11 +35,6 @@ export function useSummaryProcessing(
   const currentIcon = computed(() => {
     if (!summary.value) return "lucide:loader-2";
 
-    // Show stage-specific icon for YouTube
-    if (summary.value.essence === "youtube" && currentStage.value) {
-      return YOUTUBE_STAGES[currentStage.value].icon;
-    }
-
     switch (summary.value.essence) {
       case "youtube":
         return "lucide:play-circle";
@@ -94,18 +46,6 @@ export function useSummaryProcessing(
         return "lucide:loader-2";
     }
   });
-
-  const getStages = computed(() => {
-    if (summary.value?.essence !== "youtube") return [];
-    return Object.values(YOUTUBE_STAGES);
-  });
-
-  const getCurrentStageIndex = computed(() => {
-    if (!currentStage.value) return -1;
-    return getStages.value.findIndex((s) => s.stage === currentStage.value);
-  });
-
-  // Stage progress is now updated by polling the stage endpoint
 
   const startProcessing = async () => {
     if (!summary.value?.source || !summary.value?.summaryId) return;
@@ -126,123 +66,20 @@ export function useSummaryProcessing(
   };
 
   const watchStatusChanges = () => {
-    // Check immediately if already processing
-    if (summary.value?.status === "processing" && summary.value?.essence === "youtube") {
-      console.log("[Stage Poll] Already in processing state, starting polling immediately");
-      // Start polling for YouTube
-      if (summary.value?.summaryId) {
-        const stagePollInterval = setInterval(async () => {
-          if (!summary.value?.summaryId) return;
-
-          try {
-            console.log(`[Stage Poll] Fetching stage for ${summary.value.summaryId}`);
-            const stageData = await $fetch<{ stage: YouTubeStage | null }>(
-              `/api/summary/${summary.value.summaryId}/stage`
-            );
-
-            console.log("[Stage Poll] Stage response:", stageData);
-
-            if (stageData?.stage) {
-              console.log("[Stage Poll] Updating currentStage to:", stageData.stage);
-              currentStage.value = stageData.stage;
-
-              const stages = Object.values(YOUTUBE_STAGES);
-              const stageIndex = stages.findIndex((s) => s.stage === stageData.stage);
-
-              if (stageIndex >= 0) {
-                const totalStages = stages.length;
-                const progress = ((stageIndex + 1) / totalStages) * 100;
-                console.log("[Stage Poll] Stage index:", stageIndex, "Progress:", progress);
-                stageProgress.value = progress;
-              }
-            }
-
-            if (summary.value?.status !== "processing") {
-              console.log("[Stage Poll] No longer processing, stopping poll");
-              clearInterval(stagePollInterval);
-              currentStage.value = null;
-            }
-          } catch (err) {
-            console.error("[Stage Poll] Error fetching stage:", err);
-          }
-        }, 1000);
-
-        onUnmounted(() => {
-          console.log("[Stage Poll] Component unmounted, clearing interval");
-          clearInterval(stagePollInterval);
-        });
-      }
-    }
-
     watch(
       () => summary.value?.status,
       (newStatus) => {
-        console.log("[Stage Poll] Status changed to:", newStatus);
-
         if (newStatus === "pending") {
           startProcessing();
         } else if (newStatus === "processing") {
-          console.log("[Stage Poll] Status changed to processing, essence:", summary.value?.essence);
+          const pollInterval = setInterval(async () => {
+            await refresh();
+            if (summary.value?.status !== "processing") {
+              clearInterval(pollInterval);
+            }
+          }, 2000);
 
-          // For YouTube: poll stage endpoint for real-time progress
-          if (summary.value?.essence === "youtube") {
-            console.log("[Stage Poll] Starting YouTube stage polling for summaryId:", summary.value?.summaryId);
-
-            const stagePollInterval = setInterval(async () => {
-              if (!summary.value?.summaryId) return;
-
-              try {
-                console.log(`[Stage Poll] Fetching stage for ${summary.value.summaryId}`);
-                const stageData = await $fetch<{ stage: YouTubeStage | null }>(
-                  `/api/summary/${summary.value.summaryId}/stage`
-                );
-
-                console.log("[Stage Poll] Stage response:", stageData);
-
-                if (stageData?.stage) {
-                  console.log("[Stage Poll] Updating currentStage to:", stageData.stage);
-                  currentStage.value = stageData.stage;
-
-                  // Calculate progress based on stage position
-                  const stages = Object.values(YOUTUBE_STAGES);
-                  const stageIndex = stages.findIndex((s) => s.stage === stageData.stage);
-
-                  if (stageIndex >= 0) {
-                    const totalStages = stages.length;
-                    const progress = ((stageIndex + 1) / totalStages) * 100;
-                    console.log("[Stage Poll] Stage index:", stageIndex, "Progress:", progress);
-                    stageProgress.value = progress;
-                  }
-                } else {
-                  console.log("[Stage Poll] No stage data returned");
-                }
-
-                // Stop polling if no longer processing
-                if (summary.value?.status !== "processing") {
-                  console.log("[Stage Poll] No longer processing, stopping poll");
-                  clearInterval(stagePollInterval);
-                  currentStage.value = null;
-                }
-              } catch (err) {
-                console.error("[Stage Poll] Error fetching stage:", err);
-              }
-            }, 1000); // Poll every 1 second for stage updates
-
-            onUnmounted(() => {
-              console.log("[Stage Poll] Component unmounted, clearing interval");
-              clearInterval(stagePollInterval);
-            });
-          } else {
-            // For articles/reddit: poll summary status
-            const pollInterval = setInterval(async () => {
-              await refresh();
-              if (summary.value?.status !== "processing") {
-                clearInterval(pollInterval);
-              }
-            }, 2000);
-
-            onUnmounted(() => clearInterval(pollInterval));
-          }
+          onUnmounted(() => clearInterval(pollInterval));
         }
       },
     );
@@ -253,9 +90,5 @@ export function useSummaryProcessing(
     currentIcon,
     startProcessing,
     watchStatusChanges,
-    currentStage,
-    stageProgress,
-    getStages,
-    getCurrentStageIndex,
   };
 }

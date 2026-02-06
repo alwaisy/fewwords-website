@@ -5,7 +5,6 @@ import { summaries, youtube } from "~~/db/schema";
 import { eq } from "drizzle-orm";
 import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
 import { YOUTUBE_CLASSIFIER_CONFIG, YOUTUBE_SUMMARIZER_CONFIG } from "./config";
-import { setStage, clearStage } from "../../utils/stage-store";
 
 export interface YouTubeResult {
   url: string;
@@ -83,12 +82,6 @@ export async function summarize(
 
   const videoId = extractVideoId(url);
 
-  // Set stage: metadata
-  if (summaryId && setStage) {
-    console.log(`[YouTube Stage] Setting stage to 'metadata' for summaryId: ${summaryId}`);
-    setStage(summaryId, "metadata");
-  }
-
   // Stage 1: Fetch metadata from YouTube Data API
   const { video, channel } = await fetchYouTubeMetadata(
     url,
@@ -135,12 +128,6 @@ export async function summarize(
         });
       }
     }
-  }
-
-  // Set stage: classifying
-  if (summaryId && setStage) {
-    console.log(`[YouTube Stage] Setting stage to 'classifying' for summaryId: ${summaryId}`);
-    setStage(summaryId, "classifying");
   }
 
   // Stage 2: Classify video (watch video + determine type)
@@ -223,12 +210,6 @@ export async function summarize(
     };
   }
 
-  // Set stage: summarizing
-  if (summaryId && setStage) {
-    console.log(`[YouTube Stage] Setting stage to 'summarizing' for summaryId: ${summaryId}`);
-    setStage(summaryId, "summarizing");
-  }
-
   // Stage 3: Summarize with enriched context
   // Get prompt ID from the actual prompt file
   const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType];
@@ -247,11 +228,6 @@ export async function summarize(
     videoUrl: url,
     classifier,
   });
-
-  // Clear stage when done
-  if (summaryId && clearStage) {
-    clearStage(summaryId);
-  }
 
   return {
     url,
