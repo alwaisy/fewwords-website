@@ -4,6 +4,9 @@ export const YOUTUBE_CLASSIFIER_CONFIG = {
   model: "google/gemini-3-flash-preview" as const,
   temperature: 0.3,
   maxTokens: 500,
+  reasoning: {
+    effort: "low" as const, // Use low reasoning for fast classification
+  },
 };
 
 // Stage 3: Summarizer (Smart model with reasoning + tools)

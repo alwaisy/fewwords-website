@@ -1,32 +1,32 @@
-import { fetchYouTubeMetadata } from './metadata'
-import { classifyVideo } from './classifier'
-import { summarizeVideo } from './summarizer'
-import { summaries, youtube } from '~~/db/schema'
-import { eq } from 'drizzle-orm'
-import { YOUTUBE_PROMPTS, type YouTubeVideoType } from '../../prompts/youtube'
+import { fetchYouTubeMetadata } from "./metadata";
+import { classifyVideo } from "./classifier";
+import { summarizeVideo } from "./summarizer";
+import { summaries, youtube } from "~~/db/schema";
+import { eq } from "drizzle-orm";
+import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
+import { YOUTUBE_SUMMARIZER_CONFIG } from "./config";
 
 export interface YouTubeResult {
-  url: string
-  type: string
-  title: string
-  summary: string
-  model: string
-  promptId: string
-  reasoning: string
+  url: string;
+  type: string;
+  title: string;
+  summary: string;
+  model: string;
+  promptId: string;
+  reasoning: string;
   usage?: {
-    promptTokens: number
-    completionTokens: number
-    totalTokens: number
-  }
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 export async function summarize(
   url: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db?: any, // Drizzle database instance
-  summaryId?: string
+  summaryId?: string,
 ): Promise<YouTubeResult> {
-
   // Extract videoId from URL for database
   const extractVideoId = (url: string): string | null => {
     const patterns = [
@@ -35,33 +35,34 @@ export async function summarize(
       /(?:youtube\.com\/embed\/)([^\s?]+)/,
       /(?:youtube\.com\/v\/)([^\s?]+)/,
       /(?:youtube\.com\/shorts\/)([^\s?]+)/,
-    ]
+    ];
 
     for (const pattern of patterns) {
-      const match = url.match(pattern)
-      if (match?.[1]) return match[1]
+      const match = url.match(pattern);
+      if (match?.[1]) return match[1];
     }
 
-    return null
-  }
+    return null;
+  };
 
-  const videoId = extractVideoId(url)
+  const videoId = extractVideoId(url);
 
   // Stage 1: Fetch metadata from YouTube Data API
   const { video, channel } = await fetchYouTubeMetadata(
     url,
-    process.env.YOUTUBE_DATA_API_KEY!
-  )
+    process.env.YOUTUBE_DATA_API_KEY!,
+  );
 
   // Stage 1 save: Insert video metadata to youtube table
   if (db && summaryId && videoId) {
     // Get internal UUID from summaryId
-    const summaryRecord = await db.select({ id: summaries.id })
+    const summaryRecord = await db
+      .select({ id: summaries.id })
       .from(summaries)
       .where(eq(summaries.summaryId, summaryId))
-      .limit(1)
+      .limit(1);
 
-    const internalId = summaryRecord[0]?.id
+    const internalId = summaryRecord[0]?.id;
 
     if (internalId) {
       await db.insert(youtube).values({
@@ -80,7 +81,7 @@ export async function summarize(
         channelSubscriberCount: channel.subscriberCount,
         channelVideoCount: channel.videoCount,
         channelKeywords: channel.keywords || null,
-      })
+      });
     }
   }
 
@@ -93,32 +94,37 @@ export async function summarize(
     videoUrl: url,
     tags: video.tags,
     isAgeRestricted: video.isAgeRestricted,
-  })
+  });
 
   // Stage 2 save: Update classifier results
   if (db && summaryId && videoId) {
-    const summaryRecord = await db.select({ id: summaries.id })
+    const summaryRecord = await db
+      .select({ id: summaries.id })
       .from(summaries)
       .where(eq(summaries.summaryId, summaryId))
-      .limit(1)
+      .limit(1);
 
-    const internalId = summaryRecord[0]?.id
+    const internalId = summaryRecord[0]?.id;
 
     if (internalId) {
-      await db.update(youtube)
+      await db
+        .update(youtube)
         .set({
           cleanTitle: classifier.clean_title,
           channelBio: classifier.channel_bio,
           category: classifier.category,
           trueIntent: classifier.true_intent,
-          focusPoints: classifier.focus_points.length > 0 ? JSON.stringify(classifier.focus_points) : null,
+          focusPoints:
+            classifier.focus_points.length > 0
+              ? JSON.stringify(classifier.focus_points)
+              : null,
           isWorthIt: classifier.is_worth_it,
           classifierReasoning: classifier.reasoning,
-          classifierModel: 'google/gemini-3-flash-preview',
-          classifierReasoningEffort: 'medium',
+          classifierModel: "google/gemini-3-flash-preview",
+          classifierReasoningEffort: "medium",
           classifierTimeMs: 0, // TODO: Track actual timing
         })
-        .where(eq(youtube.videoId, videoId))
+        .where(eq(youtube.videoId, videoId));
     }
   }
 
@@ -126,50 +132,52 @@ export async function summarize(
   if (!classifier.is_worth_it) {
     // Update summaries table with early exit result
     if (db && summaryId) {
-      await db.update(summaries)
+      await db
+        .update(summaries)
         .set({
           title: video.title,
           summary: `This video was classified as not worth summarizing. ${classifier.reasoning}`,
-          model: 'N/A',
-          promptId: 'N/A',
+          model: "N/A",
+          promptId: "N/A",
           reasoning: classifier.reasoning,
-          status: 'completed',
+          status: "completed",
           completedAt: new Date(),
         })
-        .where(eq(summaries.summaryId, summaryId))
+        .where(eq(summaries.summaryId, summaryId));
     }
 
     return {
       url,
-      type: 'youtube',
+      type: "youtube",
       title: video.title,
       summary: `This video was classified as not worth summarizing. ${classifier.reasoning}`,
-      model: 'N/A',
-      promptId: 'N/A',
+      model: "N/A",
+      promptId: "N/A",
       reasoning: classifier.reasoning,
-    }
+    };
   }
 
   // Stage 3: Summarize with enriched context
   // Get prompt ID from the actual prompt file
-  const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType]
+  const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let promptId = 'youtube-unknown-v1'
+  let promptId = "youtube-unknown-v1";
 
   if (promptGetter) {
-    const promptModule = await promptGetter()
+    const promptModule = await promptGetter();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    promptId = (promptModule as any).PROMPT_META?.ID || `youtube-${classifier.category.toLowerCase()}-v1`
+    promptId = ((promptModule as any).PROMPT_META?.ID) ||
+      `youtube-${classifier.category.toLowerCase()}-v1`;
   }
 
   const summaryText = await summarizeVideo({
     videoUrl: url,
     classifier,
-  })
+  });
 
   return {
     url,
-    type: 'youtube',
+    type: "youtube",
     title: classifier.clean_title,
     summary: summaryText,
     model: YOUTUBE_SUMMARIZER_CONFIG.model,
@@ -180,5 +188,5 @@ export async function summarize(
       completionTokens: 0,
       totalTokens: 0,
     },
-  }
+  };
 }
