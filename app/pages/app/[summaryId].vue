@@ -33,8 +33,16 @@ const friendlyErrorMessage = computed(() =>
 );
 
 // Summary processing logic
-const { currentMessage, currentIcon, startProcessing, watchStatusChanges } =
-  useSummaryProcessing(summary, refresh);
+const {
+  currentMessage,
+  currentIcon,
+  currentStage,
+  stageProgress,
+  getStages,
+  getCurrentStageIndex,
+  startProcessing,
+  watchStatusChanges,
+} = useSummaryProcessing(summary, refresh);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -146,8 +154,81 @@ watchStatusChanges();
           </h1>
 
           <p class="text-sm text-muted-foreground mb-8">
-            This usually takes about 15-20 seconds
+            {{ summary.essence === 'youtube' ? 'Long videos take 3-4 minutes' : 'This usually takes about 15-20 seconds' }}
           </p>
+
+          <!-- Stage Progress for YouTube -->
+          <div
+            v-if="summary.essence === 'youtube' && getStages.length > 0"
+            class="max-w-md mx-auto"
+          >
+            <div class="space-y-4">
+              <div
+                v-for="(stage, index) in getStages"
+                :key="stage.stage"
+                class="flex items-center gap-3 text-left"
+                :class="{
+                  'opacity-100': index <= getCurrentStageIndex,
+                  'opacity-40': index > getCurrentStageIndex,
+                  'animate-pulse': currentStage === stage.stage,
+                }"
+              >
+                <!-- Stage Icon -->
+                <div class="relative">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center"
+                    :class="{
+                      'bg-primary/10': index <= getCurrentStageIndex,
+                      'bg-muted': index > getCurrentStageIndex,
+                      'bg-primary/20 ring-2 ring-primary/50': currentStage === stage.stage,
+                    }"
+                  >
+                    <Icon
+                      :name="stage.icon"
+                      size="1.25rem"
+                      :class="{
+                        'text-primary': index <= getCurrentStageIndex,
+                        'text-muted-foreground': index > getCurrentStageIndex,
+                      }"
+                    />
+                  </div>
+
+                  <!-- Current Stage Spinner -->
+                  <div
+                    v-if="currentStage === stage.stage"
+                    class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin"
+                  />
+                </div>
+
+                <!-- Stage Info -->
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-foreground">
+                    {{ stage.message }}
+                  </p>
+
+                  <!-- Progress Bar for Current Stage -->
+                  <div
+                    v-if="currentStage === stage.stage"
+                    class="mt-2 h-1.5 bg-muted rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-primary transition-all duration-300 ease-out"
+                      :style="{ width: `${stageProgress}%` }"
+                    />
+                  </div>
+
+                  <!-- Completed Check -->
+                  <div v-else-if="index < getCurrentStageIndex" class="mt-1">
+                    <Icon
+                      name="lucide:check-circle"
+                      size="1rem"
+                      class="text-green-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Failed State -->

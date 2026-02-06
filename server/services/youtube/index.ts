@@ -5,6 +5,7 @@ import { summaries, youtube } from "~~/db/schema";
 import { eq } from "drizzle-orm";
 import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
 import { YOUTUBE_CLASSIFIER_CONFIG, YOUTUBE_SUMMARIZER_CONFIG } from "./config";
+import { redis } from "~~/server/lib/redis";
 
 export interface YouTubeResult {
   url: string;
@@ -23,16 +24,34 @@ export interface YouTubeResult {
   };
 }
 
+// Stage types for YouTube processing pipeline
+type YouTubeStage = "metadata" | "classifying" | "summarizing" | "completed";
+
+// Helper function to set stage in Redis and trigger SSE update
+async function setStage(summaryId: string, stage: YouTubeStage) {
+  if (!summaryId) return;
+
+  try {
+    // Store stage with 1 hour expiration
+    await redis.set(`summary:${summaryId}:stage`, stage, { ex: 3600 });
+
+    console.log(`[YouTube Stage] ${summaryId}: ${stage}`);
+  } catch (error) {
+    console.error("[YouTube Stage] Failed to set stage:", error);
+  }
+}
+
 export async function summarize(
   url: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db?: any, // Drizzle database instance
+  db?: any,
   summaryId?: string,
 ): Promise<YouTubeResult> {
   // Block YouTube Shorts immediately
   if (url.includes("youtube.com/shorts") || url.includes("youtu.be/")) {
-    const isShort = url.includes("/shorts/") ||
-                   (url.includes("youtu.be/") && url.length < 30); // Short youtu.be URLs are likely shorts
+    const isShort =
+      url.includes("/shorts/") ||
+      (url.includes("youtu.be/") && url.length < 30); // Short youtu.be URLs are likely shorts
 
     if (isShort) {
       // Save to summaries table if summaryId provided
@@ -41,7 +60,8 @@ export async function summarize(
           .update(summaries)
           .set({
             title: "YouTube Short",
-            summary: "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
+            summary:
+              "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
             model: "N/A",
             promptId: "N/A",
             reasoning: "YouTube Shorts are too short for summarization",
@@ -55,7 +75,8 @@ export async function summarize(
         url,
         type: "youtube",
         title: "YouTube Short",
-        summary: "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
+        summary:
+          "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
         model: "N/A",
         promptId: "N/A",
         reasoning: "YouTube Shorts are too short for summarization",
@@ -81,6 +102,9 @@ export async function summarize(
   };
 
   const videoId = extractVideoId(url);
+
+  // Stage 1: Set metadata stage
+  await setStage(summaryId || "", "metadata");
 
   // Stage 1: Fetch metadata from YouTube Data API
   const { video, channel } = await fetchYouTubeMetadata(
@@ -129,6 +153,9 @@ export async function summarize(
       }
     }
   }
+
+  // Stage 2: Set classifying stage
+  await setStage(summaryId || "", "classifying");
 
   // Stage 2: Classify video (watch video + determine type)
   const classifier = await classifyVideo({
@@ -210,6 +237,9 @@ export async function summarize(
     };
   }
 
+  // Stage 3: Set summarizing stage
+  await setStage(summaryId || "", "summarizing");
+
   // Stage 3: Summarize with enriched context
   // Get prompt ID from the actual prompt file
   const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType];
@@ -219,8 +249,8 @@ export async function summarize(
   if (promptGetter) {
     const promptModule = await promptGetter();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    promptId = (promptModule as any).PROMPT_META?.ID ||
+    promptId =
+      (promptModule as { PROMPT_META?: { ID: string } }).PROMPT_META?.ID ||
       `youtube-${classifier.category.toLowerCase()}-v1`;
   }
 
@@ -228,6 +258,9 @@ export async function summarize(
     videoUrl: url,
     classifier,
   });
+
+  // Stage completed
+  await setStage(summaryId || "", "completed");
 
   return {
     url,
@@ -238,7 +271,8 @@ export async function summarize(
     promptId,
     reasoning: classifier.reasoning,
     reasoning_effort: YOUTUBE_SUMMARIZER_CONFIG.reasoning?.effort as string,
-    reasoning_tokens: (summaryResult.usage as { reasoningTokens?: number })?.reasoningTokens,
+    reasoning_tokens: (summaryResult.usage as { reasoningTokens?: number })
+      ?.reasoningTokens,
     usage: summaryResult.usage || {
       promptTokens: 0,
       completionTokens: 0,
