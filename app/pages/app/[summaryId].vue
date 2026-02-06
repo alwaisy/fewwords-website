@@ -170,6 +170,7 @@ watchStatusChanges();
                 :class="{
                   'opacity-100': index <= getCurrentStageIndex,
                   'opacity-40': index > getCurrentStageIndex,
+                  'animate-pulse': currentStage === stage.stage,
                 }"
               >
                 <!-- Stage Icon -->
@@ -179,6 +180,7 @@ watchStatusChanges();
                     :class="{
                       'bg-primary/10': index <= getCurrentStageIndex,
                       'bg-muted': index > getCurrentStageIndex,
+                      'bg-primary/20 ring-2 ring-primary/50': currentStage === stage.stage,
                     }"
                   >
                     <Icon
@@ -190,7 +192,7 @@ watchStatusChanges();
                       }"
                     />
                   </div>
-                  
+
                   <!-- Current Stage Spinner -->
                   <div
                     v-if="currentStage === stage.stage"
@@ -203,7 +205,7 @@ watchStatusChanges();
                   <p class="text-sm font-medium text-foreground">
                     {{ stage.message }}
                   </p>
-                  
+
                   <!-- Progress Bar for Current Stage -->
                   <div
                     v-if="currentStage === stage.stage"
@@ -214,7 +216,7 @@ watchStatusChanges();
                       :style="{ width: `${stageProgress}%` }"
                     />
                   </div>
-                  
+
                   <!-- Completed Check -->
                   <div v-else-if="index < getCurrentStageIndex" class="mt-1">
                     <Icon
@@ -223,11 +225,6 @@ watchStatusChanges();
                       class="text-green-500"
                     />
                   </div>
-                </div>
-
-                <!-- Stage Time -->
-                <div class="text-xs text-muted-foreground w-16 text-right">
-                  ~{{ Math.round((stage.maxTime - stage.minTime)) }}s
                 </div>
               </div>
             </div>

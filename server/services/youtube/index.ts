@@ -85,6 +85,7 @@ export async function summarize(
 
   // Set stage: metadata
   if (summaryId && setStage) {
+    console.log(`[YouTube Stage] Setting stage to 'metadata' for summaryId: ${summaryId}`);
     setStage(summaryId, "metadata");
   }
 
@@ -138,6 +139,7 @@ export async function summarize(
 
   // Set stage: classifying
   if (summaryId && setStage) {
+    console.log(`[YouTube Stage] Setting stage to 'classifying' for summaryId: ${summaryId}`);
     setStage(summaryId, "classifying");
   }
 
@@ -223,6 +225,7 @@ export async function summarize(
 
   // Set stage: summarizing
   if (summaryId && setStage) {
+    console.log(`[YouTube Stage] Setting stage to 'summarizing' for summaryId: ${summaryId}`);
     setStage(summaryId, "summarizing");
   }
 

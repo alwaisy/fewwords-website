@@ -132,17 +132,25 @@ export function useSummaryProcessing(
         if (newStatus === "pending") {
           startProcessing();
         } else if (newStatus === "processing") {
+          console.log("[Stage Poll] Status changed to processing, essence:", summary.value?.essence);
+
           // For YouTube: poll stage endpoint for real-time progress
           if (summary.value?.essence === "youtube") {
+            console.log("[Stage Poll] Starting YouTube stage polling for summaryId:", summary.value?.summaryId);
+
             const stagePollInterval = setInterval(async () => {
               if (!summary.value?.summaryId) return;
 
               try {
+                console.log(`[Stage Poll] Fetching stage for ${summary.value.summaryId}`);
                 const stageData = await $fetch<{ stage: YouTubeStage | null }>(
                   `/api/summary/${summary.value.summaryId}/stage`
                 );
 
+                console.log("[Stage Poll] Stage response:", stageData);
+
                 if (stageData?.stage) {
+                  console.log("[Stage Poll] Updating currentStage to:", stageData.stage);
                   currentStage.value = stageData.stage;
 
                   // Calculate progress based on stage position
@@ -152,21 +160,28 @@ export function useSummaryProcessing(
                   if (stageIndex >= 0) {
                     const totalStages = stages.length;
                     const progress = ((stageIndex + 1) / totalStages) * 100;
+                    console.log("[Stage Poll] Stage index:", stageIndex, "Progress:", progress);
                     stageProgress.value = progress;
                   }
+                } else {
+                  console.log("[Stage Poll] No stage data returned");
                 }
 
                 // Stop polling if no longer processing
                 if (summary.value?.status !== "processing") {
+                  console.log("[Stage Poll] No longer processing, stopping poll");
                   clearInterval(stagePollInterval);
                   currentStage.value = null;
                 }
               } catch (err) {
-                console.error("Stage poll error:", err);
+                console.error("[Stage Poll] Error fetching stage:", err);
               }
             }, 1000); // Poll every 1 second for stage updates
 
-            onUnmounted(() => clearInterval(stagePollInterval));
+            onUnmounted(() => {
+              console.log("[Stage Poll] Component unmounted, clearing interval");
+              clearInterval(stagePollInterval);
+            });
           } else {
             // For articles/reddit: poll summary status
             const pollInterval = setInterval(async () => {

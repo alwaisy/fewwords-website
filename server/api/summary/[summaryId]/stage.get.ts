@@ -1,20 +1,10 @@
 import { getRouterParam } from 'h3'
-
-// Simple in-memory stage store for tracking processing stages
-const stageStore = new Map<string, {
-  stage: string | null
-  timestamp: number
-}>()
-
-export function setStage(summaryId: string, stage: string | null) {
-  stageStore.set(summaryId, {
-    stage,
-    timestamp: Date.now()
-  })
-}
+import { getStage } from '../../../utils/stage-store'
 
 export default defineEventHandler(async (event) => {
   const summaryId = getRouterParam(event, 'summaryId')
+
+  console.log(`[Stage API] Fetching stage for summaryId: ${summaryId}`)
 
   if (!summaryId) {
     throw createError({
@@ -23,11 +13,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get current stage from in-memory store
-  const stageData = stageStore.get(summaryId)
-  
+  // Get current stage from shared stage store
+  const stage = getStage(summaryId)
+
+  console.log(`[Stage API] Returning stage: ${stage} for summaryId: ${summaryId}`)
+
   return {
     summaryId,
-    stage: stageData?.stage || null,
+    stage,
   }
 })
