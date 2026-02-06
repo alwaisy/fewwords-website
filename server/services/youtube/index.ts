@@ -4,7 +4,7 @@ import { summarizeVideo } from "./summarizer";
 import { summaries, youtube } from "~~/db/schema";
 import { eq } from "drizzle-orm";
 import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
-import { YOUTUBE_SUMMARIZER_CONFIG } from "./config";
+import { YOUTUBE_CLASSIFIER_CONFIG, YOUTUBE_SUMMARIZER_CONFIG } from "./config";
 
 export interface YouTubeResult {
   url: string;
@@ -120,8 +120,16 @@ export async function summarize(
               : null,
           isWorthIt: classifier.is_worth_it,
           classifierReasoning: classifier.reasoning,
-          classifierModel: "google/gemini-3-flash-preview",
-          classifierReasoningEffort: "medium",
+          classifierModel: YOUTUBE_CLASSIFIER_CONFIG.model,
+          classifierReasoningEffort:
+            (YOUTUBE_CLASSIFIER_CONFIG.reasoning?.effort as string) || "low",
+          classifierPromptTokens:
+            classifier.classifier_usage?.promptTokens || 0,
+          classifierCompletionTokens:
+            classifier.classifier_usage?.completionTokens || 0,
+          classifierTotalTokens: classifier.classifier_usage?.totalTokens || 0,
+          classifierReasoningTokens:
+            classifier.classifier_usage?.reasoningTokens || 0,
           classifierTimeMs: 0, // TODO: Track actual timing
         })
         .where(eq(youtube.videoId, videoId));
@@ -166,11 +174,12 @@ export async function summarize(
   if (promptGetter) {
     const promptModule = await promptGetter();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    promptId = ((promptModule as any).PROMPT_META?.ID) ||
+    promptId =
+      (promptModule as any).PROMPT_META?.ID ||
       `youtube-${classifier.category.toLowerCase()}-v1`;
   }
 
-  const summaryText = await summarizeVideo({
+  const summaryResult = await summarizeVideo({
     videoUrl: url,
     classifier,
   });
@@ -179,11 +188,11 @@ export async function summarize(
     url,
     type: "youtube",
     title: classifier.clean_title,
-    summary: summaryText,
+    summary: summaryResult.content,
     model: YOUTUBE_SUMMARIZER_CONFIG.model,
     promptId,
     reasoning: classifier.reasoning,
-    usage: {
+    usage: summaryResult.usage || {
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,

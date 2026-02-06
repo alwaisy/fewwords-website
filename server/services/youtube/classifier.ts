@@ -27,6 +27,13 @@ export interface ClassifierResult {
   is_worth_it: boolean;
   reasoning: string;
   metadata: VideoMetadata; // Include original metadata for Stage 3
+  // LLM usage tracking
+  classifier_usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    reasoningTokens?: number;
+  };
 }
 
 const CLASSIFIER_PROMPT = `You are the "fewwords" Metadata Architect and Content Classifier. Your goal is to act as a high-fidelity filter between raw data and a specialized summarizer.
@@ -99,13 +106,9 @@ export async function classifyVideo(
     provider: YOUTUBE_CLASSIFIER_CONFIG.provider,
     model: YOUTUBE_CLASSIFIER_CONFIG.model,
     prompt,
-    // Enable reasoning for better classification
-    reasoning: {
-      effort: "medium", // Medium reasoning for classification tasks
-    },
+    reasoning: YOUTUBE_CLASSIFIER_CONFIG.reasoning, // Use reasoning from config
     temperature: YOUTUBE_CLASSIFIER_CONFIG.temperature,
     maxTokens: YOUTUBE_CLASSIFIER_CONFIG.maxTokens,
-    // Pass video URL as file data for Gemini to watch
     // @ts-expect-error - files is not in core types but supported by Gemini via OpenRouter
     files: [
       {
@@ -135,6 +138,11 @@ export async function classifyVideo(
     return {
       ...parsed,
       metadata, // Include original metadata
+      classifier_usage: result.usage ? {
+        promptTokens: result.usage.promptTokens,
+        completionTokens: result.usage.completionTokens,
+        totalTokens: result.usage.totalTokens,
+      } : undefined,
     } as ClassifierResult;
   } catch {
     console.error("Failed to parse classifier response:", result.content);

@@ -8,7 +8,16 @@ interface SummaryInput {
   classifier: ClassifierResult
 }
 
-export async function summarizeVideo(input: SummaryInput): Promise<string> {
+interface SummaryResult {
+  content: string
+  usage?: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
+}
+
+export async function summarizeVideo(input: SummaryInput): Promise<SummaryResult> {
   const { videoUrl, classifier } = input
 
   // Get type-specific prompt
@@ -59,5 +68,8 @@ FULL METADATA:
     ],
   })
 
-  return result.content
+  return {
+    content: result.content,
+    usage: result.usage,
+  }
 }
