@@ -168,14 +168,14 @@ export async function summarize(
   // Stage 3: Summarize with enriched context
   // Get prompt ID from the actual prompt file
   const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let promptId = "youtube-unknown-v1";
 
   if (promptGetter) {
     const promptModule = await promptGetter();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    promptId =
-      (promptModule as any).PROMPT_META?.ID ||
+    promptId = (promptModule as any).PROMPT_META?.ID ||
       `youtube-${classifier.category.toLowerCase()}-v1`;
   }
 
