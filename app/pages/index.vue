@@ -1,6 +1,8 @@
 <script setup lang="ts">
+const { tabCount } = useTabCount()
+
 useHead({
-  title: "You Have 73 Unread Tabs. We Both Know It.",
+  title: computed(() => `You Have ${tabCount.value} Unread Tabs. We Both Know It.`),
   titleTemplate: null,
 });
 </script>

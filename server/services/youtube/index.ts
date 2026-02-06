@@ -29,6 +29,40 @@ export async function summarize(
   db?: any, // Drizzle database instance
   summaryId?: string,
 ): Promise<YouTubeResult> {
+  // Block YouTube Shorts immediately
+  if (url.includes("youtube.com/shorts") || url.includes("youtu.be/")) {
+    const isShort = url.includes("/shorts/") ||
+                   (url.includes("youtu.be/") && url.length < 30); // Short youtu.be URLs are likely shorts
+
+    if (isShort) {
+      // Save to summaries table if summaryId provided
+      if (db && summaryId) {
+        await db
+          .update(summaries)
+          .set({
+            title: "YouTube Short",
+            summary: "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
+            model: "N/A",
+            promptId: "N/A",
+            reasoning: "YouTube Shorts are too short for summarization",
+            status: "completed",
+            completedAt: new Date(),
+          })
+          .where(eq(summaries.summaryId, summaryId));
+      }
+
+      return {
+        url,
+        type: "youtube",
+        title: "YouTube Short",
+        summary: "**YouTube Shorts are not supported.**\n\nShorts are too brief to summarize meaningfully. Try a full-length video instead.",
+        model: "N/A",
+        promptId: "N/A",
+        reasoning: "YouTube Shorts are too short for summarization",
+      };
+    }
+  }
+
   // Extract videoId from URL for database
   const extractVideoId = (url: string): string | null => {
     const patterns = [
@@ -36,7 +70,6 @@ export async function summarize(
       /(?:youtu\.be\/)([^\s?]+)/,
       /(?:youtube\.com\/embed\/)([^\s?]+)/,
       /(?:youtube\.com\/v\/)([^\s?]+)/,
-      /(?:youtube\.com\/shorts\/)([^\s?]+)/,
     ];
 
     for (const pattern of patterns) {
@@ -145,8 +178,8 @@ export async function summarize(
       await db
         .update(summaries)
         .set({
-          title: video.title,
-          summary: `This video was classified as not worth summarizing. ${classifier.reasoning}`,
+          title: classifier.clean_title || video.title,
+          summary: `**Not worth watching.**\n\n${classifier.reasoning}`,
           model: "N/A",
           promptId: "N/A",
           reasoning: classifier.reasoning,
@@ -159,8 +192,8 @@ export async function summarize(
     return {
       url,
       type: "youtube",
-      title: video.title,
-      summary: `This video was classified as not worth summarizing. ${classifier.reasoning}`,
+      title: classifier.clean_title || video.title,
+      summary: `**Not worth watching.**\n\n${classifier.reasoning}`,
       model: "N/A",
       promptId: "N/A",
       reasoning: classifier.reasoning,

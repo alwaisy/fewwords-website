@@ -34,6 +34,8 @@ const transformedContent = computed(() => {
     [/^\*\*Takeaway:\*\*\s*/gm, "> "],
     // Takeaway: content (plain format)
     [/^Takeaway:\s*/gm, "> "],
+    // best quote
+    [/^##\s*BEST QUOTE\s*$/gm, ""],
   ];
 
   for (const [pattern, replacement] of patterns) {

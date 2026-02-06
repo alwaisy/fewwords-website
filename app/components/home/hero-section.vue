@@ -1,8 +1,12 @@
+<script setup lang="ts">
+const { tabCount } = useTabCount()
+</script>
+
 <template>
   <section class="py-24 md:py-40 px-4 border-b border-border">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-[0.95] tracking-tight">
-        You have 73 unread tabs.<br>
+        You have {{ tabCount }} unread tabs.<br>
         <span class="text-primary">We both know it.</span>
       </h1>
       <p class="text-2xl text-muted-foreground mb-12 max-w-2xl leading-relaxed">

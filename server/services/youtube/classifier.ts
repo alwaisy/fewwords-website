@@ -69,9 +69,9 @@ TUTORIAL: How-to, walkthrough, guide, coding, DIY.
 
 REVIEW: Product evaluation, comparison, "should you buy."
 
-NEWS: Announcements, updates, current events.
+NEWS: Official announcements, press releases, breaking news reports with factual reporting only. If the video adds analysis, commentary, or personal opinions about news, it's OPINION not NEWS.
 
-OPINION: Commentary, reaction, personal take, hot takes.
+OPINION: Commentary, reaction, analysis, personal take, hot takes. Includes videos that discuss/explain news events with opinions.
 
 INTERVIEW: Podcast, conversation, Q&A, guest appearance.
 

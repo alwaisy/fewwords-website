@@ -7,10 +7,10 @@ export const OPINION_PROMPT = `Watch this commentary/opinion video.
 
 What is the creator's main argument? One sentence.
 
-## [THE TRIGGER: keep this section head dynamic. Keep it conversational and engaging. Unlike \`The Trigger\` ]
+## [THE TRIGGER: keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE TRIGGER\`, do not use  \`The {xyz}\` pattern ]
 What prompted this video? News event, tweet, another video?
 
-## [THE ARGUMENT: keep this section head dynamic. Keep it conversational and engaging. Unlike \`The ARGUMENT\`]
+## [THE ARGUMENT: keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE ARGUMENT\`, do not use  \`The {xyz}\` pattern]
 How do they support their take? 3-5 bullets.
 
 ## Reality Check
