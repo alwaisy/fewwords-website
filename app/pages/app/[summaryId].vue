@@ -127,18 +127,18 @@ watchStatusChanges();
             summary &&
             (summary.status === 'pending' || summary.status === 'processing')
           "
-          class="text-center py-20"
+          class="text-center py-20 animate-pulse"
         >
           <div
             class="w-16 h-16 mx-auto mb-6 relative flex items-center justify-center"
           >
-            <div class="absolute inset-0 rounded-full border-2 border-primary/20" />
-            <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
-            <Icon
-              :name="currentIcon"
-              size="3rem"
-              class="text-primary"
+            <div
+              class="absolute inset-0 rounded-full border-2 border-primary/20"
             />
+            <div
+              class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin"
+            />
+            <Icon :name="currentIcon" size="3rem" class="text-primary" />
           </div>
 
           <h1 class="text-xl font-medium text-foreground mb-2">
