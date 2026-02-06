@@ -270,12 +270,15 @@ export async function summarize(
       `youtube-${classifier.category.toLowerCase()}-v1`;
   }
 
+  console.log(`[YouTube] Starting summarizeVideo for ${summaryId}...`);
   const summaryResult = await summarizeVideo({
     videoUrl: url,
     classifier,
   });
+  console.log(`[YouTube] ✓ summarizeVideo completed for ${summaryId}`);
 
   // Stage completed
+  console.log(`[YouTube] Setting stage to completed for ${summaryId}`);
   await setStage(summaryId || "", "completed");
 
   return {
