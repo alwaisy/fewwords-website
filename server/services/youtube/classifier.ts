@@ -34,6 +34,7 @@ export interface ClassifierResult {
     totalTokens: number;
     reasoningTokens?: number;
   };
+  classifier_time_ms?: number; // Time taken for classification
 }
 
 const CLASSIFIER_PROMPT = `You are the "fewwords" Metadata Architect and Content Classifier. Your goal is to act as a high-fidelity filter between raw data and a specialized summarizer.
@@ -97,6 +98,8 @@ OUTPUT FORMAT (Strict JSON):
 export async function classifyVideo(
   metadata: VideoMetadata & { videoUrl: string },
 ): Promise<ClassifierResult> {
+  const startTime = Date.now()
+
   const prompt = CLASSIFIER_PROMPT.replace("{yt_title}", metadata.title)
     .replace("{yt_desc}", metadata.description || "No description available")
     .replace("{yt_channel}", metadata.channel)
@@ -143,6 +146,7 @@ export async function classifyVideo(
         completionTokens: result.usage.completionTokens,
         totalTokens: result.usage.totalTokens,
       } : undefined,
+      classifier_time_ms: Date.now() - startTime,
     } as ClassifierResult;
   } catch {
     console.error("Failed to parse classifier response:", result.content);

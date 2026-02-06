@@ -54,7 +54,8 @@ export default defineEventHandler(async (event) => {
 
     const responseTimeMs = Date.now() - startTime
 
-    const reasoning = essence === 'article' && 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
+    // Extract reasoning (articles have it, YouTube has it from classifier)
+    const reasoning = 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
 
     if (updateSummaryId) {
       await db.update(summaries)

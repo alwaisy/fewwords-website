@@ -130,7 +130,7 @@ export async function summarize(
           classifierTotalTokens: classifier.classifier_usage?.totalTokens || 0,
           classifierReasoningTokens:
             classifier.classifier_usage?.reasoningTokens || 0,
-          classifierTimeMs: 0, // TODO: Track actual timing
+          classifierTimeMs: classifier.classifier_time_ms || 0,
         })
         .where(eq(youtube.videoId, videoId));
     }
