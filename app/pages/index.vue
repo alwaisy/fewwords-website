@@ -11,8 +11,11 @@ useHead({
   <!-- SLAY model for content copy -->
   <main class="flex-1">
     <HomeHeroSection />
+    <HomeMetricsStrip />
+    <HomeDemoComparison />
     <HomeProblemAgitation />
     <HomeSolutionSection />
+    <HomeUspSection />
     <HomeFeaturesSection />
     <HomeFinalCta />
   </main>
