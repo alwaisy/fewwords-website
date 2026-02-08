@@ -57,7 +57,7 @@ export async function classifyArticle(
   const startTime = Date.now();
 
   const llmResult = await callOpenAI({
-    model: "gpt-4.1-2025-04-14", // GPT-5 Mini (reasoning model)
+    model: "gpt-5-nano",
     messages: [
       { role: "system", content: "You are a content classifier." },
       {

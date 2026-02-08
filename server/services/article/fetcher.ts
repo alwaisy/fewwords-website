@@ -1,5 +1,15 @@
 const JINA_READER_URL = 'https://r.jina.ai/http://'
 
+interface JinaJSONResponse {
+  code: number
+  data: {
+    title?: string
+    description?: string
+    url?: string
+    content: string
+  } | null
+}
+
 export interface FetcherResponse {
   content: string
   title?: string
@@ -40,67 +50,44 @@ function countWords(text: string): number {
   return cleanText.trim().split(/\s+/).filter(w => w.length > 0).length
 }
 
-function detectCloudflareProtection(content: string): boolean {
-  const indicators = [
-    'Just a moment',
-    'Checking your browser',
-    'DDoS protection',
-    'Cloudflare',
-    'Please wait while we verify',
-    'Verify you are human',
-    'challenge-platform',
-  ]
-
-  if (!content) return false
-
-  const lowerContent = content.toLowerCase()
-  return indicators.some(indicator =>
-    lowerContent.includes(indicator.toLowerCase())
-  )
-}
-
 export async function fetchWithJina(url: string): Promise<FetcherResponse> {
   try {
     const cleanUrl = url.replace(/^https?:\/\//, '')
     const jinaUrl = `${JINA_READER_URL}${cleanUrl}`
 
-    const response = await $fetch<string>(jinaUrl, {
+    const response = await $fetch<JinaJSONResponse>(jinaUrl, {
       headers: {
         'Authorization': `Bearer ${process.env.JINA_AI_API_KEY}`,
+        'Accept': 'application/json',
         'X-Engine': 'cf-browser-rendering',
       },
       timeout: 30000,
     })
 
-    if (!response || typeof response !== 'string') {
-      throw new Error('Empty response from Jina API')
+    // Check for Jina API errors
+    if (!response || response.code !== 200 || !response.data) {
+      const errorMsg = response?.data ? 'Empty response' : 'Jina API error'
+      throw new Error(`${errorMsg}: ${JSON.stringify(response)}`)
     }
 
-    // Check if Jina returned a Cloudflare protection page instead of actual content
-    if (detectCloudflareProtection(response)) {
-      throw new Error('Site has bot protection - Jina returned Cloudflare page')
-    }
+    const { title, description, content } = response.data
 
-    // Check if response is too short (likely an error page)
-    if (response.length < 100) {
+    // Check if content is too short (likely an error page)
+    if (content.length < 100) {
       throw new Error('Content too short, possibly blocked')
     }
 
-    // Extract title from markdown (first # heading)
-    const titleMatch = response.match(/^#\s+(.+)$/m)
-    const title = titleMatch ? titleMatch[1]?.trim() : undefined
-
     // Calculate content stats
-    const wordCount = countWords(response)
+    const wordCount = countWords(content)
     const readingTimeMinutes = calculateReadingTime(wordCount)
-    const domain = extractDomain(cleanUrl)
+    const domain = extractDomain(url) // Extract from original URL, not cleanUrl
 
     return {
-      content: response,
-      title,
-      // SEO metadata (title is used as metaTitle)
+      content,
+      title, // From JSON response
+      // SEO metadata from JSON response
       metaTitle: title,
-      metaDescription: undefined, // Could be extracted from HTML in future
+      metaDescription: description,
       // Source info
       domain,
       author: undefined, // Could be extracted from HTML/schema in future
@@ -111,8 +98,6 @@ export async function fetchWithJina(url: string): Promise<FetcherResponse> {
     }
   }
   catch (error) {
-    console.error('Jina fetch error:', error)
-
     // Re-throw with clear message for DB storage
     if (error instanceof Error) {
       throw error

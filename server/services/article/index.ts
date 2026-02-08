@@ -105,7 +105,7 @@ export async function summarize(url: string): Promise<ArticleResult> {
       wordCount: metadata.wordCount,
       readingTimeMinutes: metadata.readingTimeMinutes,
       // Stage 2: Classifier stats
-      classifierModel: 'gpt-4.1-2025-04-14',
+      classifierModel: 'gpt-5-nano',
       classifierPromptTokens: classifierResult.usage.promptTokens,
       classifierCompletionTokens: classifierResult.usage.completionTokens,
       classifierTotalTokens: classifierResult.usage.totalTokens,
