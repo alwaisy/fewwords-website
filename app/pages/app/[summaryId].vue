@@ -36,10 +36,6 @@ const friendlyErrorMessage = computed(() =>
 const {
   currentMessage,
   currentIcon,
-  currentStage,
-  getStages,
-  getCurrentStageIndex,
-  startProcessing,
   watchStatusChanges,
 } = useSummaryProcessing(summary, refresh);
 
@@ -94,14 +90,7 @@ function doAnother() {
   router.push("/app");
 }
 
-// Start processing on mount if pending
-onMounted(() => {
-  if (summary.value?.status === "pending") {
-    startProcessing();
-  }
-});
-
-// Watch for status changes (for poll/retry scenarios)
+// Watch for status changes (handles pending processing via immediate: true)
 watchStatusChanges();
 </script>
 
