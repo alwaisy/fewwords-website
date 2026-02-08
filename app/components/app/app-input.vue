@@ -19,7 +19,7 @@ async function handleSubmit() {
     if (response?.summaryId) {
       await router.replace(`/app/${response.summaryId}`)
     }
-  } catch (err) {
+  } catch {
     // TODO: Show error to user
   }
 }

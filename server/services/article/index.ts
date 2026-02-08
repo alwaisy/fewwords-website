@@ -1,5 +1,5 @@
 import { ARTICLE_CONFIG } from './config'
-import { fetchWithJina, type FetcherResponse } from './fetcher'
+import { fetchWithJina } from './fetcher'
 import { classifyArticle, type ClassifierResult } from './classifier'
 import { getPrompt, getPromptMeta } from '../../prompts/article'
 import { callOpenRouter } from '../shared/llm'

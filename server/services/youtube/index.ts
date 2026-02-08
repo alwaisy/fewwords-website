@@ -37,7 +37,7 @@ async function setStage(summaryId: string, stage: YouTubeStage) {
   try {
     const key = `summary:${summaryId}:stage`;
     console.log(`[YouTube Stage] → Setting ${key} = "${stage}"`);
-    await redis.set(key, stage, { ex: 3600 });
+    await redis.set(key, stage, "EX", 3600);
 
     // Verify it was set
     const verify = await redis.get(key);

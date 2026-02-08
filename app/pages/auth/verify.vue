@@ -11,7 +11,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const token = route.query.token as string
-const { login } = useAuth()
+const { verify, isLoading } = useAuth()
 
 const status = ref<'loading' | 'success' | 'error'>('loading')
 const errorMessage = ref('')
@@ -23,28 +23,20 @@ onMounted(async () => {
     return
   }
 
-  // TODO: Verify token with backend
-  // For now, simulate verification
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+  // Verify token with backend
+  const result = await verify(token)
 
-    // Mock success (in real app, this would be an API call)
-    // const response = await $fetch('/api/auth/verify', { method: 'POST', body: { token } })
-
-    // For demo, mark as success
+  if (result.success) {
     status.value = 'success'
-
-    // Set auth state
-    login()
 
     // Redirect to app after 2 seconds
     setTimeout(() => {
       router.push('/app')
     }, 2000)
-  } catch {
+  }
+  else {
     status.value = 'error'
-    errorMessage.value = 'Invalid or expired link'
+    errorMessage.value = result.message || 'Invalid or expired link'
   }
 })
 
@@ -60,7 +52,7 @@ function goBack() {
 <template>
   <div class="w-full max-w-md text-center">
     <!-- Loading State -->
-    <template v-if="status === 'loading'">
+    <template v-if="status === 'loading' || isLoading">
       <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
         <Icon name="lucide:loader-2" class="w-10 h-10 text-primary animate-spin" />
       </div>

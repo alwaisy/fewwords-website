@@ -39,7 +39,7 @@ const isMobileMenuOpen = ref(false)
         </NuxtLink>
         <ThemeToggle />
         <Button variant="default" size="sm" as-child>
-          <NuxtLink to="/app">Try It Free</NuxtLink>
+          <NuxtLink to="/auth/login">Login</NuxtLink>
         </Button>
       </nav>
 
@@ -133,8 +133,8 @@ const isMobileMenuOpen = ref(false)
               </div>
               <DrawerClose as-child>
                 <Button variant="default" class="w-full" as-child>
-                  <NuxtLink to="/app" @click="isMobileMenuOpen = false">
-                    Try It Free
+                  <NuxtLink to="/auth/login" @click="isMobileMenuOpen = false">
+                    Login
                   </NuxtLink>
                 </Button>
               </DrawerClose>

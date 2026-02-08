@@ -10,11 +10,20 @@ definePageMeta({
 
 const email = ref('')
 const router = useRouter()
+const { login, isLoading } = useAuth()
 
-function handleLogin() {
-  // TODO: Implement login logic + send email
-  // For now, just navigate to check-email page
-  router.push({ path: '/auth/check-email', query: { email: email.value, from: 'login' } })
+async function handleLogin() {
+  if (!email.value) return
+
+  const result = await login(email.value)
+
+  if (result.success) {
+    useToastify(result.message || 'Magic link sent!', { type: 'success' })
+    router.push({ path: '/auth/check-email', query: { email: email.value, from: 'login' } })
+  }
+  else {
+    useToastify(result.message || 'Failed to send magic link', { type: 'error' })
+  }
 }
 </script>
 
@@ -39,11 +48,13 @@ function handleLogin() {
             type="email"
             placeholder="you@example.com"
             required
+            :disabled="isLoading"
           />
         </div>
 
-        <Button type="submit" variant="default" size="lg" class="w-full">
-          Send magic link →
+        <Button type="submit" variant="default" size="lg" class="w-full" :disabled="isLoading">
+          <Icon v-if="isLoading" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
+          {{ isLoading ? 'Sending...' : 'Send magic link →' }}
         </Button>
       </form>
 

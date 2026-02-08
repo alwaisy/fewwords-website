@@ -13,11 +13,20 @@ const username = ref('')
 const email = ref('')
 
 const router = useRouter()
+const { register, isLoading } = useAuth()
 
-function handleRegister() {
-  // TODO: Implement register logic + send email
-  // For now, just navigate to check-email page
-  router.push({ path: '/auth/check-email', query: { email: email.value, from: 'register' } })
+async function handleRegister() {
+  if (!name.value || !username.value || !email.value) return
+
+  const result = await register(email.value, name.value, username.value)
+
+  if (result.success) {
+    useToastify(result.message || 'Account created! Check your email.', { type: 'success' })
+    router.push({ path: '/auth/check-email', query: { email: email.value, from: 'register' } })
+  }
+  else {
+    useToastify(result.message || 'Failed to create account', { type: 'error' })
+  }
 }
 </script>
 
@@ -42,6 +51,7 @@ function handleRegister() {
             type="text"
             placeholder="Trump, not Donald"
             required
+            :disabled="isLoading"
           />
           <p class="text-xs text-muted-foreground">
             How your friends call you
@@ -58,6 +68,7 @@ function handleRegister() {
             type="text"
             placeholder="johndoe"
             required
+            :disabled="isLoading"
           />
         </div>
 
@@ -71,11 +82,13 @@ function handleRegister() {
             type="email"
             placeholder="you@example.com"
             required
+            :disabled="isLoading"
           />
         </div>
 
-        <Button type="submit" variant="default" size="lg" class="w-full">
-          Send verification link →
+        <Button type="submit" variant="default" size="lg" class="w-full" :disabled="isLoading">
+          <Icon v-if="isLoading" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
+          {{ isLoading ? 'Creating...' : 'Send verification link →' }}
         </Button>
 
         <Button
@@ -83,6 +96,7 @@ function handleRegister() {
           size="lg"
           class="w-full"
           as-child
+          :disabled="isLoading"
         >
           <NuxtLink to="/auth/login">
             Sign in instead

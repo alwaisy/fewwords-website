@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     "@nuxtjs/mdc",
     "@nuxtjs/color-mode",
     "nuxt-toastify",
+    "nuxt-auth-utils",
   ],
 
   toastify: {

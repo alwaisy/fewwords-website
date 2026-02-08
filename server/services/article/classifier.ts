@@ -1,4 +1,4 @@
-import { callOpenAI, type OpenAIResult } from "../shared/llm";
+import { callOpenAI } from "../shared/llm";
 import { PROMPT_VERSIONS, type PromptCategory } from "../../prompts/article";
 
 const CLASSIFIER_PROMPT = `### ROLE

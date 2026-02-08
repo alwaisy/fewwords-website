@@ -13,6 +13,31 @@ import { nanoid } from "nanoid";
 // Use crypto.randomUUID() for Cloudflare Workers compatibility
 const generateId = () => crypto.randomUUID();
 
+// Users table for authentication
+export const users = pgTable(
+  "User",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    email: text("email").notNull().unique(),
+    name: text("name").notNull(),
+    username: text("username").unique(),
+    magicLinkToken: text("magic_link_token"),
+    magicLinkExpiresAt: timestamp("magic_link_expires_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    emailIdx: index("User_email_idx").on(table.email),
+    magicLinkTokenIdx: index("User_magic_link_token_idx").on(table.magicLinkToken),
+  }),
+);
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
 // Generate summaryId: few-XYZ (7 chars total)
 const generateSummaryId = () => `few-${nanoid(3)}`;
 
