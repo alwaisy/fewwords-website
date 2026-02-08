@@ -22,7 +22,8 @@ export interface ClassifierResult {
     | "OPINION"
     | "INTERVIEW"
     | "EDUCATION"
-    | "ENTERTAINMENT";
+    | "ENTERTAINMENT"
+    | "GENERIC"; // Fallback when classifier fails
   true_intent: string;
   focus_points: string[];
   is_worth_it: boolean;
@@ -127,6 +128,12 @@ export async function classifyVideo(
     reasoning: YOUTUBE_CLASSIFIER_CONFIG.reasoning,
   });
 
+  // Check for empty/null response
+  if (!result.content || result.content.trim().length === 0) {
+    console.warn("[Classifier] Empty response, using fallback generic classification");
+    return getFallbackClassification(metadata, result.usage, Date.now() - startTime);
+  }
+
   try {
     // Try to parse as-is first (for plain JSON)
     let parsed;
@@ -154,7 +161,35 @@ export async function classifyVideo(
       classifier_time_ms: Date.now() - startTime,
     } as ClassifierResult;
   } catch {
-    console.error("Failed to parse classifier response:", result.content);
-    throw new Error("Classifier returned invalid JSON");
+    console.error("[Classifier] Failed to parse response, using fallback:", result.content?.substring(0, 200));
+    return getFallbackClassification(metadata, result.usage, Date.now() - startTime);
   }
+}
+
+// Fallback classification when classifier fails - allows summarization to continue
+function getFallbackClassification(
+  metadata: VideoMetadata,
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number },
+  elapsedMs?: number,
+): ClassifierResult {
+  return {
+    clean_title: metadata.title,
+    channel_bio: `Content from ${metadata.channel}`,
+    category: "GENERIC" as const,
+    true_intent: "Video content summary",
+    focus_points: [
+      "Main topics covered",
+      "Key insights shared",
+      "Practical takeaways"
+    ],
+    is_worth_it: true,
+    reasoning: "Classification unavailable - using generic summary",
+    metadata,
+    classifier_usage: usage ? {
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+      totalTokens: usage.totalTokens,
+    } : undefined,
+    classifier_time_ms: elapsedMs || 0,
+  };
 }

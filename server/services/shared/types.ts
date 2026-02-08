@@ -8,7 +8,7 @@ export type OpenRouterModel =
   | "mistralai/ministral-8b-2512";
 
 // OpenAI models (for direct OpenAI provider)
-export type OpenAIModel = "gpt-5-mini-2025-08-07" | "gpt-4.1-2025-04-14";
+export type OpenAIModel = "gpt-5-nano" | "gpt-4.1-2025-04-14";
 
 // Anthropic models (for direct Anthropic provider - no prefix)
 export type AnthropicModel = "claude-haiku-4-5-20251001";

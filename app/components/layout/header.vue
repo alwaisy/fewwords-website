@@ -1,5 +1,16 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerOverlay,
+  DrawerPortal,
+} from '~/components/ui/drawer'
+import { Button } from '~/components/ui/button'
+
 const { isLoggedIn, logout } = useAuth()
+const isMobileMenuOpen = ref(false)
 </script>
 
 <template>
@@ -11,8 +22,9 @@ const { isLoggedIn, logout } = useAuth()
         <span class="text-xl font-bold text-foreground">Fewwords</span>
       </NuxtLink>
 
+      <!-- Desktop nav (hidden on mobile) -->
       <!-- Not logged in -->
-      <nav v-if="!isLoggedIn" class="ml-auto flex items-center space-x-6">
+      <nav v-if="!isLoggedIn" class="ml-auto hidden md:flex items-center space-x-6">
         <NuxtLink
           to="/"
           class="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -32,7 +44,7 @@ const { isLoggedIn, logout } = useAuth()
       </nav>
 
       <!-- Logged in -->
-      <div v-else class="ml-auto flex items-center space-x-6">
+      <div v-else class="ml-auto hidden md:flex items-center space-x-6">
         <NuxtLink
           to="/"
           class="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -70,6 +82,107 @@ const { isLoggedIn, logout } = useAuth()
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <!-- Mobile menu button -->
+      <button
+        class="ml-auto md:hidden flex flex-col items-center justify-center space-y-1.5 p-2"
+        @click="isMobileMenuOpen = true"
+      >
+        <span class="block w-6 h-0.5 bg-foreground"></span>
+        <span class="block w-6 h-0.5 bg-foreground"></span>
+        <span class="block w-4 h-0.5 bg-foreground"></span>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile drawer -->
+  <Drawer v-model:open="isMobileMenuOpen">
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerContent
+        class="bg-background border-l border-border"
+        side="right"
+      >
+        <div class="mx-auto w-full max-w-sm">
+          <DrawerHeader>
+            <DrawerTitle>Menu</DrawerTitle>
+          </DrawerHeader>
+          <div class="flex flex-col space-y-4 py-4">
+            <!-- Not logged in -->
+            <template v-if="!isLoggedIn">
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/"
+                  class="text-lg font-medium text-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Home
+                </NuxtLink>
+              </DrawerClose>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/about"
+                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  About
+                </NuxtLink>
+              </DrawerClose>
+              <div class="flex items-center space-x-4 py-2">
+                <ThemeToggle />
+              </div>
+              <DrawerClose as-child>
+                <Button variant="default" class="w-full" as-child>
+                  <NuxtLink to="/app" @click="isMobileMenuOpen = false">
+                    Try It Free
+                  </NuxtLink>
+                </Button>
+              </DrawerClose>
+            </template>
+
+            <!-- Logged in -->
+            <template v-else>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/"
+                  class="text-lg font-medium text-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Home
+                </NuxtLink>
+              </DrawerClose>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/about"
+                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  About
+                </NuxtLink>
+              </DrawerClose>
+              <div class="flex items-center space-x-4 py-2">
+                <ThemeToggle />
+              </div>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/settings"
+                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Settings
+                </NuxtLink>
+              </DrawerClose>
+              <Button
+                variant="ghost"
+                class="w-full justify-start"
+                @click="() => { logout(); isMobileMenuOpen = false; }"
+              >
+                Log out
+              </Button>
+            </template>
+          </div>
+        </div>
+      </DrawerContent>
+    </DrawerPortal>
+  </Drawer>
 </template>

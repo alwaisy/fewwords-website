@@ -7,7 +7,7 @@ useHead({
     {
       name: "description",
       content:
-        "You have 73 unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
+        "You have couple of unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
     },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
     { property: "og:type", content: "website" },
@@ -19,7 +19,7 @@ useHead({
     {
       property: "og:description",
       content:
-        "You have 73 unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
+        "You have couple of unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
     },
   ],
   htmlAttrs: {
@@ -32,6 +32,6 @@ useHead({
   <NuxtRouteAnnouncer />
   <NuxtLayout>
     <NuxtPage />
-    <NuxtLoadingIndicator color="#3a5ba0" :height="8" />
+    <NuxtLoadingIndicator color="#a67c52" :height="8" />
   </NuxtLayout>
 </template>

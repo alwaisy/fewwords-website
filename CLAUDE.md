@@ -10,11 +10,12 @@ fewwords is an AI-powered content summarization service. Users paste a URL (arti
 
 - **Framework**: Nuxt 4 (Vue.js)
 - **Package Manager**: Bun (not npm/yarn/pnpm)
-- **Database**: PostgreSQL with Drizzle ORM
-- **LLM**: Vercel AI SDK with multi-provider support (OpenRouter, OpenAI, Anthropic)
+- **Database**: PostgreSQL with Drizzle ORM (Docker on port 5433)
+- **LLM**: Official SDKs with multi-provider support (OpenRouter, OpenAI, Anthropic)
 - **UI**: Shadcn Vue (New York style, Reka UI primitives)
 - **Styling**: Tailwind CSS v4
 - **Content Extraction**: Jina AI Reader API
+- **Real-time Updates**: Upstash Redis + Server-Sent Events (SSE)
 
 ## Development Commands
 
@@ -37,9 +38,12 @@ bun run lint:fix
 # Database commands
 bun run db:push          # Push schema changes to database
 bun run db:generate      # Generate migration files
+bun run db:migrate       # Run migrations
 bun run db:studio        # Open Drizzle Studio
 bun run db:start:pg      # Start local PostgreSQL via Docker
 bun run db:stop:pg       # Stop PostgreSQL
+bun run db:reset         # Reset database (down -v + up)
+bun run db:seed          # Seed database
 
 # Add new Shadcn component
 bun run shadcn <component-name>
@@ -51,19 +55,22 @@ bun run shadcn <component-name>
 
 1. **User submits URL** → `POST /api/summarize`
 2. **Detect content type** (article/youtube/reddit)
-3. **Fetch content** via Jina AI Reader API
-4. **Classify article** → selects v1/v2/v3 strategy
+3. **Fetch content** via Jina AI Reader API (articles) or YouTube Data API
+4. **Classify content** → selects optimal summarization strategy
 5. **Summarize** with classified prompt
 6. **Store** in PostgreSQL database
 
-### LLM Integration (`server/services/shared/llm.ts`)
+### LLM Integration (`server/services/shared/llm/`)
 
-Multi-provider support via Vercel AI SDK:
-- **OpenRouter**: Default, supports multiple models
-- **OpenAI**: Direct API access
-- **Anthropic**: Direct API access
+Official SDKs (not Vercel AI SDK):
+- **OpenRouter**: Default provider, multi-model support
+- **OpenAI**: Direct API access via `@openrouter/sdk`
+- **Anthropic**: Direct API access via `@anthropic-ai/sdk`
 
-Key function: `callLLM({ provider, model, prompt, content, temperature, maxTokens })`
+Each provider exports `call<Provider>()` function with unified interface supporting:
+- `reasoning: { effort: "high" | "medium" | "low" }` for reasoning models
+- Tool calling (Google Search, URL context for YouTube)
+- Streaming support (not yet implemented)
 
 ### Article Classification (`server/services/article/classifier.ts`)
 
@@ -88,38 +95,21 @@ When adding new prompt versions:
 2. Add to imports in `index.ts`
 3. `getLatestVersions()` automatically detects it
 
-### Database (`server/db/index.ts`, `db/schema.ts`)
+### YouTube 3-Stage Pipeline
 
-Singleton pattern for database connection. Use via `useDb(event)` in API routes.
+YouTube summarization uses a distinct 3-stage pipeline with real-time progress updates:
 
-**Summaries table** includes:
-- `summaryId`: Public ID (few-XYZ format)
-- `source`: Original URL
-- `essence`: article/youtube/reddit
-- `promptId`: Which prompt version was used
-- `reasoning`: Classifier's explanation (articles only)
-- `status`: pending/processing/completed/failed
-- Token usage, timestamps, error messages
+**Stage 1: Metadata** - Fetch video/channel metadata from YouTube Data API, store in `youtube` table
+**Stage 2: Classifying** - LLM analyzes video thumbnail + metadata, determines category (TUTORIAL/REVIEW/NEWS/OPINION/INTERVIEW/EDUCATION/LIGHT), extracts clean title, channel bio, focus points, decides if worth watching
+**Stage 3: Summarizing** - Full video analysis with type-specific prompt
 
-### Service Layer Structure
+**Real-time updates use Upstash Redis + SSE:**
+- Backend sets `summary:{summaryId}:stage` key in Redis during each stage
+- Frontend connects to `GET /api/summary/:summaryId/stream` (SSE)
+- SSE endpoint polls Redis every 500ms, pushes stage updates to client
+- See `server/api/summary/[summaryId]/stream.get.ts` and `app/pages/app/composables/use-summary-processing.ts`
 
-```
-server/services/
-├── article/
-│   ├── classifier.ts    # Content classification (v1/v2/v3)
-│   ├── fetcher.ts       # Jina AI content extraction
-│   ├── index.ts         # Summarization orchestrator
-│   └── config.ts        # Model config
-├── youtube/
-│   ├── index.ts         # YouTube summarization orchestrator
-│   └── config.ts        # Model config
-├── reddit/
-│   ├── index.ts         # Reddit summarization
-│   └── config.ts        # Model config
-└── shared/
-    ├── llm.ts          # Vercel AI SDK wrapper
-    └── types.ts        # LLM model types
-```
+**Early exit**: If classifier determines video isn't worth watching, returns immediately with reasoning.
 
 ### YouTube Content Types (`server/prompts/youtube/`)
 
@@ -134,6 +124,57 @@ Type-specific prompts for different YouTube content:
 
 Each prompt exports `{ PROMPT, PROMPT_META }` with ID, description, and type.
 
+### Database Schema (`db/schema.ts`)
+
+Two main tables with one-to-one relationship:
+
+**Summaries table** (core):
+- `id`: Internal UUID (primary key)
+- `summaryId`: Public ID (few-XYZ format, unique)
+- `source`: Original URL
+- `essence`: article/youtube/reddit
+- `title`, `summary`: Generated content
+- `promptId`: Which prompt version was used
+- `reasoning`: Classifier's explanation
+- `status`: pending/processing/completed/failed
+- Token usage (promptTokens, completionTokens, totalTokens, reasoningTokens)
+- Timestamps, error messages
+
+**YouTube table** (one-to-one via `summaryId`):
+- Stage 1: Video metadata (videoId, duration, tags, view/like/comment counts)
+- Stage 1: Channel metadata (title, description, subscriber count, keywords)
+- Stage 2: Classifier results (cleanTitle, channelBio, category, trueIntent, focusPoints, isWorthIt)
+- Stage 2: Classifier stats (model, reasoningEffort, tokens, timing)
+
+**Access pattern**: Use `useDb(event)` in API routes - singleton pattern handles connection pooling.
+
+### Service Layer Structure
+
+```
+server/services/
+├── article/
+│   ├── classifier.ts    # Content classification (v1/v2/v3)
+│   ├── fetcher.ts       # Jina AI content extraction
+│   ├── index.ts         # Summarization orchestrator
+│   └── config.ts        # Model config
+├── youtube/
+│   ├── index.ts         # YouTube orchestrator (3-stage pipeline)
+│   ├── classifier.ts    # Video classification (worth watching?)
+│   ├── summarizer.ts    # Video content summarization
+│   ├── metadata.ts      # YouTube Data API fetching
+│   └── config.ts        # Model config
+├── reddit/
+│   ├── index.ts         # Reddit summarization
+│   └── config.ts        # Model config
+└── shared/
+    ├── llm/             # Official SDK implementations
+    │   ├── index.ts
+    │   ├── openrouter.ts
+    │   ├── openai.ts
+    │   └── anthropic.ts
+    └── types.ts         # LLM model types
+```
+
 ### Content Fetching (`server/services/article/fetcher.ts`)
 
 Uses Jina AI Reader API to extract article content as markdown.
@@ -143,28 +184,31 @@ Uses Jina AI Reader API to extract article content as markdown.
 
 ### Pending Summary Flow
 
-For long-running summaries:
-1. Create pending summary record immediately
+For long-running summaries (YouTube videos):
+1. Create pending summary record immediately via `POST /api/summarize/create-pending`
 2. Return `summaryId` to user
-3. Process in background
-4. Frontend polls for status updates
+3. Process in background via `POST /api/summarize` with `updateSummaryId`
+4. Frontend polls for status updates or uses SSE for YouTube
 5. User sees real-time progress
 
-See `app/pages/app/composables/use-summary-processing.ts` for polling logic.
+See `app/pages/app/composables/use-summary-processing.ts` for polling/SSE logic.
 
 ### API Routes
 
-- `POST /api/summarize` - Create summary (or update pending)
-- `GET /api/summary/:summaryId` - Fetch summary by ID
+- `POST /api/summarize` - Create summary (or update pending record)
 - `POST /api/summarize/create-pending` - Create pending record for background processing
+- `GET /api/summary/:summaryId` - Fetch summary by ID
+- `GET /api/summary/:summaryId/stream` - SSE endpoint for real-time stage updates (YouTube)
+- `GET /api/tab-count` - Get tab counts for UI
 
 ## Design System
 
 - Colors: Pink/purple theme with dark mode
 - Fonts: Poppins (sans), Playfair Display (serif), Space Mono (mono)
-- Shadcn components in `app/components/ui/`
+- Shadcn components in `app/components/ui/` (no prefix)
 - Custom scrollbar styling
 - CSS variables in `app/css/global.css`
+- Toast: nuxt-toastify (colored theme, top-center, 4s auto-close, slide transition)
 
 ## Environment Variables
 
@@ -173,8 +217,11 @@ Required in `.env`:
 - `NUXT_SESSION_PASSWORD` - Session secret (min 32 chars)
 - `JINA_AI_API_KEY` - Content extraction
 - `OPENROUTER_API_KEY` - Default LLM provider
-- `OPENAI_API_KEY` - Optional, for OpenAI provider
-- `ANTHROPIC_API_KEY` - Optional, for Anthropic provider
+- `OPENAI_API_KEY` - OpenAI provider (required for article classification)
+- `ANTHROPIC_API_KEY` - Anthropic provider (optional)
+- `YOUTUBE_DATA_API_KEY` - YouTube metadata fetching
+- `UPSTASH_REDIS_REST_URL` - Redis for real-time updates
+- `UPSTASH_REDIS_REST_TOKEN` - Redis authentication
 
 ## Path Aliases
 
@@ -188,3 +235,9 @@ Required in `.env`:
 - All imports use type imports where applicable: `import type { ... }`
 - Shadcn components use no prefix, live in `app/components/ui/`
 - Summary IDs are public (few-XYZ), internal IDs are UUIDs
+- PostgreSQL runs on port 5433 via Docker (avoiding conflict with system PG on 5432)
+- YouTube Shorts are immediately rejected with message
+- Auto-imports: Components, composables, utilities are auto-imported (no manual imports needed)
+- Vue 3 Composition API with `<script setup>` syntax
+- VeeValidate + Zod for form validation
+- TypeScript strict mode enabled

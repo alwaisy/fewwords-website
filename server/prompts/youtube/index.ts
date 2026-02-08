@@ -6,6 +6,7 @@ export * as opinion from './opinion-v1.1';
 export * as interview from './interview-v1.1';
 export * as education from './education-v1.1';
 export * as light from './light-v1';
+export * as generic from './generic-v1';
 
 // Legacy export (remove when old code is migrated)
 export { YOUTUBE_PROMPT, PROMPT_META } from './v1';
@@ -19,6 +20,7 @@ export const YOUTUBE_PROMPTS = {
   INTERVIEW: () => import('./interview-v1.1'),
   EDUCATION: () => import('./education-v1.1'),
   LIGHT: () => import('./light-v1'),
+  GENERIC: () => import('./generic-v1'),
 } as const;
 
 // Type definitions

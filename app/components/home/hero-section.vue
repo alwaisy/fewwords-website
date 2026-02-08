@@ -1,22 +1,31 @@
 <script setup lang="ts">
-const { tabCount } = useTabCount()
+import { computed } from "vue";
+import landingCopy from "~/content/landing-copy";
+const { tabCount } = useTabCount();
+const renderedHeadline = computed(() =>
+  landingCopy.hero_section.headline.replace(
+    "{tabCount}",
+    String(tabCount.value),
+  ),
+);
 </script>
 
 <template>
   <section class="py-24 md:py-40 px-4 border-b border-border">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-[0.95] tracking-tight">
-        You have {{ tabCount }} unread tabs.<br>
-        <span class="text-primary">We both know it.</span>
+      <h1
+        class="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-[0.95] tracking-tight"
+      >
+        {{ renderedHeadline }}
       </h1>
       <p class="text-2xl text-muted-foreground mb-12 max-w-2xl leading-relaxed">
-        Get the insight from any article or video. Skip the 2000 words. 60 seconds.
+        {{ landingCopy.hero_section.subheadline }}
       </p>
       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <Button size="lg" class="text-lg px-8 py-6" as-child>
-          <NuxtLink to="/app">Close My Tabs →</NuxtLink>
+          <NuxtLink to="/app">{{ landingCopy.hero_section.cta }}</NuxtLink>
         </Button>
-        <p class="text-sm text-muted-foreground">No signup. No credit card.</p>
+        <!-- <p class="text-sm text-muted-foreground">{{ landingCopy.hero_section.note }}</p> -->
       </div>
     </div>
   </section>

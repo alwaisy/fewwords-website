@@ -1,22 +1,25 @@
 <script setup lang="ts">
-const { tabCount } = useTabCount()
+const { tabCount } = useTabCount();
 
 useHead({
-  title: computed(() => `You Have ${tabCount.value} Unread Tabs. We Both Know It.`),
+  title: computed(
+    () => `You Have ${tabCount.value} Unread Tabs. I Know, I Had 87 Too.`,
+  ),
   titleTemplate: null,
 });
 </script>
 
 <template>
-  <!-- SLAY model for content copy -->
   <main class="flex-1">
     <HomeHeroSection />
+    <HomeDemoCompare />
     <HomeMetricsStrip />
-    <HomeDemoComparison />
     <HomeProblemAgitation />
-    <HomeSolutionSection />
+    <HomeWorkflowSection />
+    <!-- <HomeSolutionSection /> -->
     <HomeUspSection />
     <HomeFeaturesSection />
+    <HomeBookmarkletSection />
     <HomeFinalCta />
   </main>
 </template>
