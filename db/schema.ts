@@ -135,17 +135,73 @@ export const youtube = pgTable(
 export type YouTube = typeof youtube.$inferSelect;
 export type NewYouTube = typeof youtube.$inferInsert;
 
+// Article table (one-to-one with summaries)
+export const articles = pgTable(
+  "Article",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    summaryId: text("summary_id")
+      .notNull()
+      .unique()
+      .references(() => summaries.id), // One-to-one relation using internal ID
+
+    // Stage 1: SEO metadata (from page/OpenGraph tags)
+    metaTitle: text("meta_title"), // <title> or og:title
+    metaDescription: text("meta_description"), // <meta name="description"> or og:description
+
+    // Stage 1: Source info (for analytics)
+    domain: text("domain"), // nytimes.com, blog.posthog.com, etc.
+    author: text("author"), // If available in article
+    publishedAt: timestamp("published_at", { withTimezone: true }), // Article date if available
+
+    // Stage 1: Content stats (for dashboard)
+    wordCount: integer("word_count"), // Raw content word count
+    readingTimeMinutes: integer("reading_time_minutes"), // ~200 words/min
+
+    // Stage 2: Classifier stats (token usage tracking)
+    classifierModel: text("classifier_model"),
+    classifierPromptTokens: integer("classifier_prompt_tokens"),
+    classifierCompletionTokens: integer("classifier_completion_tokens"),
+    classifierTotalTokens: integer("classifier_total_tokens"),
+    classifierTimeMs: integer("classifier_time_ms"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    summaryIdIdx: index("Article_summary_id_idx").on(table.summaryId),
+    domainIdx: index("Article_domain_idx").on(table.domain),
+  }),
+);
+
+export type Article = typeof articles.$inferSelect;
+export type NewArticle = typeof articles.$inferInsert;
+
 // Relations
 export const summariesRelations = relations(summaries, ({ one }) => ({
   youtube: one(youtube, {
     fields: [summaries.id],
     references: [youtube.summaryId],
   }),
+  article: one(articles, {
+    fields: [summaries.id],
+    references: [articles.summaryId],
+  }),
 }));
 
 export const youtubeRelations = relations(youtube, ({ one }) => ({
   summary: one(summaries, {
     fields: [youtube.summaryId],
+    references: [summaries.id],
+  }),
+}));
+
+export const articlesRelations = relations(articles, ({ one }) => ({
+  summary: one(summaries, {
+    fields: [articles.summaryId],
     references: [summaries.id],
   }),
 }));

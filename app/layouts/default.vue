@@ -3,10 +3,7 @@ const route = useRoute();
 
 // Check for reader mode via query param (?r or ?reader)
 const isReaderMode = computed(() => {
-  // console.log("Route query:", route.query);
-  const result = "r" in route.query || "reader" in route.query;
-  // console.log("isReaderMode:", result);
-  return result;
+  return "r" in route.query || "reader" in route.query;
 });
 </script>
 

@@ -1,7 +1,7 @@
-import { summarize as summarizeArticle } from '../../services/article'
+import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 import { summarize as summarizeReddit } from '../../services/reddit'
-import { summaries } from '~~/db/schema'
+import { summaries, articles } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
@@ -57,8 +57,11 @@ export default defineEventHandler(async (event) => {
     // Extract reasoning (articles have it, YouTube has it from classifier)
     const reasoning = 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
 
+    // Get summary record ID for metadata relation
+    let summaryInternalId: string | undefined
+
     if (updateSummaryId) {
-      await db.update(summaries)
+      const updated = await db.update(summaries)
         .set({
           title: result.title,
           summary: result.summary,
@@ -75,6 +78,29 @@ export default defineEventHandler(async (event) => {
           completedAt: new Date(),
         })
         .where(eq(summaries.summaryId, updateSummaryId))
+        .returning({ id: summaries.id })
+
+      summaryInternalId = updated[0]?.id
+
+      // Store article metadata if essence is article
+      if (essence === 'article' && summaryInternalId && 'metadata' in result) {
+        const metadata = (result as { metadata: ArticleMetadata }).metadata
+        await db.insert(articles).values({
+          summaryId: summaryInternalId,
+          metaTitle: metadata.metaTitle,
+          metaDescription: metadata.metaDescription,
+          domain: metadata.domain,
+          author: metadata.author,
+          publishedAt: metadata.publishedAt,
+          wordCount: metadata.wordCount,
+          readingTimeMinutes: metadata.readingTimeMinutes,
+          classifierModel: metadata.classifierModel,
+          classifierPromptTokens: metadata.classifierPromptTokens,
+          classifierCompletionTokens: metadata.classifierCompletionTokens,
+          classifierTotalTokens: metadata.classifierTotalTokens,
+          classifierTimeMs: metadata.classifierTimeMs,
+        }).onConflictDoNothing() // Avoid duplicate inserts
+      }
 
       return {
         summaryId: updateSummaryId,
@@ -102,6 +128,27 @@ export default defineEventHandler(async (event) => {
 
     const insertedRecord = insertResult[0]
     const summaryId = insertedRecord?.summaryId
+    summaryInternalId = insertedRecord?.id
+
+    // Store article metadata if essence is article
+    if (essence === 'article' && summaryInternalId && 'metadata' in result) {
+      const metadata = (result as { metadata: ArticleMetadata }).metadata
+      await db.insert(articles).values({
+        summaryId: summaryInternalId,
+        metaTitle: metadata.metaTitle,
+        metaDescription: metadata.metaDescription,
+        domain: metadata.domain,
+        author: metadata.author,
+        publishedAt: metadata.publishedAt,
+        wordCount: metadata.wordCount,
+        readingTimeMinutes: metadata.readingTimeMinutes,
+        classifierModel: metadata.classifierModel,
+        classifierPromptTokens: metadata.classifierPromptTokens,
+        classifierCompletionTokens: metadata.classifierCompletionTokens,
+        classifierTotalTokens: metadata.classifierTotalTokens,
+        classifierTimeMs: metadata.classifierTimeMs,
+      })
+    }
 
     return {
       summaryId,

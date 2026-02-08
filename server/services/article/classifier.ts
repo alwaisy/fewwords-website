@@ -1,4 +1,4 @@
-import { callOpenAI } from "../shared/llm";
+import { callOpenAI, type OpenAIResult } from "../shared/llm";
 import { PROMPT_VERSIONS, type PromptCategory } from "../../prompts/article";
 
 const CLASSIFIER_PROMPT = `### ROLE
@@ -37,15 +37,25 @@ Output your reasoning (1-2 sentences explaining why this category), then the cat
 // This article has product specs and comparison tables. Reader wants to extract facts.
 // v2
 
+export interface ClassifierUsageStats {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  timeMs: number;
+}
+
 export interface ClassifierResult {
   category: PromptCategory;
   version: string; // The actual version to use (e.g., "v1.2")
   reasoning: string; // Why this category was chosen
+  usage: ClassifierUsageStats; // Token usage and timing
 }
 
 export async function classifyArticle(
   content: string,
 ): Promise<ClassifierResult> {
+  const startTime = Date.now();
+
   const llmResult = await callOpenAI({
     model: "gpt-4.1-2025-04-14", // GPT-5 Mini (reasoning model)
     messages: [
@@ -57,9 +67,8 @@ export async function classifyArticle(
     ],
   });
 
-  console.log("=== CLASSIFIER RAW RESPONSE ===");
-  console.log(llmResult.content);
-  console.log("=== END CLASSIFIER RESPONSE ===");
+  const endTime = Date.now();
+  const timeMs = endTime - startTime;
 
   const trimmed = llmResult.content.trim();
   const lines = trimmed.split("\n").filter((line) => line.trim() !== "");
@@ -69,13 +78,17 @@ export async function classifyArticle(
   const match = categoryLine?.match(/^(v[1-3])/i);
 
   if (!match || !match[1]) {
-    console.log(llmResult);
-    console.warn("Classifier returned unexpected value:", llmResult.content);
     // Default to v1 if classification fails
     return {
       category: "v1",
       version: PROMPT_VERSIONS.v1,
       reasoning: "Classification failed - defaulted to v1",
+      usage: {
+        promptTokens: llmResult.usage?.promptTokens || 0,
+        completionTokens: llmResult.usage?.completionTokens || 0,
+        totalTokens: llmResult.usage?.totalTokens || 0,
+        timeMs,
+      },
     };
   }
 
@@ -84,15 +97,15 @@ export async function classifyArticle(
   // Everything except the last line is reasoning
   const reasoning = lines.slice(0, -1).join("\n").trim();
 
-  console.log("=== CLASSIFIER RESULT ===");
-  console.log("Category:", category);
-  console.log("Version:", version);
-  console.log("Reasoning:", reasoning);
-  console.log("=== END CLASSIFIER RESULT ===");
-
   return {
     category,
     version,
     reasoning,
+    usage: {
+      promptTokens: llmResult.usage?.promptTokens || 0,
+      completionTokens: llmResult.usage?.completionTokens || 0,
+      totalTokens: llmResult.usage?.totalTokens || 0,
+      timeMs,
+    },
   };
 }

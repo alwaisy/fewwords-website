@@ -1,9 +1,28 @@
 import { ARTICLE_CONFIG } from './config'
-import { fetchWithJina } from './fetcher'
-import { classifyArticle } from './classifier'
+import { fetchWithJina, type FetcherResponse } from './fetcher'
+import { classifyArticle, type ClassifierResult } from './classifier'
 import { getPrompt, getPromptMeta } from '../../prompts/article'
 import { callOpenRouter } from '../shared/llm'
 import { WRITING_GUIDELINES } from '../../prompts/system'
+
+export interface ArticleMetadata {
+  // Stage 1: SEO metadata
+  metaTitle?: string
+  metaDescription?: string
+  // Stage 1: Source info
+  domain?: string
+  author?: string
+  publishedAt?: Date | null
+  // Stage 1: Content stats
+  wordCount?: number
+  readingTimeMinutes?: number
+  // Stage 2: Classifier stats
+  classifierModel?: string
+  classifierPromptTokens?: number
+  classifierCompletionTokens?: number
+  classifierTotalTokens?: number
+  classifierTimeMs?: number
+}
 
 export interface ArticleResult {
   url: string
@@ -18,21 +37,23 @@ export interface ArticleResult {
     completionTokens: number
     totalTokens: number
   }
+  metadata: ArticleMetadata // Article metadata for storage
 }
 
 export async function summarize(url: string): Promise<ArticleResult> {
-  // Step 1: Fetch article content
-  const { content } = await fetchWithJina(url)
+  // Step 1: Fetch article content with metadata
+  const fetcherResult = await fetchWithJina(url)
+  const { content, ...metadata } = fetcherResult
 
   // Step 2: Classify article to select best prompt version
-  const { category: _category, version, reasoning } = await classifyArticle(content)
+  const classifierResult: ClassifierResult = await classifyArticle(content)
 
   // Step 3: Get the appropriate prompt for this category
-  const prompt = getPrompt(version)
-  const promptMeta = getPromptMeta(version)
+  const prompt = getPrompt(classifierResult.version)
+  const promptMeta = getPromptMeta(classifierResult.version)
 
   if (!prompt || !promptMeta) {
-    throw new Error(`Prompt version ${version} not found`)
+    throw new Error(`Prompt version ${classifierResult.version} not found`)
   }
 
   // Step 4: Call LLM with selected prompt
@@ -66,11 +87,29 @@ export async function summarize(url: string): Promise<ArticleResult> {
     summary,
     model: llmResult.model,
     promptId: promptMeta.ID,
-    reasoning,
+    reasoning: classifierResult.reasoning,
     usage: llmResult.usage ? {
       promptTokens: llmResult.usage.promptTokens,
       completionTokens: llmResult.usage.completionTokens,
       totalTokens: llmResult.usage.totalTokens,
     } : undefined,
+    metadata: {
+      // Stage 1: SEO metadata
+      metaTitle: metadata.metaTitle,
+      metaDescription: metadata.metaDescription,
+      // Stage 1: Source info
+      domain: metadata.domain,
+      author: metadata.author,
+      publishedAt: metadata.publishedAt,
+      // Stage 1: Content stats
+      wordCount: metadata.wordCount,
+      readingTimeMinutes: metadata.readingTimeMinutes,
+      // Stage 2: Classifier stats
+      classifierModel: 'gpt-4.1-2025-04-14',
+      classifierPromptTokens: classifierResult.usage.promptTokens,
+      classifierCompletionTokens: classifierResult.usage.completionTokens,
+      classifierTotalTokens: classifierResult.usage.totalTokens,
+      classifierTimeMs: classifierResult.usage.timeMs,
+    },
   }
 }

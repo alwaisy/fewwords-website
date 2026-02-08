@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // Skeleton loader component - no props needed
-console.log("Skeleton loaded");
 </script>
 
 <template>

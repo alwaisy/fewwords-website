@@ -43,11 +43,6 @@ export function useSummaryProcessing(
   const currentStage = ref<YouTubeStage>(null);
   let eventSource: EventSource | null = null;
 
-  // Watch currentStage for debugging
-  watch(currentStage, (newStage) => {
-    console.log(`[Stage] ✓ currentStage changed to: ${newStage}`);
-  }, { immediate: true });
-
   const currentMessage = computed(() => {
     if (!summary.value) return "";
 
@@ -104,42 +99,30 @@ export function useSummaryProcessing(
 
   const connectStageStream = () => {
     if (eventSource) {
-      console.log("[SSE] Already connected, skipping");
       return;
     }
 
     // Wait for summaryId to be available
     const tryConnect = () => {
       if (!summary.value?.summaryId) {
-        console.log("[SSE] No summaryId yet, retrying in 100ms");
         setTimeout(tryConnect, 100);
         return;
       }
 
-      console.log(`[SSE] Connecting to stream for ${summary.value.summaryId}`);
       eventSource = new EventSource(`/api/summary/${summary.value.summaryId}/stream`);
 
-      eventSource.onopen = () => {
-        console.log("[SSE] Connection opened successfully");
-      };
-
       eventSource.onmessage = (event) => {
-        console.log("[SSE] Raw message received:", event.data);
         try {
           const data = JSON.parse(event.data);
-          console.log("[SSE] Parsed data:", data);
           if (data.stage !== undefined) {
-            console.log("[SSE] Updating currentStage to:", data.stage);
             currentStage.value = data.stage;
           }
-        } catch (error) {
-          console.error("[SSE] Failed to parse message:", error);
+        } catch {
+          // Ignore parse errors
         }
       };
 
-      eventSource.onerror = (error) => {
-        console.error("[SSE] Connection error:", error);
-        console.error("[SSE] EventSource readyState:", eventSource?.readyState);
+      eventSource.onerror = () => {
         eventSource?.close();
         eventSource = null;
       };
@@ -150,7 +133,6 @@ export function useSummaryProcessing(
 
   const disconnectStageStream = () => {
     if (eventSource) {
-      console.log("[SSE] Disconnecting");
       eventSource.close();
       eventSource = null;
     }
@@ -168,8 +150,7 @@ export function useSummaryProcessing(
         },
       });
       await refresh();
-    } catch (err) {
-      console.error("Summarize API error:", err);
+    } catch {
       await refresh();
     }
   };
@@ -178,15 +159,12 @@ export function useSummaryProcessing(
     watch(
       () => summary.value?.status,
       (newStatus) => {
-        console.log(`[Status] ✓ Changed to: ${newStatus}, essence: ${summary.value?.essence}, summaryId: ${summary.value?.summaryId}`);
-
         if (newStatus === "pending") {
           startProcessing();
         }
 
         // Connect SSE for YouTube videos immediately, regardless of status
         if (summary.value?.essence === "youtube" && !eventSource) {
-          console.log(`[Status] → YouTube video detected, connecting SSE stream immediately...`);
           connectStageStream();
         }
 
@@ -206,11 +184,10 @@ export function useSummaryProcessing(
 
         // Disconnect SSE when completed/failed
         if ((newStatus === "completed" || newStatus === "failed") && eventSource) {
-          console.log(`[Status] → Processing finished (${newStatus}), disconnecting SSE`);
           disconnectStageStream();
         }
       },
-      { immediate: true } // Check immediately on mount
+      { immediate: true }
     );
   };
 
