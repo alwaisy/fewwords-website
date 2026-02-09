@@ -1,103 +1,103 @@
 <script setup lang="ts">
-import { ChevronRight } from 'lucide-vue-next'
+import type { LucideIcon } from "lucide-vue-next";
+import { ChevronRight } from "lucide-vue-next";
 
-import { Badge } from '@/components/ui/badge'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-} from '@/components/ui/sidebar'
-
-// Define types inline instead of importing from alias
 type NavLink = {
-  title: string
-  url: string
-  badge?: string
-  icon?: string
-  items?: never
-}
+  title: string;
+  url: string;
+  badge?: string;
+  icon?: LucideIcon;
+  items?: never;
+};
 
 type NavCollapsible = {
-  title: string
-  badge?: string
-  icon?: string
-  items: NavLink[]
-  url?: never
-}
+  title: string;
+  badge?: string;
+  icon?: LucideIcon;
+  items: NavLink[];
+  url?: never;
+};
 
-type NavItem = NavCollapsible | NavLink
+type NavItem = NavCollapsible | NavLink;
 
-defineProps<{
-  title: string
-  items: NavItem[]
-}>()
+const props = defineProps<{
+  title: string;
+  items: NavItem[];
+}>();
 
-const route = useRoute()
+const route = useRoute();
+
+// Track current path reactively
+const currentPath = computed(() => route.path);
 
 const isActive = (item: NavLink) => {
-  return route.path === item.url || route.path.startsWith(item.url + '/')
-}
+  return currentPath.value === item.url;
+};
+
+const isNavLink = (item: NavItem): item is NavLink => {
+  return "url" in item;
+};
 
 const hasActiveChild = (item: NavItem): boolean => {
-  if ('url' in item) {
-    return isActive(item as NavLink)
+  if (isNavLink(item)) {
+    return isActive(item);
   }
   // For NavCollapsible, check if any child is active
-  return (item as NavCollapsible).items.some((child) => isActive(child))
-}
+  return item.items.some((child) => isActive(child));
+};
 </script>
 
 <template>
   <SidebarGroup>
-    <SidebarGroupLabel>{{ title }}</SidebarGroupLabel>
+    <SidebarGroupLabel v-if="title">{{ title }}</SidebarGroupLabel>
+    <div v-else class="h-4" />
     <SidebarMenu>
       <template v-for="item in items" :key="item.title">
         <!-- Simple link -->
-        <SidebarMenuItem v-if="'url' in item">
-          <SidebarMenuButton as-child :is-active="isActive(item as NavLink)" :tooltip="item.title">
-            <NuxtLink :to="item.url">
-              <Icon v-if="item.icon" :name="item.icon" class="h-4 w-4" />
-              <span>{{ item.title }}</span>
-              <Badge v-if="item.badge" class="ml-auto rounded-full px-1 py-0 text-xs">
-                {{ item.badge }}
-              </Badge>
-            </NuxtLink>
+        <SidebarMenuItem v-if="isNavLink(item)">
+          <SidebarMenuButton
+            :is-active="isActive(item)"
+            :tooltip="item.title"
+            as="a"
+            :href="item.url"
+            @click.prevent="navigateTo(item.url)"
+          >
+            <component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
+            <span>{{ item.title }}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
 
         <!-- Collapsible with sub-items -->
-        <Collapsible v-else as-child class="group/collapsible" :default-open="hasActiveChild(item)">
+        <Collapsible
+          v-else
+          as-child
+          class="group/collapsible"
+          :default-open="hasActiveChild(item)"
+        >
           <SidebarMenuItem>
             <CollapsibleTrigger as-child>
               <SidebarMenuButton :tooltip="item.title">
-                <Icon v-if="item.icon" :name="item.icon" class="h-4 w-4" />
+                <component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
                 <span>{{ item.title }}</span>
-                <Badge v-if="item.badge" class="ml-auto rounded-full px-1 py-0 text-xs">
-                  {{ item.badge }}
-                </Badge>
-                <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 h-4 w-4" />
+                <ChevronRight
+                  class="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90"
+                />
               </SidebarMenuButton>
             </CollapsibleTrigger>
-            <CollapsibleContent class="collapsible-content">
+            <CollapsibleContent>
               <SidebarMenuSub>
-                <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
+                <SidebarMenuSubItem
+                  v-for="subItem in item.items"
+                  :key="subItem.title"
+                >
                   <SidebarMenuSubButton as-child :is-active="isActive(subItem)">
                     <NuxtLink :to="subItem.url">
-                      <Icon v-if="subItem.icon" :name="subItem.icon" class="h-4 w-4" />
+                      <component
+                        :is="subItem.icon"
+                        v-if="subItem.icon"
+                        class="h-4 w-4"
+                      />
                       <span>{{ subItem.title }}</span>
-                      <Badge v-if="subItem.badge" class="ml-auto rounded-full px-1 py-0 text-xs">
-                        {{ subItem.badge }}
-                      </Badge>
                     </NuxtLink>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>

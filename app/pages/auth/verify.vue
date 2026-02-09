@@ -26,12 +26,16 @@ onMounted(async () => {
   // Verify token with backend
   const result = await verify(token)
 
-  if (result.success) {
+  if (result.success && result.user) {
     status.value = 'success'
 
-    // Redirect to app after 2 seconds
+    // Redirect to admin if admin role, otherwise app
     setTimeout(() => {
-      router.push('/app')
+      if (result.user?.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/app')
+      }
     }, 2000)
   }
   else {
@@ -41,7 +45,13 @@ onMounted(async () => {
 })
 
 function goToApp() {
-  router.push('/app')
+  // Check if admin and redirect accordingly
+  const { user } = useAuth()
+  if (user.value?.role === 'admin') {
+    router.push('/admin')
+  } else {
+    router.push('/app')
+  }
 }
 
 function goBack() {

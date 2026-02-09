@@ -12,6 +12,19 @@ const email = ref('')
 const router = useRouter()
 const { login, isLoading } = useAuth()
 
+// Check if already logged in as admin, redirect to admin
+onMounted(async () => {
+  try {
+    const response = await $fetch<{ authenticated: boolean; user?: { role?: string } }>('/api/auth/me')
+    if (response?.authenticated && response.user?.role === 'admin') {
+      await router.push('/admin')
+    }
+  }
+  catch {
+    // Not authenticated, continue to login
+  }
+})
+
 async function handleLogin() {
   if (!email.value) return
 

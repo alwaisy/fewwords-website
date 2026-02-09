@@ -1,45 +1,25 @@
 /**
- * Auth composable for nuxt-auth-utils based authentication
+ * Auth composable - thin wrapper around nuxt-auth-utils
+ * Provides custom API endpoints while syncing session state
+ *
+ * User types are defined in types/auth.d.ts via module augmentation
  */
-export interface User {
-  id: string
-  email: string
-  name: string
-  username?: string
-  createdAt?: string
-}
+export type UserRole = 'user' | 'admin'
 
 export const useAuth = () => {
-  // Auth state
-  const user = useState<User | null>('user', () => null)
-  const isLoggedIn = computed(() => user.value !== null)
+  // Use nuxt-auth-utils for session state (syncs with encrypted cookie)
+  const { loggedIn, user, fetch, clear } = useUserSession()
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  // Alias for backward compatibility
+  const isLoggedIn = loggedIn
+
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated - syncs with server session
    */
   const checkAuth = async () => {
-    try {
-      isLoading.value = true
-      error.value = null
-
-      const response = await $fetch<{ authenticated: boolean; user: User | null }>('/api/auth/me')
-
-      if (response.authenticated && response.user) {
-        user.value = response.user
-      }
-      else {
-        user.value = null
-      }
-    }
-    catch (e) {
-      console.error('Check auth error:', e)
-      user.value = null
-    }
-    finally {
-      isLoading.value = false
-    }
+    await fetch()
   }
 
   /**
@@ -103,20 +83,21 @@ export const useAuth = () => {
   }
 
   /**
-   * Verify magic link token
+   * Verify magic link token - syncs session with server
    */
   const verify = async (token: string) => {
     try {
       isLoading.value = true
       error.value = null
 
-      const response = await $fetch<{ success: boolean; user?: User; message: string }>('/api/auth/verify', {
+      const response = await $fetch<{ success: boolean; user?: import('#auth-utils').User; message: string }>('/api/auth/verify', {
         method: 'POST',
         body: { token },
       })
 
-      if (response.success && response.user) {
-        user.value = response.user
+      if (response.success) {
+        // Sync session with server
+        await fetch()
       }
 
       return response
@@ -132,7 +113,7 @@ export const useAuth = () => {
   }
 
   /**
-   * Logout user
+   * Logout user - clears session
    */
   const logout = async () => {
     try {
@@ -140,8 +121,8 @@ export const useAuth = () => {
       error.value = null
 
       await $fetch('/api/auth/logout', { method: 'POST' })
+      await clear() // Clear nuxt-auth-utils session
 
-      user.value = null
       return { success: true }
     }
     catch (e) {
@@ -155,7 +136,7 @@ export const useAuth = () => {
   }
 
   return {
-    user: readonly(user),
+    user,
     isLoggedIn,
     isLoading: readonly(isLoading),
     error: readonly(error),

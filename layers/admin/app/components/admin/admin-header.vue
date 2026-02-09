@@ -1,36 +1,39 @@
 <script setup lang="ts">
 // Admin header component
 // Based on shadcn-admin Header component
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
+import { ChevronRight } from "lucide-vue-next";
 
-const route = useRoute()
+const route = useRoute();
 
 const breadcrumb = computed(() => {
-  const path = route.path
-  if (path === "/admin" || path === "/admin/") return [{ title: "Dashboard", href: "/admin" }]
+  const path = route.path;
+  if (path === "/admin" || path === "/admin/")
+    return [{ title: "Dashboard", href: "/admin" }];
 
-  const parts = path.split("/").filter(Boolean)
-  const items: Array<{ title: string; href?: string }> = [{ title: "Dashboard", href: "/admin" }]
+  const parts = path.split("/").filter(Boolean);
+  const items: Array<{ title: string; href?: string }> = [
+    { title: "Dashboard", href: "/admin" },
+  ];
 
   if (parts.length > 1 && parts[1]) {
-    items.push({ title: parts[1].charAt(0).toUpperCase() + parts[1].slice(1) })
+    items.push({ title: parts[1].charAt(0).toUpperCase() + parts[1].slice(1) });
   }
 
-  return items
-})
+  return items;
+});
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 flex h-16 w-full items-center gap-2 border-b bg-background/95 backdrop-blur supports-[bg-blend]:supports:bg-background/60">
+  <header
+    class="sticky top-0 z-50 flex h-16 w-full items-center gap-2 border-b bg-background/95 backdrop-blur supports-[bg-blend]:supports:bg-background/60"
+  >
     <div class="flex h-full w-full items-center gap-3 px-4 sm:gap-4">
       <SidebarTrigger variant="ghost" class="max-md:scale-125" />
       <Separator orientation="vertical" class="h-6" />
       <div class="flex flex-1 items-center gap-1 text-sm">
         <template v-for="(item, index) in breadcrumb" :key="index">
-          <Icon
+          <ChevronRight
             v-if="index > 0"
-            name="lucide:chevron-right"
             class="h-4 w-4 text-muted-foreground"
           />
           <component
@@ -39,7 +42,7 @@ const breadcrumb = computed(() => {
             :class="[
               index === breadcrumb.length - 1
                 ? 'text-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             ]"
           >
             {{ item.title }}

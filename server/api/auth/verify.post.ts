@@ -45,15 +45,22 @@ export default defineEventHandler(async (event) => {
       .where(eq(users.id, user.id));
 
     // Set user session
-    await setUserSession(event, {
+    const sessionData = {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        username: user.username,
+        username: user.username ?? undefined,
+        role: user.role,
         createdAt: user.createdAt.toISOString(),
       },
-    });
+    };
+
+    console.log('[VERIFY] Setting session:', JSON.stringify(sessionData, null, 2));
+
+    await setUserSession(event, sessionData);
+
+    console.log('[VERIFY] Session set, user.role:', user.role);
 
     return {
       success: true,
@@ -63,6 +70,7 @@ export default defineEventHandler(async (event) => {
         email: user.email,
         name: user.name,
         username: user.username,
+        role: user.role,
         createdAt: user.createdAt.toISOString(),
       },
     };

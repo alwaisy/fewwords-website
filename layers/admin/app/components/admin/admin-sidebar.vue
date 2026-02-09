@@ -1,174 +1,73 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { LucideIcon } from "lucide-vue-next";
+import { Command, FileText, LayoutDashboard, Users } from "lucide-vue-next";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from '@/components/ui/sidebar'
+// Get user from useAuth (consistent with rest of app)
+const { user } = useAuth();
 
 // Define types inline for sidebar data
 type User = {
-  name: string
-  email: string
-  avatar?: string
-}
+  name: string;
+  email: string;
+  avatar?: string;
+};
 
 type Team = {
-  name: string
-  logo: string
-  plan: string
-}
+  name: string;
+  logo: LucideIcon;
+  plan: string;
+};
 
 type NavLink = {
-  title: string
-  url: string
-  badge?: string
-  icon?: string
-  items?: never
-}
-
-type NavCollapsible = {
-  title: string
-  badge?: string
-  icon?: string
-  items: NavLink[]
-  url?: never
-}
-
-type NavItem = NavCollapsible | NavLink
+  title: string;
+  url: string;
+  icon: LucideIcon;
+};
 
 type NavGroup = {
-  title: string
-  items: NavItem[]
-}
+  title: string;
+  items: NavLink[];
+};
 
 type SidebarData = {
-  user: User
-  teams: Team[]
-  navGroups: NavGroup[]
-}
+  user: User;
+  teams: Team[];
+  navGroups: NavGroup[];
+};
 
-// Sidebar data - could be moved to a separate file
+// Compute user data from auth
+const userData = computed<User>(() => {
+  return {
+    name: user.value?.name || "Admin",
+    email: user.value?.email || "admin@fewwords.app",
+    avatar: user.value?.name
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.value.name)}&background=6366f1&color=fff`
+      : undefined,
+  };
+});
+
+// Sidebar data - only includes implemented pages
 const sidebarData: SidebarData = {
-  user: {
-    name: "Admin",
-    email: "admin@fewwords.app",
-    avatar: "/avatars/admin.jpg",
-  },
-  teams: [
-    {
-      name: "Fewwords Admin",
-      logo: "lucide:command",
-      plan: "Pro",
-    },
-  ],
+  user: userData.value,
+  teams: [{ name: "Fewwords Admin", logo: Command, plan: "Pro" }],
   navGroups: [
     {
-      title: "Overview",
+      title: "",
       items: [
-        {
-          title: "Dashboard",
-          url: "/admin",
-          icon: "lucide:layout-dashboard",
-        },
-        {
-          title: "Summaries",
-          url: "/admin/summaries",
-          icon: "lucide:file-text",
-        },
-        {
-          title: "Users",
-          url: "/admin/users",
-          icon: "lucide:users",
-        },
-      ],
-    },
-    {
-      title: "Analytics",
-      items: [
-        {
-          title: "Content Stats",
-          url: "/admin/content-stats",
-          icon: "lucide:bar-chart-3",
-        },
-        {
-          title: "Token Usage",
-          url: "/admin/token-usage",
-          icon: "lucide:coins",
-        },
-        {
-          title: "Costs",
-          url: "/admin/costs",
-          icon: "lucide:credit-card",
-        },
-      ],
-    },
-    {
-      title: "Management",
-      items: [
-        {
-          title: "Domains",
-          url: "/admin/domains",
-          icon: "lucide:globe",
-        },
-        {
-          title: "Channels",
-          url: "/admin/channels",
-          icon: "lucide:youtube",
-        },
-        {
-          title: "Categories",
-          url: "/admin/categories",
-          icon: "lucide:tags",
-        },
-        {
-          title: "Errors",
-          url: "/admin/errors",
-          icon: "lucide:alert-circle",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      items: [
-        {
-          title: "Profile",
-          url: "/admin/settings/profile",
-          icon: "lucide:user-cog",
-        },
-        {
-          title: "Appearance",
-          url: "/admin/settings/appearance",
-          icon: "lucide:palette",
-        },
-        {
-          title: "Notifications",
-          url: "/admin/settings/notifications",
-          icon: "lucide:bell",
-        },
+        { title: "Stats", url: "/admin", icon: LayoutDashboard },
+        { title: "Summaries", url: "/admin/summaries", icon: FileText },
+        { title: "Users", url: "/admin/users", icon: Users },
       ],
     },
   ],
-}
+};
 
-const activeTeam = ref(sidebarData.teams[0]!)
-
-// Also make sure we have at least one team
-if (!sidebarData.teams.length) {
-  sidebarData.teams.push({
-    name: "Default",
-    logo: "lucide:command",
-    plan: "Free",
-  })
-}
+const activeTeam = ref(sidebarData.teams[0]!);
 </script>
 
 <template>
   <Sidebar collapsible="icon">
-    <SidebarHeader>
+    <SidebarHeader class="border-b border-sidebar-foreground h-16">
       <AdminTeamSwitcher v-model="activeTeam" :teams="sidebarData.teams" />
     </SidebarHeader>
     <SidebarContent>
@@ -180,7 +79,7 @@ if (!sidebarData.teams.length) {
       />
     </SidebarContent>
     <SidebarFooter>
-      <AdminNavUser :user="sidebarData.user" />
+      <AdminNavUser :user="userData" />
     </SidebarFooter>
     <SidebarRail />
   </Sidebar>

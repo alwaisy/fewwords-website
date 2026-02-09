@@ -1,18 +1,10 @@
 /**
  * Auth middleware - Protects routes that require authentication
  */
-export default defineNuxtRouteMiddleware(async () => {
-  // Only run on client side
-  if (import.meta.server) return
+export default defineNuxtRouteMiddleware(() => {
+  const { loggedIn } = useUserSession()
 
-  try {
-    const response = await $fetch<{ authenticated: boolean; user: { id: string; email: string; name: string } } | null>('/api/auth/me')
-
-    if (!response?.authenticated) {
-      return navigateTo('/auth/login')
-    }
-  }
-  catch {
+  if (!loggedIn.value) {
     return navigateTo('/auth/login')
   }
 })
