@@ -1,15 +1,15 @@
 <script setup lang="ts">
 interface ErrorProps {
   error?: {
-    statusCode?: number
-    statusMessage?: string
-    message?: string
-  }
+    statusCode?: number;
+    statusMessage?: string;
+    message?: string;
+  };
 }
 
-const props = defineProps<ErrorProps>()
+const props = defineProps<ErrorProps>();
 
-const handleError = () => clearError({ redirect: '/' })
+const handleError = () => clearError({ redirect: "/" });
 </script>
 
 <template>
@@ -22,14 +22,14 @@ const handleError = () => clearError({ redirect: '/' })
       </h1>
 
       <p class="text-muted-foreground text-lg mb-8 max-w-md">
-        {{ props.error?.statusCode === 404
-          ? 'This page is playing hide and seek. And winning.'
-          : 'Something broke. We\'re on it (probably).' }}
+        {{
+          props.error?.statusCode === 404
+            ? "This page is playing hide and seek. And winning."
+            : "Something broke. I'm on it (probably)."
+        }}
       </p>
 
-      <Button size="lg" @click="handleError">
-        Go Home
-      </Button>
+      <Button size="lg" @click="handleError"> Go Home </Button>
     </div>
   </div>
 </template>

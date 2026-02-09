@@ -13,6 +13,10 @@ import { nanoid } from "nanoid";
 // Use crypto.randomUUID() for Cloudflare Workers compatibility
 const generateId = () => crypto.randomUUID();
 
+// User roles enum
+export const userRoleEnum = ["user", "admin"] as const;
+export type UserRole = (typeof userRoleEnum)[number];
+
 // Users table for authentication
 export const users = pgTable(
   "User",
@@ -23,6 +27,7 @@ export const users = pgTable(
     email: text("email").notNull().unique(),
     name: text("name").notNull(),
     username: text("username").unique(),
+    role: text("role", { enum: userRoleEnum }).notNull().default("user"),
     magicLinkToken: text("magic_link_token"),
     magicLinkExpiresAt: timestamp("magic_link_expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

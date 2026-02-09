@@ -56,11 +56,7 @@ export default defineEventHandler(async (event) => {
       },
     };
 
-    console.log('[VERIFY] Setting session:', JSON.stringify(sessionData, null, 2));
-
     await setUserSession(event, sessionData);
-
-    console.log('[VERIFY] Session set, user.role:', user.role);
 
     return {
       success: true,
@@ -74,8 +70,7 @@ export default defineEventHandler(async (event) => {
         createdAt: user.createdAt.toISOString(),
       },
     };
-  } catch (error: unknown) {
-    console.error("Verify error:", error);
+  } catch {
     throw createError({
       statusCode: 500,
       statusMessage: "Verification failed",
