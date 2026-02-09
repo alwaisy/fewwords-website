@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+
+import { Button } from '~/components/ui/button'
 import {
   Drawer,
   DrawerClose,
@@ -7,7 +9,6 @@ import {
   DrawerOverlay,
   DrawerPortal,
 } from '~/components/ui/drawer'
-import { Button } from '~/components/ui/button'
 
 const { isLoggedIn, logout } = useAuth()
 const isMobileMenuOpen = ref(false)

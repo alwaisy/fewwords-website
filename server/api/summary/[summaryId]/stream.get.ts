@@ -1,4 +1,5 @@
 import { getRouterParam } from "h3";
+
 import { redis } from "../../../lib/redis";
 
 export default defineEventHandler(async (event) => {

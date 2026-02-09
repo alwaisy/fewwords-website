@@ -1,9 +1,11 @@
+import { getPrompt, getPromptMeta } from '../../prompts/article'
+import { WRITING_GUIDELINES } from '../../prompts/system'
+import { callOpenRouter } from '../shared/llm'
+
+import { classifyArticle, type ClassifierResult } from './classifier'
 import { ARTICLE_CONFIG } from './config'
 import { fetchWithJina } from './fetcher'
-import { classifyArticle, type ClassifierResult } from './classifier'
-import { getPrompt, getPromptMeta } from '../../prompts/article'
-import { callOpenRouter } from '../shared/llm'
-import { WRITING_GUIDELINES } from '../../prompts/system'
+
 
 export interface ArticleMetadata {
   // Stage 1: SEO metadata

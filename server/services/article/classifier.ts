@@ -1,5 +1,5 @@
-import { callOpenAI } from "../shared/llm";
 import { PROMPT_VERSIONS, type PromptCategory } from "../../prompts/article";
+import { callOpenAI } from "../shared/llm";
 
 const CLASSIFIER_PROMPT = `### ROLE
 You are a content classifier. Your job is to analyze an article and select the best summarization strategy.

@@ -1,10 +1,13 @@
-import { fetchYouTubeMetadata } from "./metadata";
-import { classifyVideo } from "./classifier";
-import { summarizeVideo } from "./summarizer";
-import { summaries, youtube } from "~~/db/schema";
 import { eq } from "drizzle-orm";
+
 import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
+
+import { classifyVideo } from "./classifier";
 import { YOUTUBE_CLASSIFIER_CONFIG, YOUTUBE_SUMMARIZER_CONFIG } from "./config";
+import { fetchYouTubeMetadata } from "./metadata";
+import { summarizeVideo } from "./summarizer";
+
+import { summaries, youtube } from "~~/db/schema";
 import { redis } from "~~/server/lib/redis";
 
 export interface YouTubeResult {

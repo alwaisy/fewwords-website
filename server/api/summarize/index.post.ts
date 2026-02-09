@@ -1,8 +1,10 @@
-import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
-import { summarize as summarizeYouTube } from '../../services/youtube'
-import { summarize as summarizeReddit } from '../../services/reddit'
-import { summaries, articles } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
+
+import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
+import { summarize as summarizeReddit } from '../../services/reddit'
+import { summarize as summarizeYouTube } from '../../services/youtube'
+
+import { summaries, articles } from '~~/db/schema'
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
   const urlObj = new URL(url)

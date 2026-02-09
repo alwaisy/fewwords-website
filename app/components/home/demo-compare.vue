@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import type { UnwrapRefCarouselApi } from "~/components/ui/carousel/interface";
-import Carousel from "~/components/ui/carousel/Carousel.vue";
-import CarouselContent from "~/components/ui/carousel/CarouselContent.vue";
-import CarouselItem from "~/components/ui/carousel/CarouselItem.vue";
 import { ref, onMounted } from "vue";
+
+import CarouselContent from "~/components/ui/carousel/carousel-content.vue";
+import CarouselItem from "~/components/ui/carousel/carousel-item.vue";
+import Carousel from "~/components/ui/carousel/carousel.vue";
+import type { UnwrapRefCarouselApi } from "~/components/ui/carousel/interface";
+
 
 const demos = [
   {

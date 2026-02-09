@@ -1,6 +1,7 @@
-import { callOpenRouter } from "../shared/llm";
-import { YOUTUBE_CLASSIFIER_CONFIG } from "./config";
 import { WRITING_GUIDELINES } from "../../prompts/system";
+import { callOpenRouter } from "../shared/llm";
+
+import { YOUTUBE_CLASSIFIER_CONFIG } from "./config";
 
 export interface VideoMetadata {
   title: string;

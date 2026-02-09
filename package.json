@@ -11,7 +11,7 @@
     "lint": "eslint . --ignore-pattern 'dev-docs/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dev-docs/**'",
     "type": "nuxt typecheck",
-    "check": "bun run lint && bun type",
+    "check": "bun run lint:fix && bun run lint && bun type",
     "shadcn": "bunx --bun shadcn-vue@latest add",
     "db:start:pg": "docker compose -f local-database/docker-compose.yml up -d",
     "db:stop:pg": "docker compose -f local-database/docker-compose.yml down",
@@ -64,6 +64,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.89",
     "@nuxtjs/color-mode": "^4.0.0",
     "@radya/nuxt-dompurify": "^1.0.5",
     "@tailwindcss/typography": "^0.5.19",
@@ -71,6 +72,8 @@
     "@types/node": "^25.1.0",
     "dompurify": "^3.3.1",
     "drizzle-kit": "^0.31.8",
+    "eslint-plugin-check-file": "^3.3.1",
+    "eslint-plugin-import": "^2.32.0",
     "nuxt-auth-utils": "^0.5.28",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",

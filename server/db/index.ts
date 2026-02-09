@@ -1,7 +1,8 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import * as schema from '~~/db/schema'
 import type { H3Event } from 'h3'
+import postgres from 'postgres'
+
+import * as schema from '~~/db/schema'
 
 // Singleton for database client
 let dbInstance: ReturnType<typeof drizzle> | null = null

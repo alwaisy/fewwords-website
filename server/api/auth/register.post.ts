@@ -1,6 +1,7 @@
 import { eq, or } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { Resend } from "resend";
+
 import { users } from "~~/db/schema";
 
 export default defineEventHandler(async (event) => {

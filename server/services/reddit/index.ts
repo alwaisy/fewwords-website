@@ -1,7 +1,8 @@
-import { REDDIT_CONFIG } from './config'
 import { REDDIT_PROMPT, PROMPT_META } from '../../prompts/reddit'
-import { callOpenRouter } from '../shared/llm'
 import { WRITING_GUIDELINES } from '../../prompts/system'
+import { callOpenRouter } from '../shared/llm'
+
+import { REDDIT_CONFIG } from './config'
 
 export interface RedditResult {
   url: string

@@ -1,8 +1,10 @@
-import { callOpenRouter } from '../shared/llm'
-import { YOUTUBE_SUMMARIZER_CONFIG } from './config'
-import { YOUTUBE_PROMPTS, type YouTubeVideoType } from '../../prompts/youtube'
-import type { ClassifierResult } from './classifier'
 import { WRITING_GUIDELINES } from '../../prompts/system'
+import { YOUTUBE_PROMPTS, type YouTubeVideoType } from '../../prompts/youtube'
+import { callOpenRouter } from '../shared/llm'
+
+import type { ClassifierResult } from './classifier'
+import { YOUTUBE_SUMMARIZER_CONFIG } from './config'
+
 
 interface SummaryInput {
   videoUrl: string

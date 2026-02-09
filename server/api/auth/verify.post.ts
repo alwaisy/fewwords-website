@@ -1,4 +1,5 @@
 import { eq, and, gt } from "drizzle-orm";
+
 import { users } from "~~/db/schema";
 
 export default defineEventHandler(async (event) => {

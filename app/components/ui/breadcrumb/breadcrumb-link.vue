@@ -1,17 +1,14 @@
 <script lang="ts" setup>
-import type { PrimitiveProps } from 'reka-ui';
-import { Primitive } from 'reka-ui';
-import type { HTMLAttributes } from 'vue';
+import type { PrimitiveProps } from "reka-ui"
+import { Primitive } from "reka-ui"
+import type { HTMLAttributes } from "vue"
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils"
 
-const props = withDefaults(
-  defineProps<PrimitiveProps & { class?: HTMLAttributes['class'] }>(),
-  {
-    as: 'a',
-    class: undefined,
-  },
-);
+const props = withDefaults(defineProps<PrimitiveProps & { class?: HTMLAttributes["class"] }>(), {
+  as: "a",
+  class: undefined,
+})
 </script>
 
 <template>
