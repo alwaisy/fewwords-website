@@ -20,7 +20,7 @@ type NavCollapsible = {
 
 type NavItem = NavCollapsible | NavLink;
 
-const props = defineProps<{
+defineProps<{
   title: string;
   items: NavItem[];
 }>();
