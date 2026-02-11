@@ -124,7 +124,7 @@ export const createColumns = (
       },
       cell: ({ row }) => {
         const tokens = row.getValue("totalTokens") as number | null
-        return h("div", { class: "text-sm text-muted-foreground font-mono" }, tokens?.toLocaleString() || "N/A")
+        return h("div", { class: "text-sm text-muted-foreground font-mono text-center" }, tokens?.toLocaleString() || "N/A")
       },
     },
 

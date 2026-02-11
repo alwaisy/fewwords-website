@@ -37,9 +37,45 @@ const props = defineProps<{
 }>()
 
 // Filter states
-const essenceFilter = ref<string>("")
-const modelFilter = ref<string>("")
-const statusFilter = ref<string>("")
+const essenceFilter = ref<string>("all")
+const modelFilter = ref<string>("all")
+const statusFilter = ref<string>("all")
+
+// Dynamically extract unique models from data
+const uniqueModels = computed(() => {
+  const models = new Set<string>()
+  props.data.forEach((item) => {
+    const summary = item as Summary
+    if (summary.model && typeof summary.model === 'string') {
+      models.add(summary.model)
+    }
+  })
+  return Array.from(models).sort()
+})
+
+// Dynamically extract unique statuses from data
+const uniqueStatuses = computed(() => {
+  const statuses = new Set<string>()
+  props.data.forEach((item) => {
+    const summary = item as Summary
+    if (summary.status && typeof summary.status === 'string') {
+      statuses.add(summary.status)
+    }
+  })
+  return Array.from(statuses).sort()
+})
+
+// Dynamically extract unique essences from data
+const uniqueEssences = computed(() => {
+  const essences = new Set<string>()
+  props.data.forEach((item) => {
+    const summary = item as Summary
+    if (summary.essence && typeof summary.essence === 'string') {
+      essences.add(summary.essence)
+    }
+  })
+  return Array.from(essences).sort()
+})
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
@@ -59,9 +95,9 @@ const columnVisibility = ref<VisibilityState>({
 // Watch filter states and update column filters
 watch([essenceFilter, modelFilter, statusFilter], () => {
   columnFilters.value = [
-    { id: "essence", value: essenceFilter.value },
-    { id: "model", value: modelFilter.value },
-    { id: "status", value: statusFilter.value },
+    { id: "essence", value: essenceFilter.value === "all" ? "" : essenceFilter.value },
+    { id: "model", value: modelFilter.value === "all" ? "" : modelFilter.value },
+    { id: "status", value: statusFilter.value === "all" ? "" : statusFilter.value },
   ].filter((f) => f.value !== "")
 })
 
@@ -97,116 +133,101 @@ defineExpose({ openDrawer })
 
 <template>
   <div class="w-full">
-    <div class="flex items-center justify-between py-4 gap-4 flex-wrap">
-      <div class="flex items-center gap-2 flex-wrap">
-        <!-- Title filter -->
-        <Input
-          placeholder="Filter titles..."
-          :model-value="(table.getColumn('title')?.getFilterValue() as string) ?? ''"
-          class="max-w-[200px]"
-          @update:model-value="table.getColumn('title')?.setFilterValue($event)"
-        />
+    <div class="flex items-center justify-between py-4 gap-2 flex-wrap">
+      <!-- Search - gets max space -->
+      <Input
+        placeholder="Filter titles..."
+        :model-value="(table.getColumn('title')?.getFilterValue() as string) ?? ''"
+        class="max-w-full flex-1 min-w-[150px]"
+        @update:model-value="table.getColumn('title')?.setFilterValue($event)"
+      />
 
-        <!-- Essence filter -->
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-muted-foreground">Type:</span>
-          <Badge
-            v-if="essenceFilter"
-            variant="secondary"
-            class="cursor-pointer"
-            @click="essenceFilter = ''"
-          >
-            {{ essenceFilter }} ✕
-          </Badge>
-          <select
-            v-else
-            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            @change="(e) => essenceFilter = (e.target as HTMLSelectElement).value"
-          >
-            <option value="">All types</option>
-            <option value="article">Article</option>
-            <option value="youtube">YouTube</option>
-            <option value="reddit">Reddit</option>
-          </select>
-        </div>
-
-        <!-- Model filter -->
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-muted-foreground">Model:</span>
-          <Input
-            v-if="!modelFilter"
-            placeholder="Filter model..."
-            :model-value="modelFilter"
-            class="h-9 w-[140px]"
-            @update:model-value="modelFilter = String($event)"
-          />
-          <Badge
-            v-else
-            variant="secondary"
-            class="cursor-pointer"
-            @click="modelFilter = ''"
-          >
-            {{ modelFilter }} ✕
-          </Badge>
-        </div>
+      <div class="flex items-center gap-2">
+        <!-- Essence filter (Type) -->
+        <Select v-model="essenceFilter">
+          <SelectTrigger class="w-[130px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem
+              v-for="essence in uniqueEssences"
+              :key="essence"
+              :value="essence"
+              class="capitalize"
+            >
+              {{ essence }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         <!-- Status filter -->
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-muted-foreground">Status:</span>
-          <Badge
-            v-if="statusFilter"
-            variant="secondary"
-            class="cursor-pointer"
-            @click="statusFilter = ''"
-          >
-            {{ statusFilter }} ✕
-          </Badge>
-          <select
-            v-else
-            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            @change="(e) => statusFilter = (e.target as HTMLSelectElement).value"
-          >
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
+        <Select v-model="statusFilter">
+          <SelectTrigger class="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem
+              v-for="status in uniqueStatuses"
+              :key="status"
+              :value="status"
+            >
+              {{ status }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <!-- Model filter -->
+        <Select v-model="modelFilter">
+          <SelectTrigger class="w-[180px]">
+            <SelectValue placeholder="Model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All models</SelectItem>
+            <SelectItem
+              v-for="model in uniqueModels"
+              :key="model"
+              :value="model"
+            >
+              {{ model }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         <!-- Clear all filters -->
         <Button
-          v-if="essenceFilter || modelFilter || statusFilter"
+          v-if="essenceFilter !== 'all' || modelFilter !== 'all' || statusFilter !== 'all'"
           variant="ghost"
           size="sm"
           class="h-9"
-          @click="essenceFilter = ''; modelFilter = ''; statusFilter = ''"
+          @click="essenceFilter = 'all'; modelFilter = 'all'; statusFilter = 'all'"
         >
-          Clear filters
+          Clear
         </Button>
-      </div>
 
-      <!-- Column visibility dropdown -->
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button variant="outline" class="ml-auto">
-            Columns <ChevronDown class="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuCheckboxItem
-            v-for="column in table.getAllColumns().filter((column) => column.getCanHide())"
-            :key="column.id"
-            class="capitalize"
-            :model-value="column.getIsVisible()"
-            @update:model-value="(value) => {
-              column.toggleVisibility(!!value)
-            }"
-          >
-            {{ column.id }}
-          </DropdownMenuCheckboxItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <!-- Column visibility dropdown -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" size="sm">
+              Columns <ChevronDown class="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuCheckboxItem
+              v-for="column in table.getAllColumns().filter((column) => column.getCanHide())"
+              :key="column.id"
+              class="capitalize"
+              :model-value="column.getIsVisible()"
+              @update:model-value="(value) => {
+                column.toggleVisibility(!!value)
+              }"
+            >
+              {{ column.id }}
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
 
     <div class="rounded-md border">
