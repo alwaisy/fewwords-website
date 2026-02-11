@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
   const page = Number(query.page) || 0;
-  const pageSize = Number(query.pageSize) || 25; // Default to 25 for admin panel
+  const pageSize = Number(query.pageSize) || 10; // Default to 10 for admin panel
   const sortBy = (query.sortBy as string) || "createdAt";
   const sortOrder = (query.sortOrder as "asc" | "desc") || "desc";
   const search = (query.search as string) || "";

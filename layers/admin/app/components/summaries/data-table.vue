@@ -84,8 +84,8 @@ const uniqueEssences = computed(() => {
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
 const columnVisibility = ref<VisibilityState>({
-  // Default visible columns: title, essence, source, totalTokens, actions
-  summaryId: false,
+  // Default visible columns: summaryId, title, essence, source, totalTokens, actions
+  summaryId: true,
   title: true,
   essence: true,
   source: true,
@@ -99,7 +99,7 @@ const columnVisibility = ref<VisibilityState>({
 // Pagination state
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 25, // Increased from default 10 to show more rows
+  pageSize: 10,
 });
 
 // Watch filter states and update column filters

@@ -13,7 +13,7 @@ definePageMeta({
 
 // Pagination state
 const page = ref(0);
-const pageSize = ref(25);
+const pageSize = ref(10);
 
 // Fetch summaries with server-side pagination
 const { data, pending, error, refresh } = await useFetch("/api/admin/summaries", {
