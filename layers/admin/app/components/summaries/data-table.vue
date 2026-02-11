@@ -1,5 +1,10 @@
 <script setup lang="ts" generic="TData, TValue">
-import type { ColumnDef, ColumnFiltersState, SortingState, VisibilityState } from "@tanstack/vue-table"
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/vue-table";
 import {
   FlexRender,
   getCoreRowModel,
@@ -7,78 +12,77 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useVueTable,
-} from "@tanstack/vue-table"
-import { ChevronDown } from "lucide-vue-next"
+} from "@tanstack/vue-table";
+import { ChevronDown } from "lucide-vue-next";
 
+import SummaryDrawer from "./summary-drawer.vue";
 
-import SummaryDrawer from "./summary-drawer.vue"
-
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import TableBody from "@/components/ui/table/table-body.vue"
-import TableCell from "@/components/ui/table/table-cell.vue"
-import TableHead from "@/components/ui/table/table-head.vue"
-import TableHeader from "@/components/ui/table/table-header.vue"
-import TableRow from "@/components/ui/table/table-row.vue"
-import Table from "@/components/ui/table/table.vue"
-import { valueUpdater } from "@/components/ui/table/utils"
-import type { Summary } from "~~/db/schema"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import TableBody from "@/components/ui/table/table-body.vue";
+import TableCell from "@/components/ui/table/table-cell.vue";
+import TableHead from "@/components/ui/table/table-head.vue";
+import TableHeader from "@/components/ui/table/table-header.vue";
+import TableRow from "@/components/ui/table/table-row.vue";
+import Table from "@/components/ui/table/table.vue";
+import { valueUpdater } from "@/components/ui/table/utils";
+import type { Summary } from "~~/db/schema";
 
 const props = defineProps<{
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-}>()
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+}>();
 
 // Filter states
-const essenceFilter = ref<string>("all")
-const modelFilter = ref<string>("all")
-const statusFilter = ref<string>("all")
+const essenceFilter = ref<string>("all");
+const modelFilter = ref<string>("all");
+const statusFilter = ref<string>("all");
 
 // Dynamically extract unique models from data
 const uniqueModels = computed(() => {
-  const models = new Set<string>()
+  const models = new Set<string>();
   props.data.forEach((item) => {
-    const summary = item as Summary
-    if (summary.model && typeof summary.model === 'string') {
-      models.add(summary.model)
+    const summary = item as Summary;
+    if (summary.model && typeof summary.model === "string") {
+      models.add(summary.model);
     }
-  })
-  return Array.from(models).sort()
-})
+  });
+  return Array.from(models).sort();
+});
 
 // Dynamically extract unique statuses from data
 const uniqueStatuses = computed(() => {
-  const statuses = new Set<string>()
+  const statuses = new Set<string>();
   props.data.forEach((item) => {
-    const summary = item as Summary
-    if (summary.status && typeof summary.status === 'string') {
-      statuses.add(summary.status)
+    const summary = item as Summary;
+    if (summary.status && typeof summary.status === "string") {
+      statuses.add(summary.status);
     }
-  })
-  return Array.from(statuses).sort()
-})
+  });
+  return Array.from(statuses).sort();
+});
 
 // Dynamically extract unique essences from data
 const uniqueEssences = computed(() => {
-  const essences = new Set<string>()
+  const essences = new Set<string>();
   props.data.forEach((item) => {
-    const summary = item as Summary
-    if (summary.essence && typeof summary.essence === 'string') {
-      essences.add(summary.essence)
+    const summary = item as Summary;
+    if (summary.essence && typeof summary.essence === "string") {
+      essences.add(summary.essence);
     }
-  })
-  return Array.from(essences).sort()
-})
+  });
+  return Array.from(essences).sort();
+});
 
-const sorting = ref<SortingState>([])
-const columnFilters = ref<ColumnFiltersState>([])
+const sorting = ref<SortingState>([]);
+const columnFilters = ref<ColumnFiltersState>([]);
 const columnVisibility = ref<VisibilityState>({
   // Default visible columns: title, essence, source, totalTokens, actions
   summaryId: false,
@@ -90,45 +94,77 @@ const columnVisibility = ref<VisibilityState>({
   status: false,
   createdAt: false,
   actions: true,
-})
+});
+
+// Pagination state
+const pagination = ref({
+  pageIndex: 0,
+  pageSize: 25, // Increased from default 10 to show more rows
+});
 
 // Watch filter states and update column filters
 watch([essenceFilter, modelFilter, statusFilter], () => {
   columnFilters.value = [
-    { id: "essence", value: essenceFilter.value === "all" ? "" : essenceFilter.value },
-    { id: "model", value: modelFilter.value === "all" ? "" : modelFilter.value },
-    { id: "status", value: statusFilter.value === "all" ? "" : statusFilter.value },
-  ].filter((f) => f.value !== "")
-})
+    {
+      id: "essence",
+      value: essenceFilter.value === "all" ? "" : essenceFilter.value,
+    },
+    {
+      id: "model",
+      value: modelFilter.value === "all" ? "" : modelFilter.value,
+    },
+    {
+      id: "status",
+      value: statusFilter.value === "all" ? "" : statusFilter.value,
+    },
+  ].filter((f) => f.value !== "");
+});
 
 // Drawer state
-const selectedSummary = ref<Summary | null>(null)
-const isDrawerOpen = ref(false)
+const selectedSummary = ref<Summary | null>(null);
+const isDrawerOpen = ref(false);
 
 const openDrawer = (summary: Summary) => {
-  selectedSummary.value = summary
-  isDrawerOpen.value = true
-}
+  selectedSummary.value = summary;
+  isDrawerOpen.value = true;
+};
 
 const table = useVueTable({
-  get data() { return props.data },
-  get columns() { return props.columns },
+  get data() {
+    return props.data;
+  },
+  get columns() {
+    return props.columns;
+  },
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
-  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
-  onColumnFiltersChange: updaterOrValue => valueUpdater(updaterOrValue, columnFilters),
-  onColumnVisibilityChange: updaterOrValue => valueUpdater(updaterOrValue, columnVisibility),
+  onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
+  onColumnFiltersChange: (updaterOrValue) =>
+    valueUpdater(updaterOrValue, columnFilters),
+  onColumnVisibilityChange: (updaterOrValue) =>
+    valueUpdater(updaterOrValue, columnVisibility),
+  onPaginationChange: (updaterOrValue) =>
+    valueUpdater(updaterOrValue, pagination),
   state: {
-    get sorting() { return sorting.value },
-    get columnFilters() { return columnFilters.value },
-    get columnVisibility() { return columnVisibility.value },
+    get sorting() {
+      return sorting.value;
+    },
+    get columnFilters() {
+      return columnFilters.value;
+    },
+    get columnVisibility() {
+      return columnVisibility.value;
+    },
+    get pagination() {
+      return pagination.value;
+    },
   },
-})
+});
 
 // Expose openDrawer for parent
-defineExpose({ openDrawer })
+defineExpose({ openDrawer });
 </script>
 
 <template>
@@ -137,7 +173,9 @@ defineExpose({ openDrawer })
       <!-- Search - gets max space -->
       <Input
         placeholder="Filter titles..."
-        :model-value="(table.getColumn('title')?.getFilterValue() as string) ?? ''"
+        :model-value="
+          (table.getColumn('title')?.getFilterValue() as string) ?? ''
+        "
         class="max-w-full flex-1 min-w-[150px]"
         @update:model-value="table.getColumn('title')?.setFilterValue($event)"
       />
@@ -197,11 +235,19 @@ defineExpose({ openDrawer })
 
         <!-- Clear all filters -->
         <Button
-          v-if="essenceFilter !== 'all' || modelFilter !== 'all' || statusFilter !== 'all'"
+          v-if="
+            essenceFilter !== 'all' ||
+            modelFilter !== 'all' ||
+            statusFilter !== 'all'
+          "
           variant="ghost"
           size="sm"
           class="h-9"
-          @click="essenceFilter = 'all'; modelFilter = 'all'; statusFilter = 'all'"
+          @click="
+            essenceFilter = 'all';
+            modelFilter = 'all';
+            statusFilter = 'all';
+          "
         >
           Clear
         </Button>
@@ -215,13 +261,17 @@ defineExpose({ openDrawer })
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuCheckboxItem
-              v-for="column in table.getAllColumns().filter((column) => column.getCanHide())"
+              v-for="column in table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())"
               :key="column.id"
               class="capitalize"
               :model-value="column.getIsVisible()"
-              @update:model-value="(value) => {
-                column.toggleVisibility(!!value)
-              }"
+              @update:model-value="
+                (value) => {
+                  column.toggleVisibility(!!value);
+                }
+              "
             >
               {{ column.id }}
             </DropdownMenuCheckboxItem>
@@ -233,7 +283,10 @@ defineExpose({ openDrawer })
     <div class="rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+          <TableRow
+            v-for="headerGroup in table.getHeaderGroups()"
+            :key="headerGroup.id"
+          >
             <TableHead v-for="header in headerGroup.headers" :key="header.id">
               <FlexRender
                 v-if="!header.isPlaceholder"
@@ -263,11 +316,21 @@ defineExpose({ openDrawer })
       </Table>
     </div>
 
-    <div class="flex items-center justify-end space-x-2 py-4">
-      <div class="text-sm text-muted-foreground">
-        {{ table.getFilteredRowModel().rows.length }} row(s).
+    <div class="flex items-center justify-between px-2 py-4">
+      <div class="flex items-center gap-2">
+        <div class="text-sm text-muted-foreground">
+          {{ table.getFilteredRowModel().rows.length }} Summary(s).
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-muted-foreground">Page</span>
+          <span class="text-sm font-medium">{{
+            table.getState().pagination.pageIndex + 1
+          }}</span>
+          <span class="text-sm text-muted-foreground">of</span>
+          <span class="text-sm font-medium">{{ table.getPageCount() }}</span>
+        </div>
       </div>
-      <div class="space-x-2">
+      <div class="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
