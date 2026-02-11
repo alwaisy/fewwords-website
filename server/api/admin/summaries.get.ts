@@ -27,7 +27,8 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
   const page = Number(query.page) || 0;
-  const pageSize = Number(query.pageSize) || 10;
+  // For client-side pagination, return all records by default
+  const pageSize = Number(query.pageSize) || 10000;
   const sortBy = (query.sortBy as string) || "createdAt";
   const sortOrder = (query.sortOrder as "asc" | "desc") || "desc";
   const search = (query.search as string) || "";

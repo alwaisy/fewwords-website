@@ -317,9 +317,17 @@ defineExpose({ openDrawer });
     </div>
 
     <!-- Debug: showing pagination state -->
-    <div class="text-xs text-muted-foreground px-2">
-      Showing {{ table.getRowModel().rows.length }} of {{ table.getFilteredRowModel().rows.length }} rows
-      (page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }})
+    <div class="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
+      <strong>Debug Info:</strong><br>
+      - Total rows: {{ props.data.length }}<br>
+      - Filtered rows: {{ table.getFilteredRowModel().rows.length }}<br>
+      - Current page rows: {{ table.getRowModel().rows.length }}<br>
+      - Page index: {{ table.getState().pagination.pageIndex }}<br>
+      - Page size: {{ table.getState().pagination.pageSize }}<br>
+      - Total pages: {{ table.getPageCount() }}<br>
+      - Can previous: {{ table.getCanPreviousPage() }}<br>
+      - Can next: {{ table.getCanNextPage() }}<br>
+      - Pagination state: {{ JSON.stringify(table.getState().pagination) }}
     </div>
 
     <div class="flex items-center justify-between px-2 py-4">
