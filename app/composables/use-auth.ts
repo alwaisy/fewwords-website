@@ -113,7 +113,7 @@ export const useAuth = () => {
   }
 
   /**
-   * Logout user - clears session
+   * Logout user - clears session and redirects to login
    */
   const logout = async () => {
     try {
@@ -122,6 +122,9 @@ export const useAuth = () => {
 
       await $fetch('/api/auth/logout', { method: 'POST' })
       await clear() // Clear nuxt-auth-utils session
+
+      // Redirect to login page
+      await navigateTo('/auth/login')
 
       return { success: true }
     }

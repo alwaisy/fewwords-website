@@ -15,6 +15,10 @@ export default defineNuxtConfig({
       jinaAiKey: process.env.JINA_AI_API_KEY,
       openrouterKey: process.env.OPENROUTER_API_KEY,
     },
+    session: {
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      rolling: true, // Extend on activity
+    },
   },
 
   nitro: {

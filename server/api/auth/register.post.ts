@@ -74,9 +74,6 @@ export default defineEventHandler(async (event) => {
           </div>
         `,
       });
-    } else {
-      // Fallback to console if no API key
-      console.log(`Magic link for ${email}: ${magicLink}`);
     }
 
     return {
@@ -85,7 +82,6 @@ export default defineEventHandler(async (event) => {
       message: "Account created! Check your email for a magic link.",
     };
   } catch (error: unknown) {
-    console.error("Register error:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to create account",

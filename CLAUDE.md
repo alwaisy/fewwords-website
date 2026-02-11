@@ -241,3 +241,54 @@ Required in `.env`:
 - Vue 3 Composition API with `<script setup>` syntax
 - VeeValidate + Zod for form validation
 - TypeScript strict mode enabled
+
+## Authentication & Authorization
+
+### Session Management (nuxt-auth-utils)
+
+- **Session-based auth** with encrypted HttpOnly cookies (NOT token-based auth)
+- **No refresh/access tokens** - the session cookie IS the authentication
+- **Current config**: `maxAge: 7 days` with `rolling: true` (extends on activity)
+- Session data stored in `runtimeConfig.session` in `nuxt.config.ts`
+- If `maxAge` is not set, cookies are **session cookies** (expire on browser close)
+
+### Auth Flow
+
+**Magic Link Authentication**:
+1. User enters email → `POST /api/auth/login` or `/api/auth/register`
+2. Email sent with token (expires in 15 min)
+3. User clicks link → `POST /api/auth/verify` → Session created
+4. Session persists for 7 days (rolling with activity)
+
+### User Roles & Authorization
+
+**Roles**: `user` (default) | `admin` (for admin panel)
+
+**Admin Middleware** (`app/middleware/admin.ts`):
+- Protects all admin routes
+- Uses `useUserSession()` composable (NOT `getUserSession(event)` which doesn't auto-import in route middleware)
+- Checks `session.user.role === 'admin'`
+- Must be referenced in admin pages via `definePageMeta({ middleware: ["admin"] })`
+
+### Logout
+
+- `POST /api/auth/logout` clears session via `clearUserSession()`
+- Also explicitly deletes cookies: `nuxt-session` and `nuxt-session.token`
+- Composable redirects to `/auth/login` after logout
+
+### Admin Layer
+
+**Purpose**: Separate admin UI from main app
+- Located at `layers/admin/`
+- Has own `nuxt.config.ts` with `~admin` alias for components
+- Extends main app via `nuxt.config.ts` extends: ["./layers/admin"]
+- Uses shared auth from main app (middleware lives in `app/middleware/`)
+- Admin pages: `/admin/index`, `/admin/summaries`, `/admin/users`
+
+### Admin API Protection
+
+- Server-side routes use `getUserSession(event)` directly
+- Example: `server/api/admin/summaries.get.ts`
+- Checks `session.user.role === 'admin'` → 403 if not
+
+**Future migration plan**: See `dev-docs/auth-security-plan.md` for Clerk migration strategy (MFA, refresh tokens)

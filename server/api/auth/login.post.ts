@@ -72,9 +72,6 @@ export default defineEventHandler(async (event) => {
           </div>
         `,
       });
-    } else {
-      // Fallback to console if no API key
-      console.log(`Magic link for ${email}: ${magicLink}`);
     }
 
     return {
@@ -83,7 +80,6 @@ export default defineEventHandler(async (event) => {
       message: "Magic link sent! Check your email.",
     };
   } catch (error: unknown) {
-    console.error("Login error:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to send magic link",
