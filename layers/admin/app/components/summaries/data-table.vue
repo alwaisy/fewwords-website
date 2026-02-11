@@ -316,54 +316,6 @@ defineExpose({ openDrawer });
       </Table>
     </div>
 
-    <!-- Debug: showing pagination state -->
-    <div class="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
-      <strong>Debug Info:</strong><br>
-      - Total rows: {{ props.data.length }}<br>
-      - Filtered rows: {{ table.getFilteredRowModel().rows.length }}<br>
-      - Current page rows: {{ table.getRowModel().rows.length }}<br>
-      - Page index: {{ table.getState().pagination.pageIndex }}<br>
-      - Page size: {{ table.getState().pagination.pageSize }}<br>
-      - Total pages: {{ table.getPageCount() }}<br>
-      - Can previous: {{ table.getCanPreviousPage() }}<br>
-      - Can next: {{ table.getCanNextPage() }}<br>
-      - Pagination state: {{ JSON.stringify(table.getState().pagination) }}
-    </div>
-
-    <div class="flex items-center justify-between px-2 py-4">
-      <div class="flex items-center gap-2">
-        <div class="text-sm text-muted-foreground">
-          {{ table.getFilteredRowModel().rows.length }} Summary(s).
-        </div>
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-muted-foreground">Page</span>
-          <span class="text-sm font-medium">{{
-            table.getState().pagination.pageIndex + 1
-          }}</span>
-          <span class="text-sm text-muted-foreground">of</span>
-          <span class="text-sm font-medium">{{ table.getPageCount() }}</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          :disabled="!table.getCanPreviousPage()"
-          @click="table.previousPage()"
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          :disabled="!table.getCanNextPage()"
-          @click="table.nextPage()"
-        >
-          Next
-        </Button>
-      </div>
-    </div>
-
     <SummaryDrawer
       v-if="selectedSummary"
       :summary="selectedSummary"

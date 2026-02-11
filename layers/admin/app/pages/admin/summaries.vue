@@ -11,7 +11,17 @@ definePageMeta({
   middleware: ["admin"],
 });
 
+// Pagination state
+const page = ref(0);
+const pageSize = ref(25);
+
+// Fetch summaries with server-side pagination
 const { data, pending, error, refresh } = await useFetch("/api/admin/summaries", {
+  query: {
+    page,
+    pageSize,
+  },
+  watch: [page, pageSize],
   transform: (response) => {
     if (!response?.data) return response
     return {
@@ -26,6 +36,7 @@ const { data, pending, error, refresh } = await useFetch("/api/admin/summaries",
 })
 
 const summaries = computed(() => (data.value?.data ?? []) as Summary[])
+const meta = computed(() => data.value?.meta)
 
 // Ref to data table for accessing openDrawer
 const dataTableRef = ref<{ openDrawer: (summary: Summary) => void } | null>(null)
@@ -34,6 +45,19 @@ const dataTableRef = ref<{ openDrawer: (summary: Summary) => void } | null>(null
 const columns = createColumns((summary) => {
   dataTableRef.value?.openDrawer(summary)
 })
+
+// Pagination handlers
+const nextPage = () => {
+  if (meta.value && page.value < meta.value.totalPages - 1) {
+    page.value++
+  }
+}
+
+const prevPage = () => {
+  if (page.value > 0) {
+    page.value--
+  }
+}
 </script>
 
 <template>
@@ -74,6 +98,46 @@ const columns = createColumns((summary) => {
       </Button>
     </div>
 
-    <DataTable v-else ref="dataTableRef" :columns="columns" :data="summaries" />
+    <div v-else class="space-y-4">
+      <!-- Pagination info -->
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-muted-foreground">
+          Showing {{ meta?.total ?? 0 }} summaries
+        </span>
+        <span class="text-muted-foreground">
+          Page {{ page + 1 }} of {{ meta?.totalPages ?? 1 }}
+        </span>
+      </div>
+
+      <DataTable ref="dataTableRef" :columns="columns" :data="summaries" />
+
+      <!-- Pagination controls -->
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+          {{ meta?.total ?? 0 }} summary(s)
+        </div>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="page === 0"
+            @click="prevPage"
+          >
+            Previous
+          </Button>
+          <span class="text-sm text-muted-foreground">
+            Page {{ page + 1 }} of {{ meta?.totalPages ?? 1 }}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="!meta || page >= meta.totalPages - 1"
+            @click="nextPage"
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
