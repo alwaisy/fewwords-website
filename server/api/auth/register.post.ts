@@ -81,7 +81,7 @@ export default defineEventHandler(async (event) => {
       exists: false,
       message: "Account created! Check your email for a magic link.",
     };
-  } catch (error: unknown) {
+  } catch {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to create account",

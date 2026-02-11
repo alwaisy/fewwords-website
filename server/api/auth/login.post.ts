@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
       exists: true,
       message: "Magic link sent! Check your email.",
     };
-  } catch (error: unknown) {
+  } catch {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to send magic link",
