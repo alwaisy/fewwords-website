@@ -138,7 +138,7 @@ defineExpose({ openDrawer })
             placeholder="Filter model..."
             :model-value="modelFilter"
             class="h-9 w-[140px]"
-            @update:model-value="modelFilter = $event"
+            @update:model-value="modelFilter = String($event)"
           />
           <Badge
             v-else
