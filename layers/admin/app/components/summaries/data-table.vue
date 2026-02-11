@@ -316,6 +316,12 @@ defineExpose({ openDrawer });
       </Table>
     </div>
 
+    <!-- Debug: showing pagination state -->
+    <div class="text-xs text-muted-foreground px-2">
+      Showing {{ table.getRowModel().rows.length }} of {{ table.getFilteredRowModel().rows.length }} rows
+      (page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }})
+    </div>
+
     <div class="flex items-center justify-between px-2 py-4">
       <div class="flex items-center gap-2">
         <div class="text-sm text-muted-foreground">
