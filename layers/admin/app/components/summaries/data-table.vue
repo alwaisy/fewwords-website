@@ -8,7 +8,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from "@tanstack/vue-table"
-import { ChevronDown, Filter, X } from "lucide-vue-next"
+import { ChevronDown } from "lucide-vue-next"
 
 
 import SummaryDrawer from "./summary-drawer.vue"

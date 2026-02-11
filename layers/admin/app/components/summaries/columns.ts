@@ -105,9 +105,10 @@ export const createColumns = (
                 h("span", { class: "max-w-[150px] truncate" }, domain),
                 h(ExternalLink, { class: "ml-1 h-3 w-3 flex-shrink-0" }),
               ])
-          ),
-          h(TooltipContent, { side: "bottom", class: "max-w-[400px] break-all" }, () => source),
-        ])
+            ),
+            h(TooltipContent, { side: "bottom", class: "max-w-[400px] break-all" }, () => source),
+          ])
+        )
       },
     },
 
