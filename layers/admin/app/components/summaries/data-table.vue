@@ -8,11 +8,12 @@ import {
   getSortedRowModel,
   useVueTable,
 } from "@tanstack/vue-table"
-import { ChevronDown } from "lucide-vue-next"
+import { ChevronDown, Filter, X } from "lucide-vue-next"
 
 
 import SummaryDrawer from "./summary-drawer.vue"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -35,9 +36,34 @@ const props = defineProps<{
   data: TData[]
 }>()
 
+// Filter states
+const essenceFilter = ref<string>("")
+const modelFilter = ref<string>("")
+const statusFilter = ref<string>("")
+
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
+const columnVisibility = ref<VisibilityState>({
+  // Default visible columns: title, essence, source, totalTokens, actions
+  summaryId: false,
+  title: true,
+  essence: true,
+  source: true,
+  totalTokens: true,
+  model: false,
+  status: false,
+  createdAt: false,
+  actions: true,
+})
+
+// Watch filter states and update column filters
+watch([essenceFilter, modelFilter, statusFilter], () => {
+  columnFilters.value = [
+    { id: "essence", value: essenceFilter.value },
+    { id: "model", value: modelFilter.value },
+    { id: "status", value: statusFilter.value },
+  ].filter((f) => f.value !== "")
+})
 
 // Drawer state
 const selectedSummary = ref<Summary | null>(null)
@@ -65,19 +91,102 @@ const table = useVueTable({
   },
 })
 
-// Expose openDrawer for parent to pass to columns
+// Expose openDrawer for parent
 defineExpose({ openDrawer })
 </script>
 
 <template>
   <div class="w-full">
-    <div class="flex items-center py-4">
-      <Input
-        placeholder="Filter summaries..."
-        :model-value="(table.getColumn('title')?.getFilterValue() as string) ?? ''"
-        class="max-w-sm"
-        @update:model-value="table.getColumn('title')?.setFilterValue($event)"
-      />
+    <div class="flex items-center justify-between py-4 gap-4 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Title filter -->
+        <Input
+          placeholder="Filter titles..."
+          :model-value="(table.getColumn('title')?.getFilterValue() as string) ?? ''"
+          class="max-w-[200px]"
+          @update:model-value="table.getColumn('title')?.setFilterValue($event)"
+        />
+
+        <!-- Essence filter -->
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-muted-foreground">Type:</span>
+          <Badge
+            v-if="essenceFilter"
+            variant="secondary"
+            class="cursor-pointer"
+            @click="essenceFilter = ''"
+          >
+            {{ essenceFilter }} ✕
+          </Badge>
+          <select
+            v-else
+            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            @change="(e) => essenceFilter = (e.target as HTMLSelectElement).value"
+          >
+            <option value="">All types</option>
+            <option value="article">Article</option>
+            <option value="youtube">YouTube</option>
+            <option value="reddit">Reddit</option>
+          </select>
+        </div>
+
+        <!-- Model filter -->
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-muted-foreground">Model:</span>
+          <Input
+            v-if="!modelFilter"
+            placeholder="Filter model..."
+            :model-value="modelFilter"
+            class="h-9 w-[140px]"
+            @update:model-value="modelFilter = $event"
+          />
+          <Badge
+            v-else
+            variant="secondary"
+            class="cursor-pointer"
+            @click="modelFilter = ''"
+          >
+            {{ modelFilter }} ✕
+          </Badge>
+        </div>
+
+        <!-- Status filter -->
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-muted-foreground">Status:</span>
+          <Badge
+            v-if="statusFilter"
+            variant="secondary"
+            class="cursor-pointer"
+            @click="statusFilter = ''"
+          >
+            {{ statusFilter }} ✕
+          </Badge>
+          <select
+            v-else
+            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            @change="(e) => statusFilter = (e.target as HTMLSelectElement).value"
+          >
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+
+        <!-- Clear all filters -->
+        <Button
+          v-if="essenceFilter || modelFilter || statusFilter"
+          variant="ghost"
+          size="sm"
+          class="h-9"
+          @click="essenceFilter = ''; modelFilter = ''; statusFilter = ''"
+        >
+          Clear filters
+        </Button>
+      </div>
+
+      <!-- Column visibility dropdown -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" class="ml-auto">

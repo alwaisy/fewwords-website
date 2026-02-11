@@ -1,15 +1,9 @@
 import type { ColumnDef } from "@tanstack/vue-table"
-import { ArrowUpDown, ExternalLink, MoreHorizontal, Trash2 } from "lucide-vue-next"
+import { ArrowUpDown, ExternalLink } from "lucide-vue-next"
 import { h } from "vue"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
@@ -18,192 +12,197 @@ import {
 } from "@/components/ui/tooltip"
 import type { Summary } from "~~/db/schema"
 
-export const createColumns = (onTitleClick?: (summary: Summary) => void): ColumnDef<Summary>[] => {
+export const createColumns = (
+  onTitleClick?: (summary: Summary) => void,
+): ColumnDef<Summary>[] => {
   return [
-  {
-    accessorKey: "summaryId",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["ID", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+    // ID column - hidden by default
+    {
+      accessorKey: "summaryId",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["ID", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const summaryId = row.getValue("summaryId") as string
+        return h("div", { class: "font-mono text-sm" }, summaryId)
+      },
     },
-    cell: ({ row }) => {
-      const summaryId = row.getValue("summaryId") as string
-      return h("div", { class: "font-mono text-sm" }, summaryId)
-    },
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["Title", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-    },
-    cell: ({ row }) => {
-      const title = row.getValue("title") as string
-      const summary = row.original
-      return h("div", { class: "max-w-[300px] truncate font-medium" }, [
-        h("button", {
-          onClick: () => onTitleClick?.(summary),
-          class: "text-left hover:underline cursor-pointer",
-        }, title || "N/A"),
-      ])
-    },
-  },
-  {
-    accessorKey: "source",
-    header: "Source",
-    cell: ({ row }) => {
-      const source = row.getValue("source") as string
-      // Extract domain name from URL
-      let domain = source
-      try {
-        const url = new URL(source)
-        domain = url.hostname.replace(/^www\./, "")
-      } catch {
-        domain = source.replace(/^https?:\/\/(www\.)?/, "")
-      }
 
-      return h(TooltipProvider, {}, () =>
-        h(Tooltip, {}, () => [
-          h(TooltipTrigger, { asChild: true }, () =>
-            h("a", {
-              href: source,
-              target: "_blank",
-              rel: "noopener noreferrer",
-              class: "flex items-center text-sm text-muted-foreground hover:text-foreground",
-            }, [
-              h("span", { class: "max-w-[150px] truncate" }, domain),
-              h(ExternalLink, { class: "ml-1 h-3 w-3 flex-shrink-0" }),
-            ])
+    // Title column - visible by default
+    {
+      accessorKey: "title",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Title", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const title = row.getValue("title") as string
+        const summary = row.original
+        return h("div", { class: "max-w-[300px] truncate font-medium" }, [
+          h("button", {
+            onClick: () => onTitleClick?.(summary),
+            class: "text-left hover:underline cursor-pointer",
+          }, title || "N/A"),
+        ])
+      },
+    },
+
+    // Essence/Type column - visible by default
+    {
+      accessorKey: "essence",
+      header: ({ column }) => {
+        return h("div", { class: "flex items-center gap-2" }, [
+          "Type",
+          h(Button, {
+            variant: "ghost",
+            onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+            class: "ml-auto",
+          }, () => h(ArrowUpDown, { class: "h-4 w-4" })),
+        ])
+      },
+      cell: ({ row }) => {
+        const essence = row.getValue("essence") as string
+        const variantMap: Record<string, "default" | "secondary" | "outline"> = {
+          article: "default",
+          youtube: "secondary",
+          reddit: "outline",
+        }
+        return h(Badge, { variant: variantMap[essence] || "default" }, () =>
+          essence.charAt(0).toUpperCase() + essence.slice(1)
+        )
+      },
+    },
+
+    // Source column - visible by default
+    {
+      accessorKey: "source",
+      header: "Source",
+      cell: ({ row }) => {
+        const source = row.getValue("source") as string
+        let domain = source
+        try {
+          const url = new URL(source)
+          domain = url.hostname.replace(/^www\./, "")
+        } catch {
+          domain = source.replace(/^https?:\/\/(www\.)?/, "")
+        }
+        return h(TooltipProvider, {}, () =>
+          h(Tooltip, {}, () => [
+            h(TooltipTrigger, { asChild: true }, () =>
+              h("a", {
+                href: source,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                class: "flex items-center text-sm text-muted-foreground hover:text-foreground",
+              }, [
+                h("span", { class: "max-w-[150px] truncate" }, domain),
+                h(ExternalLink, { class: "ml-1 h-3 w-3 flex-shrink-0" }),
+              ])
           ),
           h(TooltipContent, { side: "bottom", class: "max-w-[400px] break-all" }, () => source),
         ])
-      )
+      },
     },
-  },
-  {
-    accessorKey: "essence",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["Type", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-    },
-    cell: ({ row }) => {
-      const essence = row.getValue("essence") as string
-      const variantMap: Record<string, "default" | "secondary" | "outline"> = {
-        article: "default",
-        youtube: "secondary",
-        reddit: "outline",
-      }
-      return h(Badge, { variant: variantMap[essence] || "default" }, () =>
-        essence.charAt(0).toUpperCase() + essence.slice(1)
-      )
-    },
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["Status", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-    },
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string
-      const variantMap: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-        pending: "outline",
-        processing: "secondary",
-        completed: "default",
-        failed: "destructive",
-      }
-      return h(Badge, { variant: variantMap[status] || "outline" }, () =>
-        status.charAt(0).toUpperCase() + status.slice(1)
-      )
-    },
-  },
-  {
-    accessorKey: "totalTokens",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["Tokens", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-    },
-    cell: ({ row }) => {
-      const tokens = row.getValue("totalTokens") as number | null
-      return h("div", { class: "text-sm text-muted-foreground font-mono" }, tokens?.toLocaleString() || "N/A")
-    },
-  },
-  {
-    accessorKey: "model",
-    header: "Model",
-    cell: ({ row }) => {
-      const model = row.getValue("model") as string | null
-      return h("div", { class: "text-sm text-muted-foreground max-w-[150px] truncate" }, model || "N/A")
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => {
-      return h(Button, {
-        variant: "ghost",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        class: "font-medium",
-      }, () => ["Created", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-    },
-    cell: ({ row }) => {
-      const createdAt = row.getValue("createdAt") as string
-      const date = new Date(createdAt)
-      return h("div", { class: "text-sm text-muted-foreground" }, date.toLocaleString())
-    },
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const summary = row.original
 
-      return h("div", { class: "flex items-center gap-2" }, [
-        h(Button, {
+    // Total Tokens column - visible by default
+    {
+      accessorKey: "totalTokens",
+      header: ({ column }) => {
+        return h(Button, {
           variant: "ghost",
-          size: "sm",
-          as: "a",
-          href: `/app/${summary.summaryId}`,
-          target: "_blank",
-          class: "h-8 w-8 p-0",
-        }, () => h(ExternalLink, { class: "h-4 w-4" })),
-        h(DropdownMenu, {}, () => [
-          h(DropdownMenuTrigger, { asChild: true }, () =>
-            h(Button, {
-              variant: "ghost",
-              size: "sm",
-              class: "h-8 w-8 p-0",
-            }, () => h(MoreHorizontal, { class: "h-4 w-4" }))
-          ),
-          h(DropdownMenuContent, { align: "end" }, () => [
-            h(DropdownMenuItem, {
-              class: "text-destructive focus:text-destructive",
-              onClick: () => {
-                // TODO: Implement delete
-                console.log("Delete", summary.summaryId)
-              },
-            }, () => [
-              h(Trash2, { class: "mr-2 h-4 w-4" }),
-              "Delete",
-            ]),
-          ]),
-        ]),
-      ])
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Total Tokens", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const tokens = row.getValue("totalTokens") as number | null
+        return h("div", { class: "text-sm text-muted-foreground font-mono" }, tokens?.toLocaleString() || "N/A")
+      },
     },
-  },
-]
+
+    // Actions column - visible by default
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const summary = row.original
+        return h("div", { class: "flex items-center gap-2" }, [
+          h(Button, {
+            variant: "ghost",
+            size: "sm",
+            as: "a",
+            href: `/app/${summary.summaryId}`,
+            target: "_blank",
+            class: "h-8 w-8 p-0",
+          }, () => h(ExternalLink, { class: "h-4 w-4" })),
+        ])
+      },
+    },
+
+    // ===== HIDDEN COLUMNS (available in dropdown) =====
+
+    // Status column - hidden by default
+    {
+      accessorKey: "status",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Status", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string
+        const variantMap: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+          pending: "outline",
+          processing: "secondary",
+          completed: "default",
+          failed: "destructive",
+        }
+        return h(Badge, { variant: variantMap[status] || "outline" }, () =>
+          status.charAt(0).toUpperCase() + status.slice(1)
+        )
+      },
+    },
+
+    // Model column - hidden by default
+    {
+      accessorKey: "model",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Model", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const model = row.getValue("model") as string | null
+        return h("div", { class: "text-sm text-muted-foreground max-w-[150px] truncate" }, model || "N/A")
+      },
+    },
+
+    // Created at column - hidden by default
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Created", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const createdAt = row.getValue("createdAt") as string
+        const date = new Date(createdAt)
+        return h("div", { class: "text-sm text-muted-foreground" }, date.toLocaleString())
+      },
+    },
+  ]
 }
