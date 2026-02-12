@@ -4,29 +4,13 @@ import { computed } from "vue";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Summary } from "~~/db/schema";
+import type { Article, Summary, YouTube } from "~~/db/schema";
 
 const props = defineProps<{
   summary: Summary & {
-    youtube?: {
-      videoId?: string | null;
-      duration?: number | null;
-      category?: string | null;
-      cleanTitle?: string | null;
-      classifierReasoningTokens?: number | null;
-      classifierPromptTokens?: number | null;
-      classifierCompletionTokens?: number | null;
-      classifierTotalTokens?: number | null;
-    } | {
-      article?: {
-        wordCount?: number | null;
-        readingTimeMinutes?: number | null;
-        classifierPromptTokens?: number | null;
-        classifierCompletionTokens?: number | null;
-        classifierTotalTokens?: number | null;
-        classifierTimeMs?: number | null;
-      }
-    } | null;
+    youtube?: YouTube | null;
+    article?: Article | null;
+  };
   open: boolean;
 }>();
 
@@ -48,11 +32,129 @@ const domain = computed(() => {
     return props.summary.source.replace(/^https?:\/\/(www\.)?/, "");
   }
 });
+
+// Holistic token breakdown
+const totalTokens = computed(() => {
+  let total = props.summary.totalTokens || 0;
+
+  // Add classifier tokens from YouTube or Article
+  if (props.summary.youtube?.classifierTotalTokens) {
+    total += props.summary.youtube.classifierTotalTokens;
+  }
+  if (props.summary.article?.classifierTotalTokens) {
+    total += props.summary.article.classifierTotalTokens;
+  }
+
+  // Add reasoning tokens from summaries table
+  if (props.summary.reasoningTokens) {
+    total += props.summary.reasoningTokens;
+  }
+
+  return total;
+});
+
+const tokenBreakdown = computed(() => {
+  const breakdown: {
+    stage: string;
+    prompt?: number;
+    completion?: number;
+    reasoning?: number;
+    total: number;
+  }[] = [];
+
+  // Main summarization stage
+  if (props.summary.totalTokens) {
+    breakdown.push({
+      stage: "Summarization",
+      prompt: props.summary.promptTokens || undefined,
+      completion: props.summary.completionTokens || undefined,
+      reasoning: props.summary.reasoningTokens || undefined,
+      total: props.summary.totalTokens,
+    });
+  }
+
+  // Classification stage (YouTube)
+  if (props.summary.youtube?.classifierTotalTokens) {
+    breakdown.push({
+      stage: "Classification (YouTube)",
+      prompt: props.summary.youtube.classifierPromptTokens || undefined,
+      completion: props.summary.youtube.classifierCompletionTokens || undefined,
+      reasoning: props.summary.youtube.classifierReasoningTokens || undefined,
+      total: props.summary.youtube.classifierTotalTokens,
+    });
+  }
+
+  // Classification stage (Article)
+  if (props.summary.article?.classifierTotalTokens) {
+    breakdown.push({
+      stage: "Classification (Article)",
+      prompt: props.summary.article.classifierPromptTokens || undefined,
+      completion: props.summary.article.classifierCompletionTokens || undefined,
+      total: props.summary.article.classifierTotalTokens,
+    });
+  }
+
+  return breakdown;
+});
+
+// Holistic time breakdown
+const totalTimeMs = computed(() => {
+  let total = props.summary.responseTimeMs || 0;
+
+  if (props.summary.youtube?.classifierTimeMs) {
+    total += props.summary.youtube.classifierTimeMs;
+  }
+  if (props.summary.article?.classifierTimeMs) {
+    total += props.summary.article.classifierTimeMs;
+  }
+
+  return total;
+});
+
+const formatTime = (ms: number) => {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${(ms / 1000 / 60).toFixed(2)}m`;
+};
+
+const timeBreakdown = computed(() => {
+  const breakdown: { stage: string; time: number }[] = [];
+
+  // Main summarization time (if responseTimeMs exists and we have classifier time, subtract classifier time)
+  if (props.summary.responseTimeMs) {
+    let mainTime = props.summary.responseTimeMs;
+
+    // If we have classifier time, subtract it from responseTimeMs to get actual summarization time
+    if (props.summary.youtube?.classifierTimeMs) {
+      mainTime -= props.summary.youtube.classifierTimeMs;
+      breakdown.push({
+        stage: "Classification (YouTube)",
+        time: props.summary.youtube.classifierTimeMs,
+      });
+    }
+    if (props.summary.article?.classifierTimeMs) {
+      mainTime -= props.summary.article.classifierTimeMs;
+      breakdown.push({
+        stage: "Classification (Article)",
+        time: props.summary.article.classifierTimeMs,
+      });
+    }
+
+    if (mainTime > 0) {
+      breakdown.push({
+        stage: "Summarization",
+        time: mainTime,
+      });
+    }
+  }
+
+  return breakdown;
+});
 </script>
 
 <template>
   <Drawer v-model:open="isOpen">
-    <DrawerContent class="w-full max-w-4xl">
+    <DrawerContent class="w-full max-w-4xl h-full flex flex-col">
       <DrawerHeader>
         <DrawerTitle class="text-lg">{{
           summary.title || "Untitled"
@@ -62,7 +164,8 @@ const domain = computed(() => {
         </DrawerDescription>
       </DrawerHeader>
 
-      <div class="space-y-6 px-4">
+      <div class="flex-1 overflow-y-auto px-4 min-h-0">
+        <div class="space-y-6 pb-6">
         <!-- Metadata -->
         <div class="space-y-3">
           <h3 class="text-sm font-medium">Metadata</h3>
@@ -130,63 +233,60 @@ const domain = computed(() => {
           </div>
         </div>
 
-        <!-- Token Usage -->
-        <div v-if="summary.totalTokens" class="space-y-3">
-          <h3 class="text-sm font-medium">Token Usage</h3>
-          <div class="text-sm">
-            <span class="text-muted-foreground">Total:</span>
-            {{ summary.totalTokens.toLocaleString() }}
-            <span v-if="summary.promptTokens" class="ml-3 text-muted-foreground"
-              >Prompt:</span
+        <!-- Holistic Token Breakdown -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">Total Tokens</h3>
+            <span class="text-lg font-mono font-semibold">{{
+              totalTokens.toLocaleString()
+            }}</span>
+          </div>
+
+          <!-- Detailed breakdown by stage -->
+          <div class="space-y-2 text-sm">
+            <div
+              v-for="stage in tokenBreakdown"
+              :key="stage.stage"
+              class="border-l-2 border-muted-foreground/30 pl-3 py-1"
             >
-            {{ summary.promptTokens?.toLocaleString() ?? "N/A" }}
-            <span
-              v-if="summary.completionTokens"
-              class="ml-3 text-muted-foreground"
-              >Completion:</span
-            >
-            {{ summary.completionTokens?.toLocaleString() ?? "N/A" }}
+              <div class="font-medium text-muted-foreground mb-1">
+                {{ stage.stage }}
+              </div>
+              <div class="flex gap-4 text-muted-foreground">
+                <span v-if="stage.prompt">Prompt: {{ stage.prompt.toLocaleString() }}</span>
+                <span v-if="stage.reasoning">Reasoning: {{ stage.reasoning.toLocaleString() }}</span>
+                <span v-if="stage.completion">Completion: {{ stage.completion.toLocaleString() }}</span>
+                <span class="ml-auto font-medium text-foreground">
+                  {{ stage.total.toLocaleString() }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Classification Tokens (YouTube/Article specific) -->
-        <div
-          v-if="summary.youtube?.classifierTotalTokens || summary.article?.classifierTotalTokens"
-          class="space-y-3"
-        >
-          <h3 class="text-sm font-medium">Classification Tokens</h3>
-          <div class="text-sm">
-            <span class="text-muted-foreground">Total:</span>
-            {{
-              (summary.youtube?.classifierTotalTokens ||
-                summary.article?.classifierTotalTokens
-              )?.toLocaleString() ?? "N/A"
-            }}
-            <span
-              v-if="summary.youtube?.classifierPromptTokens || summary.article?.classifierPromptTokens"
-              class="ml-3 text-muted-foreground"
-              >Prompt:</span
-            >
-            {{
-              (summary.youtube?.classifierPromptTokens ||
-                summary.article?.classifierPromptTokens
-              )?.toLocaleString() ?? "N/A"
-            }}
-            <span
-              v-if="summary.youtube?.classifierCompletionTokens || summary.article?.classifierCompletionTokens"
-              class="ml-3 text-muted-foreground"
-              >Completion:</span
-            >
-            {{
-              (summary.youtube?.classifierCompletionTokens ||
-                summary.article?.classifierCompletionTokens
-              )?.toLocaleString() ?? "N/A"
-            }}
+        <!-- Holistic Time Breakdown -->
+        <div v-if="totalTimeMs > 0" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">Total Time</h3>
+            <span class="text-lg font-mono font-semibold">{{
+              formatTime(totalTimeMs)
+            }}</span>
           </div>
-          <!-- YouTube specific: reasoning tokens -->
-          <div v-if="summary.youtube?.classifierReasoningTokens" class="text-sm">
-            <span class="text-muted-foreground">Reasoning:</span>
-            {{ summary.youtube.classifierReasoningTokens.toLocaleString() }}
+
+          <!-- Detailed breakdown by stage -->
+          <div class="space-y-2 text-sm">
+            <div
+              v-for="stage in timeBreakdown"
+              :key="stage.stage"
+              class="border-l-2 border-muted-foreground/30 pl-3 py-1"
+            >
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">{{ stage.stage }}</span>
+                <span class="font-medium text-foreground">{{
+                  formatTime(stage.time)
+                }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -195,7 +295,7 @@ const domain = computed(() => {
           <h3 class="text-sm font-medium">Content Details</h3>
           <div class="text-sm text-muted-foreground space-y-1">
             <div v-if="summary.youtube?.duration">
-              Duration: {{ summary.youtube.duration }} minutes
+              Duration: {{ Number(summary.youtube.duration).toFixed(1) }} minutes
             </div>
             <div v-if="summary.article?.wordCount">
               Word Count: {{ summary.article.wordCount.toLocaleString() }}
@@ -212,14 +312,49 @@ const domain = computed(() => {
         <!-- Summary -->
         <div v-if="summary.summary" class="space-y-3">
           <h3 class="text-sm font-medium">Summary</h3>
-          <div class="text-sm whitespace-pre-wrap">{{ summary.summary }}</div>
+          <div class="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
+            {{ summary.summary }}
+          </div>
         </div>
 
         <!-- Reasoning -->
         <div v-if="summary.reasoning" class="space-y-3">
           <h3 class="text-sm font-medium">Classification Reasoning</h3>
-          <div class="text-sm text-muted-foreground whitespace-pre-wrap">
+          <div class="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
             {{ summary.reasoning }}
+          </div>
+        </div>
+
+        <!-- Classifier Details -->
+        <div v-if="summary.youtube?.classifierModel || summary.article?.classifierModel" class="space-y-3">
+          <h3 class="text-sm font-medium">Classifier Details</h3>
+          <div class="text-sm space-y-2">
+            <div v-if="summary.youtube?.classifierModel" class="flex justify-between">
+              <span class="text-muted-foreground">Model</span>
+              <span class="font-mono">{{ summary.youtube.classifierModel }}</span>
+            </div>
+            <div v-if="summary.article?.classifierModel" class="flex justify-between">
+              <span class="text-muted-foreground">Model</span>
+              <span class="font-mono">{{ summary.article.classifierModel }}</span>
+            </div>
+            <div v-if="summary.youtube?.classifierReasoningEffort" class="flex justify-between">
+              <span class="text-muted-foreground">Reasoning Effort</span>
+              <span class="font-medium">{{ summary.youtube.classifierReasoningEffort }}</span>
+            </div>
+            <div v-if="summary.youtube?.category" class="flex justify-between">
+              <span class="text-muted-foreground">Category</span>
+              <span class="font-medium">{{ summary.youtube.category }}</span>
+            </div>
+            <div v-if="summary.youtube?.cleanTitle" class="flex justify-between">
+              <span class="text-muted-foreground">Clean Title</span>
+              <span class="font-medium truncate ml-4 max-w-[200px]">{{ summary.youtube.cleanTitle }}</span>
+            </div>
+            <div v-if="summary.youtube?.isWorthIt !== undefined" class="flex justify-between">
+              <span class="text-muted-foreground">Worth Watching</span>
+              <span :class="summary.youtube.isWorthIt ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                {{ summary.youtube.isWorthIt ? 'Yes' : 'No' }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -236,16 +371,17 @@ const domain = computed(() => {
           </div>
         </div>
 
-        <!-- Response Time -->
-        <div v-if="summary.responseTimeMs" class="space-y-3">
-          <h3 class="text-sm font-medium">Response Time</h3>
-          <div class="text-sm">
-            {{ (summary.responseTimeMs / 1000).toFixed(2) }} seconds
+        <!-- Error Message -->
+        <div v-if="summary.errorMessage" class="space-y-3">
+          <h3 class="text-sm font-medium text-destructive">Error</h3>
+          <div class="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+            {{ summary.errorMessage }}
           </div>
+        </div>
         </div>
       </div>
 
-      <DrawerFooter class="px-4 pb-4">
+      <DrawerFooter class="shrink-0 px-4 pb-6">
         <Button
           variant="outline"
           as="a"

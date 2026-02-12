@@ -233,8 +233,8 @@
 
 /* Global scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -242,25 +242,23 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ffccf4;
+  background: var(--secondary);
   border-radius: var(--radius-sm);
   transition: all 150ms ease-in-out;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ffccf4;
-  opacity: 0.8;
+  background: var(--secondary);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: #ffccf4;
-  opacity: 1;
+  background: var(--secondary);
 }
 
 /* Firefox scrollbar styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #ffccf4 transparent;
+  scrollbar-color: var(--secondary) transparent;
 }
 
 /* Hide scrollbar utility */

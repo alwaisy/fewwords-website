@@ -118,10 +118,14 @@ export function useSummaryProcessing(
             try {
               const data = JSON.parse(event.data);
               if (data.stage !== undefined) {
+                console.log(`[Frontend SSE] Stage received: ${data.stage}`);
                 currentStage.value = data.stage;
                 // Fetch final summary data when completed
                 if (data.stage === "completed") {
+                  console.log(`[Frontend SSE] Stage is completed, calling refresh()...`);
+                  console.log(`[Frontend SSE] Before refresh - summary.value.title: ${summary.value?.title}, summary.value.summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
                   await refresh();
+                  console.log(`[Frontend SSE] After refresh - summary.value.title: ${summary.value?.title}, summary.value.summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
                 }
               }
             } catch {
@@ -173,6 +177,9 @@ export function useSummaryProcessing(
     watch(
       () => summary.value?.status,
       (newStatus, oldStatus) => {
+        console.log(`[Frontend Watch] Status changed: ${oldStatus} → ${newStatus}`);
+        console.log(`[Frontend Watch] Current data - title: ${summary.value?.title ? '(exists)' : '(null)'}, summary: ${summary.value?.summary ? '(exists, length=' + summary.value.summary.length + ')' : '(null/empty)'}`);
+
         if (newStatus === "pending") {
           startProcessing();
         }
@@ -188,8 +195,11 @@ export function useSummaryProcessing(
           if (pollInterval) {
             clearInterval(pollInterval);
           }
+          console.log(`[Frontend Watch] Starting poll interval for articles/reddit...`);
           pollInterval = setInterval(async () => {
+            console.log(`[Frontend Watch] Polling refresh()...`);
             await refresh();
+            console.log(`[Frontend Watch] After poll refresh - status: ${summary.value?.status}, title: ${summary.value?.title ? '(exists)' : '(null)'}`);
             if (summary.value?.status !== "processing") {
               if (pollInterval) {
                 clearInterval(pollInterval);
@@ -201,13 +211,29 @@ export function useSummaryProcessing(
 
         // Disconnect SSE when completed/failed
         if ((newStatus === "completed" || newStatus === "failed") && eventSource) {
+          console.log(`[Frontend Watch] Disconnecting SSE (status: ${newStatus})`);
           disconnectStageStream();
         }
 
         // Final refresh when transitioning from processing to completed
         // (handles race condition where poll may have missed the data)
         if (oldStatus === "processing" && newStatus === "completed") {
-          refresh();
+          console.log(`[Frontend Watch] processing → completed, calling refresh()...`);
+          console.log(`[Frontend Watch] Before final refresh - title: ${summary.value?.title ? '(exists)' : '(null)'}, summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
+          refresh().then(() => {
+            console.log(`[Frontend Watch] After final refresh - title: ${summary.value?.title ? '(exists)' : '(null)'}, summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
+          });
+        }
+
+        // Also refresh when page loads with already completed summary (oldStatus is undefined)
+        // This ensures data is fresh when navigating to a completed summary
+        // Check for null, undefined, OR empty string
+        const summaryIsEmpty = !summary.value?.summary || summary.value.summary.trim().length === 0;
+        if (oldStatus === undefined && newStatus === "completed" && summaryIsEmpty) {
+          console.log(`[Frontend Watch] Page loaded with completed summary but ${!summary.value?.summary ? 'null' : 'empty'} summary, calling refresh()...`);
+          refresh().then(() => {
+            console.log(`[Frontend Watch] After refresh - title: ${summary.value?.title ? '(exists)' : '(null)'}, summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
+          });
         }
       },
       { immediate: true }

@@ -10,7 +10,29 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { Summary } from "~~/db/schema"
+import type { Article, Summary, YouTube } from "~~/db/schema"
+
+// Helper function to calculate holistic total tokens
+const getHolisticTotalTokens = (
+  summary: Summary & { youtube?: YouTube | null; article?: Article | null }
+): number => {
+  let total = summary.totalTokens || 0
+
+  // Add classifier tokens from YouTube or Article
+  if (summary.youtube?.classifierTotalTokens) {
+    total += summary.youtube.classifierTotalTokens
+  }
+  if (summary.article?.classifierTotalTokens) {
+    total += summary.article.classifierTotalTokens
+  }
+
+  // Add reasoning tokens from summaries table
+  if (summary.reasoningTokens) {
+    total += summary.reasoningTokens
+  }
+
+  return total
+}
 
 export const createColumns = (
   onTitleClick?: (summary: Summary) => void,
@@ -112,9 +134,9 @@ export const createColumns = (
       },
     },
 
-    // Total Tokens column - visible by default
+    // Total Tokens column - visible by default (holistic total including classifier tokens)
     {
-      accessorKey: "totalTokens",
+      id: "holisticTotalTokens",
       header: ({ column }) => {
         return h(Button, {
           variant: "ghost",
@@ -123,8 +145,9 @@ export const createColumns = (
         }, () => ["Total Tokens", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
       },
       cell: ({ row }) => {
-        const tokens = row.getValue("totalTokens") as number | null
-        return h("div", { class: "text-sm text-muted-foreground font-mono text-center" }, tokens?.toLocaleString() || "N/A")
+        const summary = row.original as Summary & { youtube?: YouTube | null; article?: Article | null }
+        const tokens = getHolisticTotalTokens(summary)
+        return h("div", { class: "text-sm text-foreground font-mono font-medium text-center" }, tokens > 0 ? tokens.toLocaleString() : "N/A")
       },
     },
 

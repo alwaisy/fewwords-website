@@ -33,11 +33,8 @@ const friendlyErrorMessage = computed(() =>
 );
 
 // Summary processing logic
-const {
-  currentMessage,
-  currentIcon,
-  watchStatusChanges,
-} = useSummaryProcessing(summary, refresh);
+const { currentMessage, currentIcon, watchStatusChanges } =
+  useSummaryProcessing(summary, refresh);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -168,8 +165,13 @@ watchStatusChanges();
         </div>
 
         <!-- Completed State -->
-        <template v-else-if="summary && summary.status === 'completed'">
+        <template
+          v-else-if="
+            summary && summary.summary && summary.status === 'completed'
+          "
+        >
           <AppSummaryHeader
+            :key="`header-${summary.summaryId}`"
             :title="displayTitle"
             :source-url="summary.source"
             :reader-mode="isReaderMode"
@@ -178,10 +180,11 @@ watchStatusChanges();
             @save="saveSummary"
           />
           <AppSummaryContent
-            :content="summary.summary ?? ''"
+            :content="summary.summary"
             :source-url="summary.source"
           />
           <AppSummaryFooter
+            :key="`footer-${summary.summaryId}`"
             :reader-mode="isReaderMode"
             @do-another="doAnother"
           />

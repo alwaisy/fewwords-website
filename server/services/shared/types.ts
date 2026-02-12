@@ -5,7 +5,8 @@ export type LLMProvider = "openrouter" | "openai" | "anthropic";
 export type OpenRouterModel =
   | "google/gemini-3-flash-preview"
   | "anthropic/claude-haiku-4-5-20251001"
-  | "mistralai/ministral-8b-2512";
+  | "mistralai/ministral-8b-2512"
+  | "prime-intellect/intellect-3";
 
 // OpenAI models (for direct OpenAI provider)
 export type OpenAIModel = "gpt-5-nano" | "gpt-4.1-2025-04-14";

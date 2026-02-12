@@ -1,6 +1,9 @@
+import { eq } from "drizzle-orm";
 import { getRouterParam } from "h3";
 
 import { redis } from "../../../lib/redis";
+
+import { summaries } from "~~/db/schema";
 
 export default defineEventHandler(async (event) => {
   const summaryId = getRouterParam(event, "summaryId");
@@ -52,6 +55,37 @@ export default defineEventHandler(async (event) => {
           console.log(`[SSE] ✓ Already completed - closing stream for ${summaryId}`);
           controller.close();
           return;
+        }
+
+        // If stage is null, check database to see if summary is already done
+        if (initialStage === null) {
+          console.log(`[SSE] Stage is null, checking database status...`);
+          const db = await useDb(event);
+          const summaryRecord = await db
+            .select({ status: summaries.status })
+            .from(summaries)
+            .where(eq(summaries.summaryId, summaryId))
+            .limit(1);
+
+          const dbStatus = summaryRecord[0]?.status;
+          console.log(`[SSE] Database status: ${dbStatus}`);
+
+          // If summary is already completed/failed, close the stream
+          if (dbStatus === "completed" || dbStatus === "failed") {
+            console.log(`[SSE] ✓ Summary already ${dbStatus} in DB - closing stream for ${summaryId}`);
+            controller.close();
+            return;
+          }
+
+          // If summary is pending/processing, start polling (wait for stage to be set)
+          if (dbStatus === "pending" || dbStatus === "processing") {
+            console.log(`[SSE] Summary is ${dbStatus}, starting poll loop...`);
+          } else {
+            // No record found or unknown status - don't poll forever
+            console.log(`[SSE] No valid summary found, closing stream for ${summaryId}`);
+            controller.close();
+            return;
+          }
         }
 
         // Poll Redis for stage changes every 500ms

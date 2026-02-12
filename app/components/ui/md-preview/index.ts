@@ -1,1 +1,1 @@
-export { default as MDPreview } from "./md-preview.vue";
+export { default as MdPreview } from "./md-preview.vue";

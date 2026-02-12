@@ -11,7 +11,9 @@ import { summaries, articles } from '~~/db/schema'
 async function setCompletedStage(summaryId: string | undefined) {
   if (!summaryId) return;
   try {
+    console.log(`[SSE Stage] Setting 'completed' stage for ${summaryId}...`);
     await redis.set(`summary:${summaryId}:stage`, 'completed', 'EX', 3600);
+    console.log(`[SSE Stage] ✓ Set 'completed' stage for ${summaryId}`);
   } catch (error) {
     console.error(`[SSE Stage] Failed to set completed stage:`, error);
   }
@@ -115,6 +117,9 @@ export default defineEventHandler(async (event) => {
         }).onConflictDoNothing() // Avoid duplicate inserts
       }
 
+      // Log what was written to DB
+      console.log(`[DB Update] Summary ${updateSummaryId} updated: title="${result.title?.substring(0, 50)}...", summary=${result.summary ? '(exists)' : '(null)'}`);
+
       // Set completed stage AFTER DB write for SSE (fixes race condition)
       await setCompletedStage(updateSummaryId)
 
@@ -165,6 +170,9 @@ export default defineEventHandler(async (event) => {
         classifierTimeMs: metadata.classifierTimeMs,
       })
     }
+
+    // Log what was written to DB
+    console.log(`[DB Insert] Summary ${summaryId} inserted: title="${result.title?.substring(0, 50)}...", summary=${result.summary ? '(exists)' : '(null)'}`);
 
     // Set completed stage AFTER DB write for SSE (fixes race condition)
     await setCompletedStage(summaryId)
