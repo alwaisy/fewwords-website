@@ -12,6 +12,10 @@ definePageMeta({
   middleware: "admin",
 });
 
+useHead({
+  title: "Admin Dashboard",
+});
+
 const userData = useAuth().user;
 </script>
 
@@ -26,6 +30,9 @@ const userData = useAuth().user;
 
     <!-- Stats Cards -->
     <stats-cards />
+
+    <!-- Average Stats by Content Type -->
+    <stats-avg-stats />
 
     <!-- Daily Summaries + Content Distribution - 2 Columns -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

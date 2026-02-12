@@ -11,6 +11,10 @@ definePageMeta({
   middleware: ["admin"],
 });
 
+useHead({
+  title: "Summaries | Admin",
+});
+
 // Pagination state
 const page = ref(0);
 const pageSize = ref(10);

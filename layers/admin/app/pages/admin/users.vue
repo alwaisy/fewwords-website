@@ -2,7 +2,11 @@
 definePageMeta({
   layout: "admin",
   middleware: ["admin"],
-})
+});
+
+useHead({
+  title: "Users | Admin",
+});
 </script>
 
 <template>

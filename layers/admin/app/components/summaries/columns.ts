@@ -34,6 +34,35 @@ const getHolisticTotalTokens = (
   return total
 }
 
+// Helper function to calculate holistic total time
+const getHolisticTotalTimeMs = (
+  summary: Summary & { youtube?: YouTube | null; article?: Article | null }
+): number => {
+  let total = summary.responseTimeMs || 0
+
+  // Add classifier time from YouTube or Article
+  if (summary.youtube?.classifierTimeMs) {
+    total += summary.youtube.classifierTimeMs
+  }
+  if (summary.article?.classifierTimeMs) {
+    total += summary.article.classifierTimeMs
+  }
+
+  return total
+}
+
+// Format time helper
+const formatTime = (ms: number): string => {
+  if (ms <= 0) return "N/A"
+  if (ms >= 60000) {
+    return (ms / 60000).toFixed(1) + "m"
+  }
+  if (ms >= 1000) {
+    return (ms / 1000).toFixed(1) + "s"
+  }
+  return ms + "ms"
+}
+
 export const createColumns = (
   onTitleClick?: (summary: Summary) => void,
 ): ColumnDef<Summary>[] => {
@@ -102,7 +131,62 @@ export const createColumns = (
       },
     },
 
-    // Source column - visible by default
+    // Total Tokens column - visible by default (holistic total including classifier tokens)
+    {
+      id: "holisticTotalTokens",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Total Tokens", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const summary = row.original as Summary & { youtube?: YouTube | null; article?: Article | null }
+        const tokens = getHolisticTotalTokens(summary)
+        return h("div", { class: "text-sm text-foreground font-mono font-medium text-center" }, tokens > 0 ? tokens.toLocaleString() : "N/A")
+      },
+    },
+
+    // Total Time column - visible by default (holistic total including classifier time)
+    {
+      id: "holisticTotalTime",
+      header: ({ column }) => {
+        return h(Button, {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          class: "font-medium",
+        }, () => ["Total Time", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
+      },
+      cell: ({ row }) => {
+        const summary = row.original as Summary & { youtube?: YouTube | null; article?: Article | null }
+        const timeMs = getHolisticTotalTimeMs(summary)
+        return h("div", { class: "text-sm text-foreground font-mono font-medium text-center" }, formatTime(timeMs))
+      },
+    },
+
+    // Actions column - visible by default
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const summary = row.original
+        return h("div", { class: "flex items-center gap-2" }, [
+          h(Button, {
+            variant: "ghost",
+            size: "sm",
+            as: "a",
+            href: `/app/${summary.summaryId}`,
+            target: "_blank",
+            class: "h-8 w-8 p-0",
+          }, () => h(ExternalLink, { class: "h-4 w-4" })),
+        ])
+      },
+    },
+
+    // ===== HIDDEN COLUMNS (available in dropdown) =====
+
+    // Source column - hidden by default (moved from visible)
     {
       accessorKey: "source",
       header: "Source",
@@ -133,44 +217,6 @@ export const createColumns = (
         )
       },
     },
-
-    // Total Tokens column - visible by default (holistic total including classifier tokens)
-    {
-      id: "holisticTotalTokens",
-      header: ({ column }) => {
-        return h(Button, {
-          variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-          class: "font-medium",
-        }, () => ["Total Tokens", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })])
-      },
-      cell: ({ row }) => {
-        const summary = row.original as Summary & { youtube?: YouTube | null; article?: Article | null }
-        const tokens = getHolisticTotalTokens(summary)
-        return h("div", { class: "text-sm text-foreground font-mono font-medium text-center" }, tokens > 0 ? tokens.toLocaleString() : "N/A")
-      },
-    },
-
-    // Actions column - visible by default
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const summary = row.original
-        return h("div", { class: "flex items-center gap-2" }, [
-          h(Button, {
-            variant: "ghost",
-            size: "sm",
-            as: "a",
-            href: `/app/${summary.summaryId}`,
-            target: "_blank",
-            class: "h-8 w-8 p-0",
-          }, () => h(ExternalLink, { class: "h-4 w-4" })),
-        ])
-      },
-    },
-
-    // ===== HIDDEN COLUMNS (available in dropdown) =====
 
     // Status column - hidden by default
     {

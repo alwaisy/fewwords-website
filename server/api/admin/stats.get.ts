@@ -1,7 +1,7 @@
 import { count, eq, sql, desc } from "drizzle-orm";
 
 import type { UserRole } from "~~/db/schema";
-import { summaries, users } from "~~/db/schema";
+import { articles, summaries, users, youtube } from "~~/db/schema";
 
 /**
  * Admin-only endpoint to get dashboard statistics
@@ -33,25 +33,56 @@ export default defineEventHandler(async (event) => {
   const [
     totalSummariesResult,
     totalUsersResult,
-    totalTokensResult,
+    summaryTokensResult,
+    summaryReasoningTokensResult,
+    youtubeClassifierTokensResult,
+    articleClassifierTokensResult,
     completedSummariesResult,
     failedSummariesResult,
     thisMonthSummariesResult,
     lastMonthSummariesResult,
     thisMonthUsersResult,
     lastMonthUsersResult,
-    thisMonthTokensResult,
-    lastMonthTokensResult,
+    thisMonthSummaryTokensResult,
+    lastMonthSummaryTokensResult,
     essenceBreakdownResult,
     recentSummariesResult,
+    // Average stats for articles
+    articleStatsResult,
+    // Average stats for youtube
+    youtubeStatsResult,
+    // Article min/max stats
+    articleMinMaxResult,
+    // YouTube min/max stats
+    youtubeMinMaxResult,
   ] = await Promise.all([
     // Total counts
     db.select({ count: count() }).from(summaries),
     db.select({ count: count() }).from(users),
+
+    // Holistic token counting: Summary tokens (main)
     db
       .select({ total: sql<number>`COALESCE(SUM(${summaries.totalTokens}), 0)` })
       .from(summaries)
       .where(isNotNull(summaries.totalTokens)),
+
+    // Holistic token counting: Reasoning tokens from summaries
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${summaries.reasoningTokens}), 0)` })
+      .from(summaries)
+      .where(isNotNull(summaries.reasoningTokens)),
+
+    // Holistic token counting: YouTube classifier tokens
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${youtube.classifierTotalTokens}), 0)` })
+      .from(youtube)
+      .where(isNotNull(youtube.classifierTotalTokens)),
+
+    // Holistic token counting: Article classifier tokens
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${articles.classifierTotalTokens}), 0)` })
+      .from(articles)
+      .where(isNotNull(articles.classifierTotalTokens)),
 
     // Status breakdown
     db.select({ count: count() }).from(summaries).where(eq(summaries.status, "completed")),
@@ -82,7 +113,7 @@ export default defineEventHandler(async (event) => {
         sql`${users.createdAt} >= ${startOfLastMonthStr} AND ${users.createdAt} < ${endOfLastMonthStr}`
       ),
 
-    // This month tokens
+    // This month summary tokens (for comparison)
     db
       .select({ total: sql<number>`COALESCE(SUM(${summaries.totalTokens}), 0)` })
       .from(summaries)
@@ -90,7 +121,7 @@ export default defineEventHandler(async (event) => {
         sql`${summaries.createdAt} >= ${startOfMonthStr} AND ${summaries.totalTokens} IS NOT NULL`
       ),
 
-    // Last month tokens
+    // Last month summary tokens (for comparison)
     db
       .select({ total: sql<number>`COALESCE(SUM(${summaries.totalTokens}), 0)` })
       .from(summaries)
@@ -119,12 +150,86 @@ export default defineEventHandler(async (event) => {
       .from(summaries)
       .orderBy(desc(summaries.createdAt))
       .limit(10),
+
+    // Article average stats: avg tokens (summary + classifier) and avg time
+    db
+      .select({
+        count: count(),
+        avgSummaryTokens: sql<number>`AVG(${summaries.totalTokens})`,
+        avgReasoningTokens: sql<number>`AVG(${summaries.reasoningTokens})`,
+        avgResponseTimeMs: sql<number>`AVG(${summaries.responseTimeMs})`,
+      })
+      .from(summaries)
+      .leftJoin(articles, sql`${articles.summaryId} = ${summaries.id}`)
+      .where(sql`${summaries.essence} = 'article' AND ${summaries.status} = 'completed'`),
+
+    // YouTube average stats: avg tokens (summary + classifier) and avg time
+    db
+      .select({
+        count: count(),
+        avgSummaryTokens: sql<number>`AVG(${summaries.totalTokens})`,
+        avgReasoningTokens: sql<number>`AVG(${summaries.reasoningTokens})`,
+        avgResponseTimeMs: sql<number>`AVG(${summaries.responseTimeMs})`,
+      })
+      .from(summaries)
+      .leftJoin(youtube, sql`${youtube.summaryId} = ${summaries.id}`)
+      .where(sql`${summaries.essence} = 'youtube' AND ${summaries.status} = 'completed'`),
+
+    // Article min/max stats
+    db
+      .select({
+        minSummaryTokens: sql<number>`MIN(${summaries.totalTokens})`,
+        maxSummaryTokens: sql<number>`MAX(${summaries.totalTokens})`,
+        minResponseTimeMs: sql<number>`MIN(${summaries.responseTimeMs})`,
+        maxResponseTimeMs: sql<number>`MAX(${summaries.responseTimeMs})`,
+      })
+      .from(summaries)
+      .where(sql`${summaries.essence} = 'article' AND ${summaries.status} = 'completed' AND ${summaries.totalTokens} IS NOT NULL`),
+
+    // YouTube min/max stats
+    db
+      .select({
+        minSummaryTokens: sql<number>`MIN(${summaries.totalTokens})`,
+        maxSummaryTokens: sql<number>`MAX(${summaries.totalTokens})`,
+        minResponseTimeMs: sql<number>`MIN(${summaries.responseTimeMs})`,
+        maxResponseTimeMs: sql<number>`MAX(${summaries.responseTimeMs})`,
+      })
+      .from(summaries)
+      .where(sql`${summaries.essence} = 'youtube' AND ${summaries.status} = 'completed' AND ${summaries.totalTokens} IS NOT NULL`),
   ]);
+
+  // Get classifier token averages separately (need to join with youtube/articles tables)
+  const articleClassifierAvg = await db
+    .select({
+      avgClassifierTokens: sql<number>`AVG(${articles.classifierTotalTokens})`,
+      avgClassifierTimeMs: sql<number>`AVG(${articles.classifierTimeMs})`,
+    })
+    .from(articles)
+    .innerJoin(summaries, sql`${articles.summaryId} = ${summaries.id}`)
+    .where(sql`${summaries.status} = 'completed'`);
+
+  const youtubeClassifierAvg = await db
+    .select({
+      avgClassifierTokens: sql<number>`AVG(${youtube.classifierTotalTokens})`,
+      avgClassifierTimeMs: sql<number>`AVG(${youtube.classifierTimeMs})`,
+    })
+    .from(youtube)
+    .innerJoin(summaries, sql`${youtube.summaryId} = ${summaries.id}`)
+    .where(sql`${summaries.status} = 'completed'`);
 
   // Extract values
   const totalSummaries = totalSummariesResult[0]?.count ?? 0;
   const totalUsers = totalUsersResult[0]?.count ?? 0;
-  const totalTokens = totalTokensResult[0]?.total ?? 0;
+
+  // Holistic token counting: sum all token sources
+  const summaryTokens = Number(summaryTokensResult[0]?.total ?? 0);
+  const summaryReasoningTokens = Number(summaryReasoningTokensResult[0]?.total ?? 0);
+  const youtubeClassifierTokens = Number(youtubeClassifierTokensResult[0]?.total ?? 0);
+  const articleClassifierTokens = Number(articleClassifierTokensResult[0]?.total ?? 0);
+
+  // Total holistic tokens
+  const totalHolisticTokens = summaryTokens + summaryReasoningTokens + youtubeClassifierTokens + articleClassifierTokens;
+
   const completedSummaries = completedSummariesResult[0]?.count ?? 0;
   const failedSummaries = failedSummariesResult[0]?.count ?? 0;
 
@@ -132,8 +237,8 @@ export default defineEventHandler(async (event) => {
   const lastMonthSummaries = lastMonthSummariesResult[0]?.count ?? 0;
   const thisMonthUsers = thisMonthUsersResult[0]?.count ?? 0;
   const lastMonthUsers = lastMonthUsersResult[0]?.count ?? 0;
-  const thisMonthTokens = thisMonthTokensResult[0]?.total ?? 0;
-  const lastMonthTokens = lastMonthTokensResult[0]?.total ?? 0;
+  const thisMonthTokens = Number(thisMonthSummaryTokensResult[0]?.total ?? 0);
+  const lastMonthTokens = Number(lastMonthSummaryTokensResult[0]?.total ?? 0);
 
   // Calculate percentage changes
   const calculatePercentChange = (current: number, previous: number) => {
@@ -166,6 +271,37 @@ export default defineEventHandler(async (event) => {
       : "0.0",
   }));
 
+  // Calculate average stats for articles
+  const articleCount = articleStatsResult[0]?.count ?? 0;
+  const articleAvgSummaryTokens = Number(articleStatsResult[0]?.avgSummaryTokens ?? 0);
+  const articleAvgReasoningTokens = Number(articleStatsResult[0]?.avgReasoningTokens ?? 0);
+  const articleAvgClassifierTokens = Number(articleClassifierAvg[0]?.avgClassifierTokens ?? 0);
+  const articleAvgTotalTokens = articleAvgSummaryTokens + articleAvgReasoningTokens + articleAvgClassifierTokens;
+  const articleAvgResponseTimeMs = Number(articleStatsResult[0]?.avgResponseTimeMs ?? 0);
+  const articleAvgClassifierTimeMs = Number(articleClassifierAvg[0]?.avgClassifierTimeMs ?? 0);
+  const articleAvgTotalTimeMs = articleAvgResponseTimeMs + articleAvgClassifierTimeMs;
+
+  // Calculate average stats for YouTube
+  const youtubeCount = youtubeStatsResult[0]?.count ?? 0;
+  const youtubeAvgSummaryTokens = Number(youtubeStatsResult[0]?.avgSummaryTokens ?? 0);
+  const youtubeAvgReasoningTokens = Number(youtubeStatsResult[0]?.avgReasoningTokens ?? 0);
+  const youtubeAvgClassifierTokens = Number(youtubeClassifierAvg[0]?.avgClassifierTokens ?? 0);
+  const youtubeAvgTotalTokens = youtubeAvgSummaryTokens + youtubeAvgReasoningTokens + youtubeAvgClassifierTokens;
+  const youtubeAvgResponseTimeMs = Number(youtubeStatsResult[0]?.avgResponseTimeMs ?? 0);
+  const youtubeAvgClassifierTimeMs = Number(youtubeClassifierAvg[0]?.avgClassifierTimeMs ?? 0);
+  const youtubeAvgTotalTimeMs = youtubeAvgResponseTimeMs + youtubeAvgClassifierTimeMs;
+
+  // Extract min/max stats
+  const articleMinTokens = Number(articleMinMaxResult[0]?.minSummaryTokens ?? 0);
+  const articleMaxTokens = Number(articleMinMaxResult[0]?.maxSummaryTokens ?? 0);
+  const articleMinTimeMs = Number(articleMinMaxResult[0]?.minResponseTimeMs ?? 0);
+  const articleMaxTimeMs = Number(articleMinMaxResult[0]?.maxResponseTimeMs ?? 0);
+
+  const youtubeMinTokens = Number(youtubeMinMaxResult[0]?.minSummaryTokens ?? 0);
+  const youtubeMaxTokens = Number(youtubeMinMaxResult[0]?.maxSummaryTokens ?? 0);
+  const youtubeMinTimeMs = Number(youtubeMinMaxResult[0]?.minResponseTimeMs ?? 0);
+  const youtubeMaxTimeMs = Number(youtubeMinMaxResult[0]?.maxResponseTimeMs ?? 0);
+
   return {
     statsCards: [
       {
@@ -182,7 +318,7 @@ export default defineEventHandler(async (event) => {
       },
       {
         title: "Token Usage",
-        value: formatTokens(totalTokens),
+        value: formatTokens(totalHolisticTokens),
         change: calculatePercentChange(thisMonthTokens, lastMonthTokens) + " from last month",
         trend: thisMonthTokens >= lastMonthTokens ? "up" : "down",
       },
@@ -195,10 +331,51 @@ export default defineEventHandler(async (event) => {
     ],
     essenceStats,
     recentSummaries,
+    // Average stats by content type
+    avgStats: {
+      article: {
+        count: articleCount,
+        avgTokens: Math.round(articleAvgTotalTokens),
+        avgTimeMs: Math.round(articleAvgTotalTimeMs),
+        minTokens: articleMinTokens,
+        maxTokens: articleMaxTokens,
+        minTimeMs: articleMinTimeMs,
+        maxTimeMs: articleMaxTimeMs,
+        breakdown: {
+          summaryTokens: Math.round(articleAvgSummaryTokens),
+          reasoningTokens: Math.round(articleAvgReasoningTokens),
+          classifierTokens: Math.round(articleAvgClassifierTokens),
+          summaryTimeMs: Math.round(articleAvgResponseTimeMs),
+          classifierTimeMs: Math.round(articleAvgClassifierTimeMs),
+        },
+      },
+      youtube: {
+        count: youtubeCount,
+        avgTokens: Math.round(youtubeAvgTotalTokens),
+        avgTimeMs: Math.round(youtubeAvgTotalTimeMs),
+        minTokens: youtubeMinTokens,
+        maxTokens: youtubeMaxTokens,
+        minTimeMs: youtubeMinTimeMs,
+        maxTimeMs: youtubeMaxTimeMs,
+        breakdown: {
+          summaryTokens: Math.round(youtubeAvgSummaryTokens),
+          reasoningTokens: Math.round(youtubeAvgReasoningTokens),
+          classifierTokens: Math.round(youtubeAvgClassifierTokens),
+          summaryTimeMs: Math.round(youtubeAvgResponseTimeMs),
+          classifierTimeMs: Math.round(youtubeAvgClassifierTimeMs),
+        },
+      },
+    },
     total: {
       summaries: totalSummaries,
       users: totalUsers,
-      tokens: totalTokens,
+      tokens: totalHolisticTokens,
+      tokenBreakdown: {
+        summaryTokens,
+        reasoningTokens: summaryReasoningTokens,
+        youtubeClassifierTokens,
+        articleClassifierTokens,
+      },
     },
   };
 });

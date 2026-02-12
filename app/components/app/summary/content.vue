@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
-import { parse } from "marked";
 import DOMPurify from "dompurify";
+import { parse } from "marked";
+import { computed, watch } from "vue";
 
 import { convertYoutubeTimestamps } from "~/utils/markdown";
 
@@ -84,8 +84,8 @@ watch(
     <ClientOnly>
       <div
         v-if="renderedHtml"
-        v-html="renderedHtml"
         class="prose prose-lime prose-xl dark:prose-invert max-w-none p-2"
+        v-html="renderedHtml"
       />
       <template #fallback>
         <AppSummarySkeleton />

@@ -83,12 +83,13 @@ const uniqueEssences = computed(() => {
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
 const columnVisibility = ref<VisibilityState>({
-  // Default visible columns: summaryId, title, essence, source, totalTokens, actions
+  // Default visible columns: summaryId, title, essence, totalTokens, totalTime, actions
   summaryId: true,
   title: true,
   essence: true,
-  source: true,
-  totalTokens: true,
+  source: false, // Hidden by default
+  holisticTotalTokens: true,
+  holisticTotalTime: true,
   model: false,
   status: false,
   createdAt: false,
