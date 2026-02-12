@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
+import { parse } from "marked";
+import DOMPurify from "dompurify";
 
 import { convertYoutubeTimestamps } from "~/utils/markdown";
 
@@ -45,21 +47,50 @@ const transformedContent = computed(() => {
 
   return content;
 });
+
+// Parse markdown to sanitized HTML (client-side only)
+const renderedHtml = computed(() => {
+  if (!transformedContent.value) return "";
+
+  // Parse markdown to HTML
+  const rawHtml = parse(transformedContent.value) as string;
+
+  // Sanitize with DOMPurify (only on client)
+  if (import.meta.client) {
+    return DOMPurify.sanitize(rawHtml);
+  }
+
+  return rawHtml;
+});
+
+// Debug watch
+watch(
+  () => props.content,
+  (newContent, oldContent) => {
+    console.log("[AppSummaryContent] Content changed:", {
+      oldLength: oldContent?.length ?? 0,
+      newLength: newContent?.length ?? 0,
+      hasNewContent: !!newContent,
+      transformedLength: transformedContent.value.length,
+    });
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <div class="summary-wrapper">
-    <MDC
-      v-if="transformedContent"
-      :value="transformedContent"
-      class="prose prose-lime prose-xl dark:prose-invert max-w-none p-2"
-    />
-    <div v-else class="flex items-center justify-center h-full">
-      <Icon
-        name="lucide:loader-2"
-        class="w-10 h-10 text-primary animate-spin"
+    <!-- Render sanitized HTML directly -->
+    <ClientOnly>
+      <div
+        v-if="renderedHtml"
+        v-html="renderedHtml"
+        class="prose prose-lime prose-xl dark:prose-invert max-w-none p-2"
       />
-    </div>
+      <template #fallback>
+        <AppSummarySkeleton />
+      </template>
+    </ClientOnly>
   </div>
 </template>
 
@@ -158,21 +189,9 @@ const transformedContent = computed(() => {
 }
 
 /* Blockquote */
-/* .summary-wrapper :deep(blockquote) {
-  border-left: 3px solid currentColor;
-  padding-left: 1rem;
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  font-style: normal;
-} */
-
 .summary-wrapper :deep(blockquote) {
   color: var(--muted-foreground);
 }
-
-/* .summary-wrapper :deep(blockquote p) {
-  margin: 0;
-} */
 
 /* Special styling for Final Take blockquotes */
 .summary-wrapper :deep(blockquote:has(strong)) {
