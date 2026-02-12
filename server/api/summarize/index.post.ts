@@ -1,10 +1,21 @@
 import { eq } from 'drizzle-orm'
 
+import { redis } from '../../lib/redis'
 import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 
 import { summaries, articles } from '~~/db/schema'
+
+// Helper to set stage in Redis for SSE (only for YouTube)
+async function setCompletedStage(summaryId: string | undefined) {
+  if (!summaryId) return;
+  try {
+    await redis.set(`summary:${summaryId}:stage`, 'completed', 'EX', 3600);
+  } catch (error) {
+    console.error(`[SSE Stage] Failed to set completed stage:`, error);
+  }
+}
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
   const urlObj = new URL(url)
@@ -104,6 +115,9 @@ export default defineEventHandler(async (event) => {
         }).onConflictDoNothing() // Avoid duplicate inserts
       }
 
+      // Set completed stage AFTER DB write for SSE (fixes race condition)
+      await setCompletedStage(updateSummaryId)
+
       return {
         summaryId: updateSummaryId,
         title: result.title,
@@ -151,6 +165,9 @@ export default defineEventHandler(async (event) => {
         classifierTimeMs: metadata.classifierTimeMs,
       })
     }
+
+    // Set completed stage AFTER DB write for SSE (fixes race condition)
+    await setCompletedStage(summaryId)
 
     return {
       summaryId,

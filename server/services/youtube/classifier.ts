@@ -143,11 +143,19 @@ export async function classifyVideo(
     } catch {
       // If that fails, try removing markdown code blocks
       let content = result.content.trim();
-      if (content.startsWith("```json")) {
-        content = content.replace(/```json\n?/, "").replace(/```$/, "");
-      } else if (content.startsWith("```")) {
-        content = content.replace(/```\n?/, "").replace(/```$/, "");
+
+      // Extract content between ```json or ``` and closing ```
+      const codeBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (codeBlockMatch && codeBlockMatch[1]) {
+        content = codeBlockMatch[1].trim();
+      } else {
+        // Fallback: strip starting and ending markers manually
+        content = content
+          .replace(/^```(?:json)?\s*\n?/, '')
+          .replace(/\n?```\s*$/, '')
+          .trim();
       }
+
       parsed = JSON.parse(content);
     }
 

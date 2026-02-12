@@ -280,9 +280,8 @@ export async function summarize(
   });
   console.log(`[YouTube] ✓ summarizeVideo completed for ${summaryId}`);
 
-  // Stage completed
-  console.log(`[YouTube] Setting stage to completed for ${summaryId}`);
-  await setStage(summaryId || "", "completed");
+  // Stage "completed" is set by API route AFTER DB write to avoid race condition
+  // (SSE will notify frontend only after data is in database)
 
   return {
     url,

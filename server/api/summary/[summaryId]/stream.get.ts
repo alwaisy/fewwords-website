@@ -47,6 +47,13 @@ export default defineEventHandler(async (event) => {
         lastStage = initialStage;
         sendEvent({ stage: initialStage });
 
+        // Stop immediately if already completed
+        if (initialStage === "completed") {
+          console.log(`[SSE] ✓ Already completed - closing stream for ${summaryId}`);
+          controller.close();
+          return;
+        }
+
         // Poll Redis for stage changes every 500ms
         console.log(`[SSE] Starting poll loop for ${summaryId} (500ms interval)`);
         let pollCount = 0;

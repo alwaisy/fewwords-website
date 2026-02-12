@@ -17,7 +17,6 @@ import { ChevronDown } from "lucide-vue-next";
 
 import SummaryDrawer from "./summary-drawer.vue";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

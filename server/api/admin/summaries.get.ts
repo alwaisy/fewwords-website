@@ -1,7 +1,7 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import type { UserRole } from "~~/db/schema";
-import { summaries } from "~~/db/schema";
+import { summaries, youtube, articles } from "~~/db/schema";
 
 /**
  * Admin-only endpoint to get all summaries with pagination and filtering
@@ -36,13 +36,57 @@ export default defineEventHandler(async (event) => {
 
   const db = await useDb(event);
 
-  // Get all summaries and apply filters in memory
-  // TODO: Move filtering to SQL for production
+  // Get all summaries with their related data (youtube/articles)
   const allSummaries = await db
-    .select()
+    .select({
+      id: summaries.id,
+      summaryId: summaries.summaryId,
+      source: summaries.source,
+      essence: summaries.essence,
+      title: summaries.title,
+      summary: summaries.summary,
+      model: summaries.model,
+      promptId: summaries.promptId,
+      reasoning: summaries.reasoning,
+      reasoningEffort: summaries.reasoningEffort,
+      reasoningTokens: summaries.reasoningTokens,
+      promptTokens: summaries.promptTokens,
+      completionTokens: summaries.completionTokens,
+      totalTokens: summaries.totalTokens,
+      isPublic: summaries.isPublic,
+      responseTimeMs: summaries.responseTimeMs,
+      status: summaries.status,
+      stage: summaries.stage,
+      errorMessage: summaries.errorMessage,
+      createdAt: summaries.createdAt,
+      completedAt: summaries.completedAt,
+      // YouTube specific fields
+      youtube: {
+        videoId: youtube.videoId,
+        duration: youtube.duration,
+        category: youtube.category,
+        cleanTitle: youtube.cleanTitle,
+        classifierReasoningTokens: youtube.classifierReasoningTokens,
+        classifierPromptTokens: youtube.classifierPromptTokens,
+        classifierCompletionTokens: youtube.classifierCompletionTokens,
+        classifierTotalTokens: youtube.classifierTotalTokens,
+      },
+      // Article specific fields
+      article: {
+        wordCount: articles.wordCount,
+        readingTimeMinutes: articles.readingTimeMinutes,
+        classifierPromptTokens: articles.classifierPromptTokens,
+        classifierCompletionTokens: articles.classifierCompletionTokens,
+        classifierTotalTokens: articles.classifierTotalTokens,
+        classifierTimeMs: articles.classifierTimeMs,
+      },
+    })
     .from(summaries)
+    .leftJoin(youtube, eq(summaries.id, youtube.summaryId))
+    .leftJoin(articles, eq(summaries.id, articles.summaryId))
     .orderBy(desc(summaries.createdAt));
 
+  // Apply filters
   let filteredSummaries = allSummaries;
 
   // Apply search filter (title or summaryId contains search term)
@@ -50,7 +94,7 @@ export default defineEventHandler(async (event) => {
     const searchLower = search.toLowerCase();
     filteredSummaries = filteredSummaries.filter((s) =>
       s.title?.toLowerCase().includes(searchLower) ||
-      s.summaryId.toLowerCase().includes(searchLower)
+      s.summaryId?.toLowerCase().includes(searchLower)
     );
   }
 

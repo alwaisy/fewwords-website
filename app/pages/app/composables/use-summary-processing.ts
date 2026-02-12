@@ -102,33 +102,45 @@ export function useSummaryProcessing(
       return;
     }
 
-    // Wait for summaryId to be available
-    const tryConnect = () => {
-      if (!summary.value?.summaryId) {
-        setTimeout(tryConnect, 100);
-        return;
-      }
+    // Only run on client - EventSource doesn't exist during SSR
+    onMounted(() => {
+      // Wait for summaryId to be available
+      const tryConnect = () => {
+        if (!summary.value?.summaryId) {
+          setTimeout(tryConnect, 100);
+          return;
+        }
 
-      eventSource = new EventSource(`/api/summary/${summary.value.summaryId}/stream`);
-
-      eventSource.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.stage !== undefined) {
-            currentStage.value = data.stage;
-          }
-        } catch {
-          // Ignore parse errors
+          eventSource = new EventSource(`/api/summary/${summary.value.summaryId}/stream`);
+
+          eventSource.onmessage = async (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.stage !== undefined) {
+                currentStage.value = data.stage;
+                // Fetch final summary data when completed
+                if (data.stage === "completed") {
+                  await refresh();
+                }
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          };
+
+          eventSource.onerror = () => {
+            eventSource?.close();
+            eventSource = null;
+          };
+        } catch (err) {
+          // EventSource not available (SSR or unsupported browser)
+          console.error('[SSE] Failed to connect:', err);
         }
       };
 
-      eventSource.onerror = () => {
-        eventSource?.close();
-        eventSource = null;
-      };
-    };
-
-    tryConnect();
+      tryConnect();
+    });
   };
 
   const disconnectStageStream = () => {
@@ -156,9 +168,11 @@ export function useSummaryProcessing(
   };
 
   const watchStatusChanges = () => {
+    let pollInterval: NodeJS.Timeout | null = null;
+
     watch(
       () => summary.value?.status,
-      (newStatus) => {
+      (newStatus, oldStatus) => {
         if (newStatus === "pending") {
           startProcessing();
         }
@@ -170,25 +184,41 @@ export function useSummaryProcessing(
 
         // Keep polling for status changes (articles/reddit)
         if (newStatus === "processing" && summary.value?.essence !== "youtube") {
-          const pollInterval = setInterval(async () => {
+          // Clear any existing poll interval first
+          if (pollInterval) {
+            clearInterval(pollInterval);
+          }
+          pollInterval = setInterval(async () => {
             await refresh();
             if (summary.value?.status !== "processing") {
-              clearInterval(pollInterval);
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+              }
             }
           }, 2000);
-
-          onUnmounted(() => {
-            clearInterval(pollInterval);
-          });
         }
 
         // Disconnect SSE when completed/failed
         if ((newStatus === "completed" || newStatus === "failed") && eventSource) {
           disconnectStageStream();
         }
+
+        // Final refresh when transitioning from processing to completed
+        // (handles race condition where poll may have missed the data)
+        if (oldStatus === "processing" && newStatus === "completed") {
+          refresh();
+        }
       },
       { immediate: true }
     );
+
+    // Cleanup interval on unmount
+    onUnmounted(() => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    });
   };
 
   return {
