@@ -5,7 +5,7 @@ import { summarize as summarizeArticle, type ArticleMetadata } from '../../servi
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 
-import { summaries, articles } from '~~/db/schema'
+import { summaries, articles, youtube } from '~~/db/schema'
 
 // Helper to set stage in Redis for SSE (only for YouTube)
 async function setCompletedStage(summaryId: string | undefined) {
@@ -16,6 +16,27 @@ async function setCompletedStage(summaryId: string | undefined) {
     console.log(`[SSE Stage] ✓ Set 'completed' stage for ${summaryId}`);
   } catch (error) {
     console.error(`[SSE Stage] Failed to set completed stage:`, error);
+  }
+}
+
+// Helper to calculate and store total cycle time
+async function storeTotalTime(
+  db: ReturnType<typeof useDb>,
+  summaryInternalId: string,
+  essence: 'article' | 'youtube' | 'reddit',
+  createdAt: Date,
+  completedAt: Date
+) {
+  const totalTimeMs = completedAt.getTime() - createdAt.getTime()
+  
+  if (essence === 'article') {
+    await db.update(articles)
+      .set({ totalTimeMs })
+      .where(eq(articles.summaryId, summaryInternalId))
+  } else if (essence === 'youtube') {
+    await db.update(youtube)
+      .set({ totalTimeMs })
+      .where(eq(youtube.summaryId, summaryInternalId))
   }
 }
 
@@ -76,6 +97,14 @@ export default defineEventHandler(async (event) => {
     let summaryInternalId: string | undefined
 
     if (updateSummaryId) {
+      // Fetch the original createdAt for total time calculation
+      const existingSummary = await db.select({ id: summaries.id, createdAt: summaries.createdAt })
+        .from(summaries)
+        .where(eq(summaries.summaryId, updateSummaryId))
+        .limit(1)
+      
+      const originalCreatedAt = existingSummary[0]?.createdAt
+
       const updated = await db.update(summaries)
         .set({
           title: result.title,
@@ -96,6 +125,7 @@ export default defineEventHandler(async (event) => {
         .returning({ id: summaries.id })
 
       summaryInternalId = updated[0]?.id
+      const completedAt = new Date()
 
       // Store article metadata if essence is article
       if (essence === 'article' && summaryInternalId && 'metadata' in result) {
@@ -115,6 +145,16 @@ export default defineEventHandler(async (event) => {
           classifierTotalTokens: metadata.classifierTotalTokens,
           classifierTimeMs: metadata.classifierTimeMs,
         }).onConflictDoNothing() // Avoid duplicate inserts
+
+        // Store total cycle time
+        if (originalCreatedAt) {
+          await storeTotalTime(db, summaryInternalId, essence, originalCreatedAt, completedAt)
+        }
+      }
+
+      // Store total cycle time for YouTube (article record already created in service)
+      if (essence === 'youtube' && summaryInternalId && originalCreatedAt) {
+        await storeTotalTime(db, summaryInternalId, essence, originalCreatedAt, completedAt)
       }
 
       // Log what was written to DB

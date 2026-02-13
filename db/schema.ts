@@ -151,6 +151,9 @@ export const youtube = pgTable(
     classifierTotalTokens: integer("classifier_total_tokens"),
     classifierTimeMs: integer("classifier_time_ms"),
 
+    // Total cycle time (from user submit to completed/failed)
+    totalTimeMs: integer("total_time_ms"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -196,6 +199,9 @@ export const articles = pgTable(
     classifierCompletionTokens: integer("classifier_completion_tokens"),
     classifierTotalTokens: integer("classifier_total_tokens"),
     classifierTimeMs: integer("classifier_time_ms"),
+
+    // Total cycle time (from user submit to completed/failed)
+    totalTimeMs: integer("total_time_ms"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

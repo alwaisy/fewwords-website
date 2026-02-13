@@ -34,7 +34,7 @@ const userData = useAuth().user;
     <!-- Average Stats by Content Type -->
     <stats-avg-stats />
 
-    <!-- Daily Summaries + Content Distribution - 2 Columns -->
+    <!-- Daily Summaries + Content Distribution/Models - 2 Columns -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
@@ -45,7 +45,10 @@ const userData = useAuth().user;
           <stats-daily-summaries />
         </CardContent>
       </Card>
-      <stats-content-distribution />
+      <div class="space-y-4">
+        <stats-content-distribution />
+        <stats-model-usage />
+      </div>
     </div>
 
     <!-- Recent Summaries - Full Width -->

@@ -13,6 +13,7 @@ import { articles, summaries, youtube } from "~~/db/schema";
  * - search: string (filters title and summaryId)
  * - status: string (filters by status)
  * - essence: string (filters by essence type)
+ * - model: string (filters by model)
  */
 export default defineEventHandler(async (event) => {
   // Verify admin role
@@ -33,6 +34,7 @@ export default defineEventHandler(async (event) => {
   const search = (query.search as string) || "";
   const status = (query.status as string) || "";
   const essence = (query.essence as string) || "";
+  const model = (query.model as string) || "";
 
   const db = await useDb(event);
 
@@ -62,6 +64,11 @@ export default defineEventHandler(async (event) => {
   // Apply essence filter
   if (essence) {
     filteredSummaries = filteredSummaries.filter((s) => s.essence === essence);
+  }
+
+  // Apply model filter
+  if (model) {
+    filteredSummaries = filteredSummaries.filter((s) => s.model === model);
   }
 
   // Apply sorting
@@ -115,6 +122,12 @@ export default defineEventHandler(async (event) => {
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
+    },
+    // Filter options (unique values from all data)
+    filterOptions: {
+      essences: ["article", "youtube", "reddit"],
+      statuses: ["pending", "processing", "completed", "failed"],
+      models: [...new Set(allSummaries.map((s) => s.model).filter(Boolean))].sort() as string[],
     },
   };
 });

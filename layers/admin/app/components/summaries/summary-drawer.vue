@@ -99,16 +99,8 @@ const tokenBreakdown = computed(() => {
 
 // Holistic time breakdown
 const totalTimeMs = computed(() => {
-  let total = props.summary.responseTimeMs || 0;
-
-  if (props.summary.youtube?.classifierTimeMs) {
-    total += props.summary.youtube.classifierTimeMs;
-  }
-  if (props.summary.article?.classifierTimeMs) {
-    total += props.summary.article.classifierTimeMs;
-  }
-
-  return total;
+  // responseTimeMs already includes classifier time, so just use it directly
+  return props.summary.responseTimeMs || 0;
 });
 
 const formatTime = (ms: number) => {
@@ -120,35 +112,41 @@ const formatTime = (ms: number) => {
 const timeBreakdown = computed(() => {
   const breakdown: { stage: string; time: number }[] = [];
 
-  // Main summarization time (if responseTimeMs exists and we have classifier time, subtract classifier time)
+  // Classification time (part of responseTimeMs)
+  let classifierTime = 0;
+  if (props.summary.youtube?.classifierTimeMs) {
+    classifierTime += props.summary.youtube.classifierTimeMs;
+    breakdown.push({
+      stage: "Classification (YouTube)",
+      time: props.summary.youtube.classifierTimeMs,
+    });
+  }
+  if (props.summary.article?.classifierTimeMs) {
+    classifierTime += props.summary.article.classifierTimeMs;
+    breakdown.push({
+      stage: "Classification (Article)",
+      time: props.summary.article.classifierTimeMs,
+    });
+  }
+
+  // Summarization time = responseTimeMs - classifierTime (remaining time)
   if (props.summary.responseTimeMs) {
-    let mainTime = props.summary.responseTimeMs;
-
-    // If we have classifier time, subtract it from responseTimeMs to get actual summarization time
-    if (props.summary.youtube?.classifierTimeMs) {
-      mainTime -= props.summary.youtube.classifierTimeMs;
-      breakdown.push({
-        stage: "Classification (YouTube)",
-        time: props.summary.youtube.classifierTimeMs,
-      });
-    }
-    if (props.summary.article?.classifierTimeMs) {
-      mainTime -= props.summary.article.classifierTimeMs;
-      breakdown.push({
-        stage: "Classification (Article)",
-        time: props.summary.article.classifierTimeMs,
-      });
-    }
-
-    if (mainTime > 0) {
+    const summarizationTime = props.summary.responseTimeMs - classifierTime;
+    if (summarizationTime > 0) {
       breakdown.push({
         stage: "Summarization",
-        time: mainTime,
+        time: summarizationTime,
       });
     }
   }
 
   return breakdown;
+});
+
+// Total cycle time (from user submit to completion)
+const cycleTimeMs = computed(() => {
+  // Get from article or youtube table
+  return props.summary.article?.totalTimeMs || props.summary.youtube?.totalTimeMs || 0;
 });
 </script>
 
@@ -288,6 +286,19 @@ const timeBreakdown = computed(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Total Cycle Time (from submit to complete) -->
+        <div v-if="cycleTimeMs > 0" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">Total Cycle Time</h3>
+            <span class="text-lg font-mono font-semibold text-primary">{{
+              formatTime(cycleTimeMs)
+            }}</span>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Time from user submit to completion
+          </p>
         </div>
 
         <!-- Video/Article specific metadata -->

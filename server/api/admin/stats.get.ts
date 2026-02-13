@@ -55,6 +55,12 @@ export default defineEventHandler(async (event) => {
     articleMinMaxResult,
     // YouTube min/max stats
     youtubeMinMaxResult,
+    // Model stats for summaries
+    summaryModelsResult,
+    // Model stats for article classifiers
+    articleClassifierModelsResult,
+    // Model stats for youtube classifiers
+    youtubeClassifierModelsResult,
   ] = await Promise.all([
     // Total counts
     db.select({ count: count() }).from(summaries),
@@ -196,6 +202,41 @@ export default defineEventHandler(async (event) => {
       })
       .from(summaries)
       .where(sql`${summaries.essence} = 'youtube' AND ${summaries.status} = 'completed' AND ${summaries.totalTokens} IS NOT NULL`),
+
+    // Model stats: Summary models (from summaries table)
+    db
+      .select({
+        model: summaries.model,
+        count: count(),
+      })
+      .from(summaries)
+      .where(isNotNull(summaries.model))
+      .groupBy(summaries.model)
+      .orderBy(desc(count())),
+
+    // Model stats: Article classifier models
+    db
+      .select({
+        model: articles.classifierModel,
+        count: count(),
+      })
+      .from(articles)
+      .innerJoin(summaries, sql`${articles.summaryId} = ${summaries.id}`)
+      .where(isNotNull(articles.classifierModel))
+      .groupBy(articles.classifierModel)
+      .orderBy(desc(count())),
+
+    // Model stats: YouTube classifier models
+    db
+      .select({
+        model: youtube.classifierModel,
+        count: count(),
+      })
+      .from(youtube)
+      .innerJoin(summaries, sql`${youtube.summaryId} = ${summaries.id}`)
+      .where(isNotNull(youtube.classifierModel))
+      .groupBy(youtube.classifierModel)
+      .orderBy(desc(count())),
   ]);
 
   // Get classifier token averages separately (need to join with youtube/articles tables)
@@ -376,6 +417,20 @@ export default defineEventHandler(async (event) => {
         youtubeClassifierTokens,
         articleClassifierTokens,
       },
+    },
+    modelStats: {
+      summaryModels: summaryModelsResult.map(m => ({
+        model: m.model,
+        count: m.count,
+      })),
+      articleClassifierModels: articleClassifierModelsResult.map(m => ({
+        model: m.model,
+        count: m.count,
+      })),
+      youtubeClassifierModels: youtubeClassifierModelsResult.map(m => ({
+        model: m.model,
+        count: m.count,
+      })),
     },
   };
 });

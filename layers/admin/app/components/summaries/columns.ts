@@ -35,20 +35,11 @@ const getHolisticTotalTokens = (
 }
 
 // Helper function to calculate holistic total time
+// Note: responseTimeMs already includes classifier time, so use it directly
 const getHolisticTotalTimeMs = (
   summary: Summary & { youtube?: YouTube | null; article?: Article | null }
 ): number => {
-  let total = summary.responseTimeMs || 0
-
-  // Add classifier time from YouTube or Article
-  if (summary.youtube?.classifierTimeMs) {
-    total += summary.youtube.classifierTimeMs
-  }
-  if (summary.article?.classifierTimeMs) {
-    total += summary.article.classifierTimeMs
-  }
-
-  return total
+  return summary.responseTimeMs || 0;
 }
 
 // Format time helper
