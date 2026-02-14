@@ -4,10 +4,10 @@ export const INTERVIEW_PROMPT = `Watch this interview/podcast.
 - If there is company / product or similar they mention or it's being a subject, turn it bold.
 - Keep quotation in markdown quotation format
 
-## THE GUEST
+## GUEST
 Who is being interviewed? One sentence on why they matter.
 
-## THE TOPIC
+## TOPIC
 What are they mainly discussing?
 
 ## KEY MOMENTS
