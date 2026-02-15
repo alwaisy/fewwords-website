@@ -21,7 +21,7 @@ async function setCompletedStage(summaryId: string | undefined) {
 
 // Helper to calculate and store total cycle time
 async function storeTotalTime(
-  db: ReturnType<typeof useDb>,
+  db: Awaited<ReturnType<typeof useDb>>,
   summaryInternalId: string,
   essence: 'article' | 'youtube' | 'reddit',
   createdAt: Date,
