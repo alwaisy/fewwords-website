@@ -39,7 +39,15 @@ export default defineNuxtConfig({
     "@nuxtjs/color-mode",
     "nuxt-toastify",
     "nuxt-auth-utils",
+    "nuxt-processor",
   ],
+
+  processor: {
+    redis: {
+      url: process.env.REDIS_URL,
+      lazyConnect: true, // Don't connect during build
+    },
+  },
 
   toastify: {
     autoClose: 4000,
