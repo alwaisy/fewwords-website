@@ -1,14 +1,14 @@
 import { WRITING_GUIDELINES } from "../../prompts/system";
 import { callOpenRouter } from "../shared/llm";
 
-import { YOUTUBE_CLASSIFIER_CONFIG } from "./config";
+import { CLASSIFICATION_CONFIG } from "./config";
 
 export interface VideoMetadata {
   title: string;
   description: string;
   channel: string;
   duration: number;
-  videoUrl: string; // YouTube URL to pass to Gemini for video analysis
+  videoUrl?: string; // Optional: for reference only, not used for processing
   tags?: string[]; // Video tags
   isAgeRestricted?: boolean; // Age-restriction flag
 }
@@ -30,6 +30,7 @@ export interface ClassifierResult {
   is_worth_it: boolean;
   reasoning: string;
   metadata: VideoMetadata; // Include original metadata for Stage 3
+  classifierModel?: string; // Model used for classification
   // LLM usage tracking
   classifier_usage?: {
     promptTokens: number;
@@ -40,7 +41,7 @@ export interface ClassifierResult {
   classifier_time_ms?: number; // Time taken for classification
 }
 
-const CLASSIFIER_PROMPT = `You are the "fewwords" Metadata Architect and Content Classifier. Your goal is to act as a high-fidelity filter between raw data and a specialized summarizer.
+const CLASSIFIER_PROMPT = `You are the "fewwords" Metadata Architect and Content Classifier. Your goal is to act as a high-fidelity filter between raw transcript data and a specialized summarizer.
 
 INPUT DATA:
 
@@ -51,6 +52,9 @@ Description: {yt_desc}
 Channel: {yt_channel}
 
 Duration: {yt_duration} minutes
+
+Transcript (first 2000 words):
+{transcript_preview}
 
 YOUR TASKS:
 
@@ -99,17 +103,23 @@ OUTPUT FORMAT (Strict JSON):
 }`;
 
 export async function classifyVideo(
-  metadata: VideoMetadata & { videoUrl: string },
+  transcript: string,
+  metadata: VideoMetadata,
 ): Promise<ClassifierResult> {
-  const startTime = Date.now()
+  const startTime = Date.now();
+
+  // Preview first 2000 words of transcript for classification
+  const transcriptPreview = transcript.split(" ").slice(0, 2000).join(" ");
 
   const prompt = CLASSIFIER_PROMPT.replace("{yt_title}", metadata.title)
     .replace("{yt_desc}", metadata.description || "No description available")
     .replace("{yt_channel}", metadata.channel)
-    .replace("{yt_duration}", metadata.duration.toString());
+    .replace("{yt_duration}", metadata.duration.toString())
+    .replace("{transcript_preview}", transcriptPreview);
 
   const result = await callOpenRouter({
-    model: YOUTUBE_CLASSIFIER_CONFIG.model,
+    model: CLASSIFICATION_CONFIG.model,
+    reasoning: CLASSIFICATION_CONFIG.reasoning,
     messages: [
       {
         role: "system",
@@ -117,16 +127,9 @@ export async function classifyVideo(
       },
       {
         role: "user",
-        content: [
-          { type: "text", text: prompt },
-          {
-            type: "input_video",
-            videoUrl: { url: metadata.videoUrl },
-          },
-        ],
+        content: prompt,
       },
     ],
-    reasoning: YOUTUBE_CLASSIFIER_CONFIG.reasoning,
   });
 
   // Check for empty/null response
@@ -162,6 +165,7 @@ export async function classifyVideo(
     return {
       ...parsed,
       metadata, // Include original metadata
+      classifierModel: CLASSIFICATION_CONFIG.model,
       classifier_usage: result.usage ? {
         promptTokens: result.usage.promptTokens,
         completionTokens: result.usage.completionTokens,
@@ -194,6 +198,7 @@ function getFallbackClassification(
     is_worth_it: true,
     reasoning: "Classification unavailable - using generic summary",
     metadata,
+    classifierModel: CLASSIFICATION_CONFIG.model,
     classifier_usage: usage ? {
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,

@@ -33,8 +33,11 @@ const friendlyErrorMessage = computed(() =>
 );
 
 // Summary processing logic
-const { currentMessage, currentIcon, watchStatusChanges } =
+const { currentMessage, currentIcon, watchStatusChanges, liveElapsedTime, totalTime } =
   useSummaryProcessing(summary, refresh);
+
+// Dev mode check (only show time tracking in dev)
+const isDev = computed(() => import.meta.dev);
 
 // Update meta tags when summary is loaded
 watchEffect(() => {
@@ -138,6 +141,11 @@ watchStatusChanges();
             {{ currentMessage }}
           </h1>
 
+          <!-- Time tracking (dev mode only) -->
+          <div v-if="isDev" class="text-sm text-muted-foreground font-mono">
+            {{ liveElapsedTime }}
+          </div>
+
           <!-- Current Stage Message for YouTube (shows one at a time) -->
         </div>
 
@@ -170,6 +178,11 @@ watchStatusChanges();
             summary && summary.summary && summary.status === 'completed'
           "
         >
+          <!-- Total time display (dev mode only) -->
+          <div v-if="isDev && totalTime" class="text-center text-sm text-muted-foreground font-mono mb-4">
+            Total time: {{ totalTime }}
+          </div>
+
           <AppSummaryHeader
             :key="`header-${summary.summaryId}`"
             :title="displayTitle"

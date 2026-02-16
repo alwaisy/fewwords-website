@@ -43,12 +43,12 @@ AI-powered content summarization service. Users paste URLs (articles, YouTube, R
 │ ├─ db/ → Database singleton and utilities
 │ ├─ services/ → Business logic layer
 │ │ ├─ article/ → Article summarization (fetcher, classifier, orchestrator)
-│ │ ├─ youtube/ → YouTube summarization (metadata, classifier, summarizer)
+│ │ ├─ youtube/ → YouTube summarization (metadata, classifier, summarizer, transcript)
 │ │ ├─ reddit/ → Reddit summarization
 │ │ └─ shared/ → LLM integration (OpenRouter, OpenAI, Anthropic official SDKs)
 │ └─ prompts/ → Prompt templates with versioning
-│ ├─ article/ → v1, v2, v3 strategies (v1.1, v2.3, etc. for improvements)
-│ └─ youtube/ → Type-specific prompts (tutorial, review, news, opinion, etc.)
+│ ├─ article/ → v1, v2, v3 strategies with dynamic version detection
+│ └─ youtube/ → Type-specific prompts in folder structure (tutorial/, review/, news/, etc.)
 ├─ db/ → Database schema and migrations (Drizzle ORM)
 ├─ layers/admin/ → Admin layer (extends main app)
 │ └─ app/ → Admin-specific pages and components
@@ -60,13 +60,15 @@ Path aliases: `@/` and `~/` resolve to `app/`, `~~/` resolves to project root.
 
 Nuxt 4 full-stack application with service-oriented architecture. Each content type (article, YouTube, Reddit) has dedicated service modules. Request flow: URL submission → content type detection → content fetching → classification → LLM summarization with type-specific prompts → PostgreSQL storage.
 
-Prompt versioning system dynamically detects latest versions without hardcoding. Classifier uses GPT-5 Mini reasoning to select optimal summarization strategy (essays → v1 structured, tutorials → v2 data-shot, news → v3 decision brief).
+**Prompt Versioning:** Dynamic version detection without hardcoding. Add new versions (e.g., `v1.4.ts`) to `server/prompts/article/`, import in `index.ts` - `getLatestVersions()` automatically detects the latest patch version for each major version (v1, v2, v3).
 
-YouTube uses distinct 3-stage pipeline: metadata fetch → classification (worth watching?) → summarization with enriched context. Early exit if not worth watching.
+**Article Classification:** Uses GPT-5 Mini reasoning to select optimal summarization strategy: v1 structured (essays, research), v2 data-shot (tutorials, specs), v3 decision brief (news, time-sensitive). Falls back to v1 if classification fails.
 
-Database uses singleton pattern accessed via `useDb(event)` in API routes. Summaries have public IDs (few-XYZ) and internal UUIDs. Long-running summaries use pending flow: create record → return summaryId → background processing → frontend polling/SSE.
+**YouTube Pipeline:** Distinct 3-stage pipeline with real-time progress: (1) Metadata fetch from YouTube Data API, (2) Classification via LLM analyzing thumbnail/metadata (determines worth watching, extracts clean title, focus points), (3) Summarization with type-specific prompt. Early exit if classifier determines video isn't worth watching. Real-time updates via Redis + SSE.
 
-LLM integration via official SDKs for OpenRouter (default), OpenAI, and Anthropic. Multi-provider support with reasoning capabilities.
+**Database:** Singleton pattern accessed via `useDb(event)` in API routes. Summaries have public IDs (few-XYZ, 7 chars) and internal UUIDs. Long-running summaries use pending flow: create record → return summaryId → background processing → frontend polling/SSE.
+
+**LLM Integration:** Official SDKs for OpenRouter (default, multi-model), OpenAI, and Anthropic. Multi-provider support with reasoning capabilities (high/medium/low effort). Streaming not yet implemented.
 
 ## Development Patterns & Constraints
 
@@ -78,12 +80,14 @@ LLM integration via official SDKs for OpenRouter (default), OpenAI, and Anthropi
 • Function components with `<script setup>` syntax
 • VeeValidate + Zod for form validation
 • Naming: camelCase for variables/functions, PascalCase for components/types
+• **File naming:** KEBAB_CASE enforced by ESLint (except Nuxt dynamic routes like `[id].vue`)
 
 ### File Organization
 • Colocation: components near their usage (home/sections, app/components)
-• Barrel exports for prompts: `server/prompts/article/index.ts`
+• Barrel exports for prompts: `server/prompts/article/index.ts`, `server/prompts/youtube/index.ts`
 • Services organized by content type with index.ts orchestrators
 • API routes follow REST conventions: `/api/summarize`, `/api/summary/:id`
+• **YouTube prompts:** Organized in folders by type (`tutorial/`, `review/`, etc.) with versioned files (`v-1.ts`, `v-1.1.ts`, `v-2.0.ts`) and `index.ts` exporting latest version as `PROMPT`
 
 ### Styling
 • Tailwind CSS v4 with custom theme via @tailwindcss/vite
@@ -91,7 +95,7 @@ LLM integration via official SDKs for OpenRouter (default), OpenAI, and Anthropi
 • Shadcn Vue (New York style) for UI primitives, Reka UI underneath
 • CSS variables in `app/css/global.css`
 • Fonts: Poppins (sans), Playfair Display (serif), Space Mono (mono)
-• Toast: nuxt-toastify (colored, top-center, 4s auto-close)
+• Toast: nuxt-toastify (colored, top-center, 4s auto-close, slide transition)
 
 ### Error Handling
 • Zod schemas for runtime validation
@@ -104,7 +108,7 @@ LLM integration via official SDKs for OpenRouter (default), OpenAI, and Anthropi
 • Async/await preferred (no callbacks)
 • Pending summary flow for long-running LLM calls
 • SSE for YouTube stage updates (Redis-polling implementation)
-• Connection pooling via Drizzle singleton
+• Connection pooling via Drizzle singleton (max: 10 connections)
 
 ## Security
 
@@ -151,7 +155,7 @@ A pull request is reviewable when it includes:
 • Anthropic - `ANTHROPIC_API_KEY` - Optional, for Claude model access
 • YouTube Data API v3 - `YOUTUBE_DATA_API_KEY` - Video metadata fetching
 • PostgreSQL (Docker) - `DATABASE_URL` - Local development database on port 5433
-• Redis (Docker) - `REDIS_URL` - Real-time stage updates via SSE (port 6380)
+• Redis (Docker) - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` - Real-time stage updates via SSE (port 6380)
 • Resend - `RESEND_API_KEY` - Email service for magic links
 
 ## Gotchas & Common Pitfalls
@@ -161,8 +165,9 @@ A pull request is reviewable when it includes:
 • **Path aliases** - Use `~/` or `@/` for app imports, `~~/` for project root
 • **Database singleton** - Access via `useDb(event)` in API routes, don't import directly
 • **Prompt versioning** - Add new versions to `server/prompts/` and update `index.ts` - auto-detected
+• **YouTube prompts** - Use folder structure: `type/v-1.1.ts`, `type/index.ts` exports `PROMPT` from latest version
 • **dev-docs/** excluded from linting - See package.json lint script: `--ignore-pattern 'dev-docs/**'`
-• **Summary IDs** - Public IDs use `few-XYZ` format, internal IDs are UUIDs
+• **Summary IDs** - Public IDs use `few-XYZ` format (nanoid 3 chars), internal IDs are UUIDs
 • **PostgreSQL on port 5433** - Docker Compose uses 5433 to avoid conflict with system PostgreSQL on 5432
 • **YouTube Shorts rejected** - Immediately return error, don't process
 • **Classification defaults to v1** - If classifier fails, article defaults to v1 (structured)
@@ -170,6 +175,7 @@ A pull request is reviewable when it includes:
 • **Admin middleware** - Use `useUserSession()` composable in middleware, NOT `getUserSession(event)`
 • **Redis stage updates** - SSE endpoint polls Redis every 500ms, sets `summary:{summaryId}:stage` key
 • **Layer architecture** - Admin lives in `layers/admin/` with `~admin` alias, extends main app via `nuxt.config.ts`
+• **YouTube transcript prompts** - Located in `server/prompts/youtube/transcript/` with MEDIUM, LONG, SUPER_LONG variants
 
 ## Performance Considerations
 

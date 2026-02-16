@@ -151,6 +151,17 @@ export const youtube = pgTable(
     classifierTotalTokens: integer("classifier_total_tokens"),
     classifierTimeMs: integer("classifier_time_ms"),
 
+    // Stage 3: Transcript cache (LLM-generated)
+    transcriptText: text("transcript_text"),
+    transcriptModel: text("transcript_model"),
+    transcriptReasoningEffort: text("transcript_reasoning_effort"),
+    transcriptPromptTokens: integer("transcript_prompt_tokens"),
+    transcriptCompletionTokens: integer("transcript_completion_tokens"),
+    transcriptTotalTokens: integer("transcript_total_tokens"),
+    transcriptReasoningTokens: integer("transcript_reasoning_tokens"),
+    transcriptTimeMs: integer("transcript_time_ms"),
+    transcriptCachedAt: timestamp("transcript_cached_at", { withTimezone: true }),
+
     // Total cycle time (from user submit to completed/failed)
     totalTimeMs: integer("total_time_ms"),
 

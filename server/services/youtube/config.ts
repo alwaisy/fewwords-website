@@ -1,52 +1,52 @@
-// Stage 2: Classifier (Fast model)
-export const YOUTUBE_CLASSIFIER_CONFIG = {
-  model: "google/gemini-3-flash-preview" as const,
+import type { LLMModel } from "../shared/types";
+
+// Stage 2: Transcript extraction (Gemini required for video processing)
+export const TRANSCRIPT_CONFIG = {
+  MEDIUM: {
+    model: "google/gemini-3-flash-preview" as LLMModel,
+    reasoning: {
+      effort: "low" as const,
+    },
+  },
+  LONG: {
+    model: "google/gemini-3-flash-preview" as LLMModel,
+    reasoning: {
+      effort: "medium" as const,
+    },
+  },
+  SUPERLONG: {
+    model: "google/gemini-3-flash-preview" as LLMModel,
+    reasoning: {
+      effort: "high" as const,
+    },
+  },
+} as const;
+
+// Direct summarization for short videos (Gemini required for video processing)
+export const DIRECT_SUMMARIZATION_CONFIG = {
+  model: "google/gemini-3-flash-preview" as LLMModel,
+  reasoning: {
+    effort: "low" as const,
+  },
+} as const;
+
+// Stage 3: Classification (cheaper model, text-only)
+export const CLASSIFICATION_CONFIG = {
+  model: "prime-intellect/intellect-3" as LLMModel,
   temperature: 0.3,
   maxTokens: 500,
-  reasoning: {
-    effort: "low" as const, // Use low reasoning for fast classification
-  },
-};
+  reasoning: undefined,
+} as const;
 
-// Stage 3: Summarizer (Smart model with reasoning + tools)
-export const YOUTUBE_SUMMARIZER_CONFIG = {
-  model: "google/gemini-3-flash-preview" as const,
+// Stage 4: Summarization (cheaper model, text-only)
+export const SUMMARIZATION_CONFIG = {
+  model: "moonshotai/kimi-k2-thinking" as LLMModel,
   temperature: 0.7,
   maxTokens: 4000,
-  reasoning: {
-    effort: "high" as const, // Use high reasoning effort for complex video analysis
-  },
-  tools: {
-    // Google Search tool for context
-    googleSearch: {
-      description: "Search the web for additional context",
-      inputSchema: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "Search query",
-          },
-        },
-        required: ["query"],
-      },
-    },
-    // URL context tool for video analysis
-    urlContext: {
-      description: "Analyze content from a URL",
-      inputSchema: {
-        type: "object",
-        properties: {
-          url: {
-            type: "string",
-            description: "URL to analyze",
-          },
-        },
-        required: ["url"],
-      },
-    },
-  },
-};
+  reasoning: undefined,
+} as const;
 
-// Legacy config for backwards compatibility
+// Legacy configs for backwards compatibility
+export const YOUTUBE_CLASSIFIER_CONFIG = CLASSIFICATION_CONFIG;
+export const YOUTUBE_SUMMARIZER_CONFIG = SUMMARIZATION_CONFIG;
 export const YOUTUBE_CONFIG = YOUTUBE_CLASSIFIER_CONFIG;

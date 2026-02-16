@@ -43,6 +43,52 @@ export function useSummaryProcessing(
   const currentStage = ref<YouTubeStage>(null);
   let eventSource: EventSource | null = null;
 
+  // Time tracking (dev mode only)
+  const startTime = ref<number | null>(null);
+  const elapsedTime = ref(0);
+  let timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Format time in readable units (e.g., "2.3s", "1m 15s", "2m 30.5s")
+  const formatTime = (ms: number): string => {
+    const totalSeconds = ms / 1000;
+
+    if (totalSeconds < 60) {
+      // Less than 1 minute: show as seconds with 1 decimal place
+      return totalSeconds < 10
+        ? `${totalSeconds.toFixed(1)}s`
+        : `${Math.round(totalSeconds)}s`;
+    }
+
+    // 1 minute or more: show minutes and seconds
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    if (minutes === 1) {
+      return seconds > 0
+        ? `1m ${seconds.toFixed(1)}s`
+        : "1m";
+    }
+    return seconds > 0
+      ? `${minutes}m ${seconds.toFixed(1)}s`
+      : `${minutes}m`;
+  };
+
+  // Live elapsed time (updates every 100ms via interval)
+  const liveElapsedTime = computed(() => {
+    if (!startTime.value) return "0.0s";
+    return formatTime(elapsedTime.value);
+  });
+
+  // Total processing time (calculated from timestamps)
+  const totalTime = computed(() => {
+    if (!summary.value?.createdAt) return null;
+    if (!summary.value?.completedAt) return null;
+
+    const created = new Date(summary.value.createdAt).getTime();
+    const completed = new Date(summary.value.completedAt).getTime();
+    return formatTime(completed - created);
+  });
+
   const currentMessage = computed(() => {
     if (!summary.value) return "";
 
@@ -171,6 +217,25 @@ export function useSummaryProcessing(
     }
   };
 
+  const startTimer = () => {
+    if (startTime.value) return; // Already started
+    startTime.value = Date.now();
+
+    // Update elapsed time every 100ms for smooth display
+    timerInterval = setInterval(() => {
+      if (startTime.value) {
+        elapsedTime.value = Date.now() - startTime.value;
+      }
+    }, 100);
+  };
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  };
+
   const watchStatusChanges = () => {
     let pollInterval: NodeJS.Timeout | null = null;
 
@@ -182,6 +247,12 @@ export function useSummaryProcessing(
 
         if (newStatus === "pending") {
           startProcessing();
+          startTimer();
+        }
+
+        // Start timer for processing status (for non-YouTube content that skips pending)
+        if (newStatus === "processing" && !startTime.value) {
+          startTimer();
         }
 
         // Connect SSE for YouTube videos immediately, regardless of status
@@ -215,6 +286,11 @@ export function useSummaryProcessing(
           disconnectStageStream();
         }
 
+        // Stop timer when completed/failed
+        if ((newStatus === "completed" || newStatus === "failed") && startTime.value) {
+          stopTimer();
+        }
+
         // Final refresh when transitioning from processing to completed
         // (handles race condition where poll may have missed the data)
         if (oldStatus === "processing" && newStatus === "completed") {
@@ -244,6 +320,7 @@ export function useSummaryProcessing(
       if (pollInterval) {
         clearInterval(pollInterval);
       }
+      stopTimer();
     });
   };
 
@@ -255,5 +332,7 @@ export function useSummaryProcessing(
     getCurrentStageIndex,
     startProcessing,
     watchStatusChanges,
+    liveElapsedTime,
+    totalTime,
   };
 }

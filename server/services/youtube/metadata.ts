@@ -1,4 +1,4 @@
-interface YouTubeVideoMetadata {
+export interface YouTubeVideoMetadata {
   title: string
   description: string
   channelTitle: string
@@ -12,7 +12,7 @@ interface YouTubeVideoMetadata {
   }
 }
 
-interface YouTubeChannelMetadata {
+export interface YouTubeChannelMetadata {
   title: string
   description: string
   country?: string

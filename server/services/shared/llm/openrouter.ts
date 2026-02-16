@@ -68,6 +68,7 @@ export interface OpenRouterOptions {
     | "none"
     | "required"
     | { type: "function"; function: { name: string } };
+  nitro?: boolean; // Enable Nitro mode (default: true for OpenRouter models)
   provider?: {
     order?: string[];
     allow_fallbacks?: boolean;
@@ -87,6 +88,13 @@ export interface OpenRouterResult {
     reasoningTokens?: number;
   };
 }
+
+// Helper function to add Nitro suffix to model
+const withNitro = (model: string, enabled = true): string => {
+  if (!enabled) return model;
+  if (model.includes(":nitro")) return model; // Already has Nitro suffix
+  return `${model}:nitro`;
+};
 
 export async function callOpenRouter(
   options: OpenRouterOptions,
@@ -112,7 +120,7 @@ export async function callOpenRouter(
 
     // Build params object - use type assertion to satisfy SDK's internal types
     const generationParams: Record<string, unknown> = {
-      model: options.model,
+      model: withNitro(options.model, options.nitro !== false),
       messages: sdkMessages,
       stream: false,
       temperature: options.temperature,

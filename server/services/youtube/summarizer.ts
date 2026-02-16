@@ -3,16 +3,17 @@ import { YOUTUBE_PROMPTS, type YouTubeVideoType } from '../../prompts/youtube'
 import { callOpenRouter } from '../shared/llm'
 
 import type { ClassifierResult } from './classifier'
-import { YOUTUBE_SUMMARIZER_CONFIG } from './config'
+import { SUMMARIZATION_CONFIG } from './config'
 
 
 interface SummaryInput {
-  videoUrl: string
+  transcript: string
   classifier: ClassifierResult
 }
 
 interface SummaryResult {
   content: string
+  promptId: string
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -21,7 +22,7 @@ interface SummaryResult {
 }
 
 export async function summarizeVideo(input: SummaryInput): Promise<SummaryResult> {
-  const { videoUrl, classifier } = input
+  const { transcript, classifier } = input
 
   // Get type-specific prompt module
   const promptGetter = YOUTUBE_PROMPTS[classifier.category as YouTubeVideoType]
@@ -32,15 +33,13 @@ export async function summarizeVideo(input: SummaryInput): Promise<SummaryResult
   const promptModule = await promptGetter()
 
   // Extract the actual prompt string from the module
-  // Each module exports a specific prompt (e.g., EDUCATION_PROMPT, TUTORIAL_PROMPT)
-  const promptKey = `${classifier.category.toUpperCase()}_PROMPT`
-  const typePrompt = (promptModule as Record<string, unknown>)[promptKey] as string
+  // Each folder exports a generic PROMPT (and type-specific for backward compat)
+  const typePrompt = (promptModule as Record<string, unknown>).PROMPT as string
+  const promptMeta = (promptModule as Record<string, unknown>).PROMPT_META as { ID: string }
 
   // Build enriched prompt with classifier insights
   const enrichedPrompt = `
 You are summarizing a ${classifier.category} video.
-
-Video: ${videoUrl}
 
 Context from analysis:
 - True Intent: ${classifier.true_intent}
@@ -56,10 +55,14 @@ FULL METADATA:
 - Duration: ${classifier.metadata.duration} minutes
 - Tags: ${classifier.metadata.tags?.slice(0, 10).join(', ') || 'N/A'}
 - Age Restricted: ${classifier.metadata.isAgeRestricted ? 'Yes' : 'No'}
+
+TRANSCRIPT:
+${transcript}
 `.trim()
 
   const result = await callOpenRouter({
-    model: YOUTUBE_SUMMARIZER_CONFIG.model,
+    model: SUMMARIZATION_CONFIG.model,
+    reasoning: SUMMARIZATION_CONFIG.reasoning,
     messages: [
       {
         role: "system",
@@ -67,20 +70,14 @@ FULL METADATA:
       },
       {
         role: "user",
-        content: [
-          { type: "text", text: enrichedPrompt },
-          {
-            type: "input_video",
-            videoUrl: { url: videoUrl },
-          },
-        ],
+        content: enrichedPrompt,
       },
     ],
-    reasoning: YOUTUBE_SUMMARIZER_CONFIG.reasoning,
   })
 
   return {
     content: result.content,
+    promptId: promptMeta.ID,
     usage: result.usage,
   }
 }

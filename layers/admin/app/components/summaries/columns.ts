@@ -18,6 +18,11 @@ const getHolisticTotalTokens = (
 ): number => {
   let total = summary.totalTokens || 0
 
+  // Add transcript tokens from YouTube
+  if (summary.youtube?.transcriptTotalTokens) {
+    total += summary.youtube.transcriptTotalTokens
+  }
+
   // Add classifier tokens from YouTube or Article
   if (summary.youtube?.classifierTotalTokens) {
     total += summary.youtube.classifierTotalTokens
@@ -46,7 +51,9 @@ const getHolisticTotalTimeMs = (
 const formatTime = (ms: number): string => {
   if (ms <= 0) return "N/A"
   if (ms >= 60000) {
-    return (ms / 60000).toFixed(1) + "m"
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(1);
+    return seconds === '0.0' ? `${minutes}m` : `${minutes}m ${seconds}s`;
   }
   if (ms >= 1000) {
     return (ms / 1000).toFixed(1) + "s"

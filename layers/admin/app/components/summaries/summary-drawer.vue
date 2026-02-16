@@ -37,6 +37,11 @@ const domain = computed(() => {
 const totalTokens = computed(() => {
   let total = props.summary.totalTokens || 0;
 
+  // Add transcript tokens from YouTube
+  if (props.summary.youtube?.transcriptTotalTokens) {
+    total += props.summary.youtube.transcriptTotalTokens;
+  }
+
   // Add classifier tokens from YouTube or Article
   if (props.summary.youtube?.classifierTotalTokens) {
     total += props.summary.youtube.classifierTotalTokens;
@@ -62,14 +67,14 @@ const tokenBreakdown = computed(() => {
     total: number;
   }[] = [];
 
-  // Main summarization stage
-  if (props.summary.totalTokens) {
+  // Transcript stage (YouTube)
+  if (props.summary.youtube?.transcriptTotalTokens) {
     breakdown.push({
-      stage: "Summarization",
-      prompt: props.summary.promptTokens || undefined,
-      completion: props.summary.completionTokens || undefined,
-      reasoning: props.summary.reasoningTokens || undefined,
-      total: props.summary.totalTokens,
+      stage: "Transcript (YouTube)",
+      prompt: props.summary.youtube.transcriptPromptTokens || undefined,
+      completion: props.summary.youtube.transcriptCompletionTokens || undefined,
+      reasoning: props.summary.youtube.transcriptReasoningTokens || undefined,
+      total: props.summary.youtube.transcriptTotalTokens,
     });
   }
 
@@ -94,6 +99,17 @@ const tokenBreakdown = computed(() => {
     });
   }
 
+  // Main summarization stage
+  if (props.summary.totalTokens) {
+    breakdown.push({
+      stage: "Summarization",
+      prompt: props.summary.promptTokens || undefined,
+      completion: props.summary.completionTokens || undefined,
+      reasoning: props.summary.reasoningTokens || undefined,
+      total: props.summary.totalTokens,
+    });
+  }
+
   return breakdown;
 });
 
@@ -106,13 +122,23 @@ const totalTimeMs = computed(() => {
 const formatTime = (ms: number) => {
   if (ms < 1000) return `${ms}ms`;
   if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
-  return `${(ms / 1000 / 60).toFixed(2)}m`;
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(1);
+  return seconds === '0.0' ? `${minutes}m` : `${minutes}m ${seconds}s`;
 };
 
 const timeBreakdown = computed(() => {
   const breakdown: { stage: string; time: number }[] = [];
 
-  // Classification time (part of responseTimeMs)
+  // Transcript time (YouTube)
+  if (props.summary.youtube?.transcriptTimeMs) {
+    breakdown.push({
+      stage: "Transcript (YouTube)",
+      time: props.summary.youtube.transcriptTimeMs,
+    });
+  }
+
+  // Classification time
   let classifierTime = 0;
   if (props.summary.youtube?.classifierTimeMs) {
     classifierTime += props.summary.youtube.classifierTimeMs;
@@ -228,6 +254,10 @@ const cycleTimeMs = computed(() => {
               <span class="text-muted-foreground">Model</span>
               <div class="mt-1 truncate">{{ summary.model }}</div>
             </div>
+            <div v-if="summary.promptId">
+              <span class="text-muted-foreground">Prompt ID</span>
+              <div class="mt-1 font-mono text-xs">{{ summary.promptId }}</div>
+            </div>
           </div>
         </div>
 
@@ -333,6 +363,31 @@ const cycleTimeMs = computed(() => {
           <h3 class="text-sm font-medium">Classification Reasoning</h3>
           <div class="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
             {{ summary.reasoning }}
+          </div>
+        </div>
+
+        <!-- Transcript Details -->
+        <div v-if="summary.youtube?.transcriptModel" class="space-y-3">
+          <h3 class="text-sm font-medium">Transcript Details</h3>
+          <div class="text-sm space-y-2">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Model</span>
+              <span class="font-mono">{{ summary.youtube.transcriptModel }}</span>
+            </div>
+            <div v-if="summary.youtube.transcriptReasoningEffort" class="flex justify-between">
+              <span class="text-muted-foreground">Reasoning Effort</span>
+              <span class="font-medium">{{ summary.youtube.transcriptReasoningEffort }}</span>
+            </div>
+            <div v-if="summary.youtube.transcriptCachedAt" class="flex justify-between">
+              <span class="text-muted-foreground">Cached At</span>
+              <span class="font-medium">{{ new Date(summary.youtube.transcriptCachedAt).toLocaleString() }}</span>
+            </div>
+            <div v-if="summary.youtube.transcriptText" class="pt-2">
+              <span class="text-muted-foreground block mb-1">Transcript Preview</span>
+              <div class="bg-muted/50 p-3 rounded-md text-xs max-h-32 overflow-y-auto">
+                {{ summary.youtube.transcriptText.slice(0, 500) }}{{ summary.youtube.transcriptText.length > 500 ? '...' : '' }}
+              </div>
+            </div>
           </div>
         </div>
 
