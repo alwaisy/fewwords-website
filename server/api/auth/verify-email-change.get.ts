@@ -58,6 +58,11 @@ export default defineEventHandler(async (event) => {
 
   console.log(`[User] Email verified for user ${user.id}: ${user.pendingEmail}`);
 
-  // Show success page or redirect
-  return sendRedirect(event, `/settings?emailVerified=true`);
+  // Return JSON response instead of redirect
+  return {
+    success: true,
+    oldEmail: user.name,
+    newEmail: user.pendingEmail,
+    message: "Email verified successfully"
+  };
 });

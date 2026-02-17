@@ -8,6 +8,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const route = useRoute();
 const { user, checkAuth, logout } = useAuth()
 
 // Dialog states
@@ -18,8 +19,21 @@ const showDeleteDialog = ref(false);
 const newEmail = ref('');
 const deleteConfirm = ref('');
 
-onMounted(() => {
-  checkAuth()
+// Email verification states
+const isVerifyingEmail = ref(false);
+const emailVerifyStatus = ref<'loading' | 'success' | 'error'>('loading');
+const emailVerifyError = ref('');
+
+onMounted(async () => {
+  checkAuth();
+
+  // Check if user came from email verification link
+  const token = route.query.token as string;
+  const verifyEmail = route.query.verifyEmail;
+
+  if (token && verifyEmail) {
+    await handleEmailVerification(token as string);
+  }
 })
 
 // Format date
@@ -57,6 +71,37 @@ async function handleChangeEmail() {
   }
 }
 
+async function handleEmailVerification(token: string) {
+  isVerifyingEmail.value = true;
+  emailVerifyStatus.value = 'loading';
+
+  try {
+    const response = await $fetch<{success: boolean; oldEmail: string; newEmail: string; message: string}>(`/api/auth/verify-email-change?token=${token}`);
+    
+    if (response.success) {
+      emailVerifyStatus.value = 'success';
+      
+      // Show "Logging you out..." message first
+      useToastify('Email verified! Logging you out...', { type: 'info' });
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Show message for 2 seconds
+      
+      // Then logout and redirect to login
+      await logout();
+      
+      await navigateTo('/auth/login?message=email-changed', { replace: true });
+    }
+  } catch (error: any) {
+    emailVerifyStatus.value = 'error';
+    emailVerifyError.value = error.data?.message || 'Verification failed';
+    useToastify(emailVerifyError.value, { type: 'error' });
+    
+    isVerifyingEmail.value = false;
+    
+    // Clear URL params
+    await navigateTo('/settings', { replace: true });
+  }
+}
+
 async function handleDeleteAccount() {
   if (deleteConfirm.value !== 'DELETE') return;
 
@@ -83,6 +128,21 @@ async function handleDeleteAccount() {
         <h1 class="text-3xl font-bold text-foreground mb-8">
           Account
         </h1>
+
+        <!-- Email Verification Status -->
+        <div v-if="isVerifyingEmail" class="bg-card border border-border rounded-lg p-6 mb-6">
+          <div class="flex items-center gap-3">
+            <Icon v-if="emailVerifyStatus === 'loading'" name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted-foreground" />
+            <Icon v-else-if="emailVerifyStatus === 'success'" name="lucide:check-circle" class="w-5 h-5 text-green-500" />
+            <Icon v-else name="lucide:x-circle" class="w-5 h-5 text-destructive" />
+            
+            <div>
+              <p v-if="emailVerifyStatus === 'loading'" class="text-sm text-foreground">Verifying your email...</p>
+              <p v-else-if="emailVerifyStatus === 'success'" class="text-sm text-foreground">Email verified successfully!</p>
+              <p v-else class="text-sm text-destructive">{{ emailVerifyError }}</p>
+            </div>
+          </div>
+        </div>
 
         <!-- Profile Info -->
         <div v-if="user" class="bg-card border border-border rounded-lg p-6 mb-6">
@@ -212,7 +272,7 @@ async function handleDeleteAccount() {
             <DialogHeader>
               <DialogTitle>Delete account?</DialogTitle>
               <DialogDescription>
-                This action cannot be undone. Your account will be permanently deleted, but your summaries will remain in our system.
+                This action cannot be undone. Your account is permanently deleted, but your summaries will remain in our system.
               </DialogDescription>
             </DialogHeader>
 

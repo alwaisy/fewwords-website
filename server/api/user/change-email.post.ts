@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
 
   // Send verification email to NEW email address
   const baseUrl = process.env.NUXT_SITE_URL || getRequestURL(event).origin;
-  const verifyLink = `${baseUrl}/auth/verify-email-change?token=${token}`;
+  const verifyLink = `${baseUrl}/settings?token=${token}&verifyEmail=true`;
 
   const resendApiKey = process.env.RESEND_API_KEY;
   if (resendApiKey) {
