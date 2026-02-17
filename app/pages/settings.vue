@@ -10,6 +10,14 @@ definePageMeta({
 
 const { user, checkAuth, logout } = useAuth()
 
+// Dialog states
+const showEmailDialog = ref(false);
+const showDeleteDialog = ref(false);
+
+// Form states
+const newEmail = ref('');
+const deleteConfirm = ref('');
+
 onMounted(() => {
   checkAuth()
 })
@@ -29,6 +37,41 @@ async function handleLogout() {
   if (result.success) {
     useToastify('Logged out successfully', { type: 'success' })
     await navigateTo('/')
+  }
+}
+
+async function handleChangeEmail() {
+  if (!newEmail.value || newEmail.value === user.value?.email) return;
+
+  try {
+    await $fetch('/api/user/change-email', {
+      method: 'POST',
+      body: { newEmail: newEmail.value }
+    });
+
+    useToastify('Verification email sent! Check your inbox.', { type: 'success' });
+    showEmailDialog.value = false;
+    newEmail.value = '';
+  } catch (error) {
+    useToastify('Failed to send verification email', { type: 'error' });
+  }
+}
+
+async function handleDeleteAccount() {
+  if (deleteConfirm.value !== 'DELETE') return;
+
+  try {
+    await $fetch('/api/user/delete', {
+      method: 'DELETE'
+    });
+
+    useToastify('Account deleted successfully', { type: 'success' });
+
+    // Logout and redirect
+    await logout();
+    await navigateTo('/');
+  } catch (error) {
+    useToastify('Failed to delete account', { type: 'error' });
   }
 }
 </script>
@@ -87,20 +130,134 @@ async function handleLogout() {
           </Button>
         </div>
 
-        <!-- Need Changes -->
-        <div class="bg-muted/30 border border-border rounded-lg p-6">
+        <!-- Change Email -->
+        <div class="bg-muted/30 border border-border rounded-lg p-6 mb-6">
           <h2 class="text-lg font-semibold text-foreground mb-2">
-            Need to make changes?
+            Change email
           </h2>
           <p class="text-sm text-muted-foreground mb-4">
-            For now, account management is a work in progress. Email me and I'll take care of it manually.
+            Update your email address. You'll need to verify the new email.
           </p>
-          <Button variant="default" as-child>
-            <a href="mailto:support@fewwords.com?subject=Account Change Request">
-              Email me
-            </a>
+          <Button
+            variant="outline"
+            @click="showEmailDialog = true"
+          >
+            Change email
           </Button>
         </div>
+
+        <!-- Delete Account -->
+        <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-destructive mb-2">
+            Delete account
+          </h2>
+          <p class="text-sm text-muted-foreground mb-4">
+            Permanently delete your account. Your summaries will remain in our system.
+          </p>
+          <Button
+            variant="destructive"
+            @click="showDeleteDialog = true"
+          >
+            Delete account
+          </Button>
+        </div>
+
+        <!-- Change Email Dialog -->
+        <Dialog v-model:open="showEmailDialog">
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Change email address</DialogTitle>
+              <DialogDescription>
+                Enter your new email address. We'll send a verification link.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div class="space-y-4 py-4">
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Current email</label>
+                <p class="text-sm text-muted-foreground">{{ user?.email }}</p>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="new-email">New email</label>
+                <Input
+                  id="new-email"
+                  v-model="newEmail"
+                  type="email"
+                  placeholder="new@email.com"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                @click="showEmailDialog = false"
+              >
+                Cancel
+              </Button>
+              <Button
+                :disabled="!newEmail || newEmail === user?.email"
+                @click="handleChangeEmail"
+              >
+                Send verification
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <!-- Delete Account Dialog -->
+        <Dialog v-model:open="showDeleteDialog">
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete account?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. Your account will be permanently deleted, but your summaries will remain in our system.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div class="space-y-4 py-4">
+              <div class="bg-muted rounded-lg p-4">
+                <p class="text-sm text-muted-foreground">
+                  <strong>What happens:</strong>
+                </p>
+                <ul class="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                  <li>Your account is permanently deleted</li>
+                  <li>You can't recover your account</li>
+                  <li>Your summaries stay in our system</li>
+                  <li>For help, contact support@fewwords.app</li>
+                </ul>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="delete-confirm">
+                  Type "DELETE" to confirm
+                </label>
+                <Input
+                  id="delete-confirm"
+                  v-model="deleteConfirm"
+                  placeholder="DELETE"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                @click="showDeleteDialog = false"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                :disabled="deleteConfirm !== 'DELETE'"
+                @click="handleDeleteAccount"
+              >
+                Delete my account
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   </main>

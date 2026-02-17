@@ -30,6 +30,10 @@ export const users = pgTable(
     role: text("role", { enum: userRoleEnum }).notNull().default("user"),
     magicLinkToken: text("magic_link_token"),
     magicLinkExpiresAt: timestamp("magic_link_expires_at", { withTimezone: true }),
+    // Email change verification
+    pendingEmail: text("pending_email"),
+    emailChangeToken: text("email_change_token"),
+    emailChangeExpiresAt: timestamp("email_change_expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
