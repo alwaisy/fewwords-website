@@ -1,4 +1,4 @@
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, and, ne } from "drizzle-orm";
 
 import { summaries, savedSummaries } from "~~/db/schema";
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const countResult = await db
     .select({ totalCount: count() })
     .from(savedSummaries)
-    .where(eq(savedSummaries.userId, userId));
+    .where(and(eq(savedSummaries.userId, userId), ne(summaries.status, 'failed')));
 
   const totalCount = countResult[0]?.totalCount || 0;
 
