@@ -5,6 +5,8 @@ export interface YouTubeVideoMetadata {
   durationMinutes: number // Duration in minutes
   tags: string[]
   isAgeRestricted: boolean // Age-restricted content
+  isLive: boolean // Live stream or upcoming live stream
+  isLiveContent: boolean // Currently live
   statistics: {
     viewCount: string
     likeCount: string
@@ -66,7 +68,7 @@ export async function fetchYouTubeMetadata(
 
   // Fetch video metadata
   const videoUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
-  videoUrl.searchParams.append('part', 'snippet,contentDetails,statistics')
+  videoUrl.searchParams.append('part', 'snippet,contentDetails,statistics,status,liveStreamingDetails')
   videoUrl.searchParams.append('id', videoId)
   videoUrl.searchParams.append('key', apiKey)
 
@@ -109,6 +111,8 @@ export async function fetchYouTubeMetadata(
     durationMinutes: parseDuration(videoItem.contentDetails.duration),
     tags: videoItem.snippet.tags || [],
     isAgeRestricted: videoItem.contentDetails.contentRating?.ytRating === 'ytAgeRestricted',
+    isLive: videoItem.snippet.liveBroadcastContent === 'live' || videoItem.snippet.liveBroadcastContent === 'upcoming',
+    isLiveContent: videoItem.snippet.liveBroadcastContent === 'live',
     statistics: {
       viewCount: videoItem.statistics.viewCount || '0',
       likeCount: videoItem.statistics.likeCount || '0',

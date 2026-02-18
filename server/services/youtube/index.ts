@@ -103,6 +103,17 @@ export async function summarize(
 
   const duration = video.durationMinutes;
 
+  // Check for live streams (not supported)
+  if (video.isLive) {
+    const errorMessage = "Live streams aren't supported yet. Wait for the stream to end and try again.";
+
+    if (db && summaryId) {
+      await saveError(db, summaryId, errorMessage);
+    }
+
+    throw new Error(errorMessage);
+  }
+
   // Validate video duration
   if (duration <= 5) {
     const result = {

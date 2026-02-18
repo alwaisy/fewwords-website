@@ -26,6 +26,31 @@ export function useErrorMessage() {
   const getFriendlyErrorMessage = (errorMessage: string): string => {
     const raw = errorMessage || "";
 
+    // Video length errors (specific messages)
+    if (raw.includes("Video too short")) {
+      return "Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.";
+    }
+    if (raw.includes("Video too long")) {
+      return "Videos over 3 hours exceed the maximum supported length. Try a shorter video.";
+    }
+    if (raw.includes("Not worth watching")) {
+      return raw; // Show the full "Not worth watching" message with reasoning
+    }
+    if (raw.includes("Live streams")) {
+      return "Live streams aren't supported yet. Wait for the stream to end and try again.";
+    }
+
+    // YouTube specific errors
+    if (raw.includes("Invalid YouTube URL") || raw.includes("Could not extract video ID")) {
+      return "That doesn't look like a valid YouTube URL. Check the link?";
+    }
+    if (raw.includes("Video not found") || raw.includes("private")) {
+      return "This video's private or unavailable. Want to try another?";
+    }
+    if (raw.includes("age") && raw.includes("restricted")) {
+      return "This video is age-restricted and can't be summarized.";
+    }
+
     // Site protection/bot detection (Cloudflare, etc.)
     if (
       raw.includes("Just a moment") ||
@@ -46,11 +71,6 @@ export function useErrorMessage() {
     }
     if (raw.includes("timeout") || raw.includes("timed out")) {
       return "This is taking forever... let's try another one?";
-    }
-
-    // YouTube errors
-    if (raw.includes("YouTube") || raw.includes("video")) {
-      return "This video's feeling private. Want to try another?";
     }
 
     // Generic fallback
