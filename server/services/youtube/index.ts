@@ -105,34 +105,16 @@ export async function summarize(
 
   // Check for live streams (not supported)
   if (video.isLive) {
-    const errorMessage = "Live streams aren't supported yet. Wait for the stream to end and try again.";
-
-    if (db && summaryId) {
-      await saveError(db, summaryId, errorMessage);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error("Live streams aren't supported yet. Wait for the stream to end and try again.");
   }
 
   // Validate video duration - treat as errors, not completed summaries
   if (duration <= 5) {
-    const errorMessage = "Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.";
-
-    if (db && summaryId) {
-      await saveError(db, summaryId, errorMessage);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error("Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.");
   }
 
   if (duration > 180) {
-    const errorMessage = "Videos over 3 hours exceed the maximum supported length. Try a shorter video.";
-
-    if (db && summaryId) {
-      await saveError(db, summaryId, errorMessage);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error("Videos over 3 hours exceed the maximum supported length. Try a shorter video.");
   }
 
   // Save metadata to database
@@ -437,18 +419,3 @@ async function saveResult(
     .where(eq(summaries.summaryId, summaryId));
 }
 
-// Helper: Save error to database
-async function saveError(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
-  summaryId: string,
-  errorMessage: string,
-) {
-  await db
-    .update(summaries)
-    .set({
-      status: "failed",
-      errorMessage,
-    })
-    .where(eq(summaries.summaryId, summaryId));
-}
