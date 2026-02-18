@@ -114,41 +114,25 @@ export async function summarize(
     throw new Error(errorMessage);
   }
 
-  // Validate video duration
+  // Validate video duration - treat as errors, not completed summaries
   if (duration <= 5) {
-    const result = {
-      url,
-      type: "youtube",
-      title: video.title,
-      summary: "**Video too short.**\n\nVideos under 5 minutes are too brief to summarize meaningfully. Try a longer video.",
-      model: "N/A",
-      promptId: null,
-      reasoning: "Video under 5 minutes",
-    };
+    const errorMessage = "Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.";
 
     if (db && summaryId) {
-      await saveResult(db, summaryId, result, videoId);
+      await saveError(db, summaryId, errorMessage);
     }
 
-    return result;
+    throw new Error(errorMessage);
   }
 
   if (duration > 180) {
-    const result = {
-      url,
-      type: "youtube",
-      title: video.title,
-      summary: "**Video too long.**\n\nVideos over 3 hours exceed the maximum supported length. Try a shorter video.",
-      model: "N/A",
-      promptId: null,
-      reasoning: "Video over 3 hours",
-    };
+    const errorMessage = "Videos over 3 hours exceed the maximum supported length. Try a shorter video.";
 
     if (db && summaryId) {
-      await saveResult(db, summaryId, result, videoId);
+      await saveError(db, summaryId, errorMessage);
     }
 
-    return result;
+    throw new Error(errorMessage);
   }
 
   // Save metadata to database
@@ -449,6 +433,22 @@ async function saveResult(
       totalTokens: result.usage?.totalTokens || 0,
       status: "completed",
       completedAt: new Date(),
+    })
+    .where(eq(summaries.summaryId, summaryId));
+}
+
+// Helper: Save error to database
+async function saveError(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  summaryId: string,
+  errorMessage: string,
+) {
+  await db
+    .update(summaries)
+    .set({
+      status: "failed",
+      errorMessage,
     })
     .where(eq(summaries.summaryId, summaryId));
 }
