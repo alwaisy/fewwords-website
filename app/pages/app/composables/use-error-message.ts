@@ -27,16 +27,16 @@ export function useErrorMessage() {
     const raw = errorMessage || "";
 
     // Video length errors (specific messages)
-    if (raw.includes("Video too short")) {
+    if (raw.includes("Videos under 5 minutes") || raw.includes("too brief to summarize")) {
       return "Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.";
     }
-    if (raw.includes("Video too long")) {
+    if (raw.includes("Videos over 3 hours") || raw.includes("exceed the maximum supported length")) {
       return "Videos over 3 hours exceed the maximum supported length. Try a shorter video.";
     }
     if (raw.includes("Not worth watching")) {
       return raw; // Show the full "Not worth watching" message with reasoning
     }
-    if (raw.includes("Live streams")) {
+    if (raw.includes("Live streams") || raw.includes("aren't supported yet")) {
       return "Live streams aren't supported yet. Wait for the stream to end and try again.";
     }
 
