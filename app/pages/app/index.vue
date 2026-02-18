@@ -6,12 +6,9 @@ useHead({
 </script>
 
 <template>
-  <main class="flex-1">
-    <section class="py-16 px-4">
-      <div class="max-w-4xl mx-auto">
-        <AppInput />
-        <AppSampleContent />
-      </div>
-    </section>
+  <main class="flex-1 flex items-center justify-center px-4 min-h-[calc(100vh-186px)]">
+    <div class="w-full max-w-2xl">
+      <AppInput />
+    </div>
   </main>
 </template>

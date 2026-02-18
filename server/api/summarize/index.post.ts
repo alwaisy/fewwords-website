@@ -56,6 +56,8 @@ function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
 
 export default defineEventHandler(async (event) => {
   const db = await useDb(event)
+  const session = await getUserSession(event)
+  const userId = session?.user ? (session.user as { id: string }).id : null
   const startTime = Date.now()
 
   let updateSummaryId: string | undefined
@@ -120,6 +122,7 @@ export default defineEventHandler(async (event) => {
           responseTimeMs,
           status: 'completed',
           completedAt: new Date(),
+          userId,
         })
         .where(eq(summaries.summaryId, updateSummaryId))
         .returning({ id: summaries.id })
@@ -185,6 +188,7 @@ export default defineEventHandler(async (event) => {
       totalTokens: result.usage?.totalTokens,
       responseTimeMs,
       status: 'completed',
+      userId,
     }).returning({ id: summaries.id, summaryId: summaries.summaryId })
 
     const insertedRecord = insertResult[0]

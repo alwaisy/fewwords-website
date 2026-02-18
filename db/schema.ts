@@ -91,6 +91,7 @@ export const summaries = pgTable(
     status: text("status", { enum: statusEnum }).notNull().default("pending"),
     stage: text("stage"), // Temporary field for multi-stage loading (metadata, classifying, summarizing)
     errorMessage: text("error_message"),
+    userId: text("user_id").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -100,6 +101,7 @@ export const summaries = pgTable(
     essenceIdx: index("Summary_essence_idx").on(table.essence),
     createdAtIdx: index("Summary_created_at_idx").on(table.createdAt),
     statusIdx: index("Summary_status_idx").on(table.status),
+    userIdIdx: index("Summary_user_id_idx").on(table.userId),
   }),
 );
 
@@ -256,3 +258,28 @@ export const articlesRelations = relations(articles, ({ one }) => ({
     references: [summaries.id],
   }),
 }));
+
+// Saved summaries table (junction table for user bookmarked summaries)
+export const savedSummaries = pgTable(
+  "SavedSummary",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    summaryId: text("summary_id")
+      .notNull()
+      .references(() => summaries.summaryId), // Use public ID (few-XYZ)
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userSummaryIdx: index("SavedSummary_user_summary_idx").on(table.userId, table.summaryId),
+  }),
+);
+
+export type SavedSummary = typeof savedSummaries.$inferSelect;
+export type NewSavedSummary = typeof savedSummaries.$inferInsert;
