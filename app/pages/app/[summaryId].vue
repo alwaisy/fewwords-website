@@ -5,11 +5,25 @@ import { useSummaryProcessing } from "./composables/use-summary-processing";
 const route = useRoute();
 const router = useRouter();
 const summaryId = route.params.summaryId as string;
+const { user } = useAuth();
 
 // Check for reader mode via query param
 const isReaderMode = computed(
   () => "r" in route.query || "reader" in route.query,
 );
+
+// Check if summary is saved (for logged-in users)
+const isSaved = ref(false);
+
+async function checkIfSaved() {
+  if (!user.value) return;
+  try {
+    const response = await $fetch<{ summaries: { summaryId: string }[] }>(`/api/library/saved?page=1&limit=100`);
+    isSaved.value = response.summaries.some((s) => s.summaryId === summaryId);
+  } catch (error) {
+    console.error('Failed to check saved status:', error);
+  }
+}
 
 // Fetch summary data from API
 const {
@@ -18,6 +32,13 @@ const {
   error,
   refresh,
 } = await useFetch(`/api/summary/${summaryId}`);
+
+// Check saved status after summary loads
+watchEffect(() => {
+  if (summary.value && user.value) {
+    checkIfSaved();
+  }
+});
 
 // Get the display title
 const displayTitle = computed(() => {
@@ -82,8 +103,37 @@ function openSource() {
   }
 }
 
-function saveSummary() {
-  useToastify("Saved!");
+async function saveSummary() {
+  if (!user.value) {
+    useToastify("Please login to save summaries", { type: "error" });
+    return;
+  }
+
+  try {
+    await $fetch("/api/library/save", {
+      method: "POST",
+      body: { summaryId },
+    });
+    isSaved.value = true;
+    useToastify("Saved to library!", { type: "success" });
+  } catch {
+    useToastify("Failed to save", { type: "error" });
+  }
+}
+
+async function unsaveSummary() {
+  if (!user.value) return;
+
+  try {
+    await $fetch("/api/library/save", {
+      method: "DELETE",
+      body: { summaryId },
+    });
+    isSaved.value = false;
+    useToastify("Removed from library", { type: "info" });
+  } catch {
+    useToastify("Failed to unsave", { type: "error" });
+  }
 }
 
 function doAnother() {
@@ -188,9 +238,11 @@ watchStatusChanges();
             :title="displayTitle"
             :source-url="summary.source"
             :reader-mode="isReaderMode"
+            :is-saved="isSaved"
             @share="copyLink"
             @open-source="openSource"
             @save="saveSummary"
+            @unsave="unsaveSummary"
           />
           <AppSummaryContent
             :content="summary.summary"

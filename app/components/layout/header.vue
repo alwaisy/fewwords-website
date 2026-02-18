@@ -12,6 +12,15 @@ import {
 
 const { isLoggedIn, logout } = useAuth()
 const isMobileMenuOpen = ref(false)
+const route = useRoute()
+
+// Check if link is active
+function isActive(path: string): boolean {
+  if (path === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(path)
+}
 </script>
 
 <template>
@@ -28,15 +37,30 @@ const isMobileMenuOpen = ref(false)
       <nav v-if="!isLoggedIn" class="ml-auto hidden md:flex items-center space-x-6">
         <NuxtLink
           to="/"
-          class="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
         >
           Home
         </NuxtLink>
         <NuxtLink
           to="/about"
-          class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
         >
           About
+        </NuxtLink>
+        <NuxtLink
+          to="/explore"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
+        >
+          Explore
         </NuxtLink>
         <ThemeToggle />
         <Button variant="default" size="sm" as-child>
@@ -48,15 +72,30 @@ const isMobileMenuOpen = ref(false)
       <div v-else class="ml-auto hidden md:flex items-center space-x-6">
         <NuxtLink
           to="/"
-          class="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
         >
           Home
         </NuxtLink>
         <NuxtLink
           to="/about"
-          class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
         >
           About
+        </NuxtLink>
+        <NuxtLink
+          to="/explore"
+          :class="[
+            'text-sm font-medium transition-colors',
+            isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+          ]"
+        >
+          Explore
         </NuxtLink>
         <ThemeToggle />
 
@@ -73,6 +112,9 @@ const isMobileMenuOpen = ref(false)
           <DropdownMenuContent align="end" class="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+              <NuxtLink to="/library">Library</NuxtLink>
+            </DropdownMenuItem>
             <DropdownMenuItem as-child>
               <NuxtLink to="/settings">Settings</NuxtLink>
             </DropdownMenuItem>
@@ -114,7 +156,10 @@ const isMobileMenuOpen = ref(false)
               <DrawerClose as-child>
                 <NuxtLink
                   to="/"
-                  class="text-lg font-medium text-foreground hover:text-primary transition-colors py-2"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
                   @click="isMobileMenuOpen = false"
                 >
                   Home
@@ -123,10 +168,25 @@ const isMobileMenuOpen = ref(false)
               <DrawerClose as-child>
                 <NuxtLink
                   to="/about"
-                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
                   @click="isMobileMenuOpen = false"
                 >
                   About
+                </NuxtLink>
+              </DrawerClose>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/explore"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Explore
                 </NuxtLink>
               </DrawerClose>
               <div class="flex items-center space-x-4 py-2">
@@ -146,7 +206,10 @@ const isMobileMenuOpen = ref(false)
               <DrawerClose as-child>
                 <NuxtLink
                   to="/"
-                  class="text-lg font-medium text-foreground hover:text-primary transition-colors py-2"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
                   @click="isMobileMenuOpen = false"
                 >
                   Home
@@ -155,15 +218,39 @@ const isMobileMenuOpen = ref(false)
               <DrawerClose as-child>
                 <NuxtLink
                   to="/about"
-                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
                   @click="isMobileMenuOpen = false"
                 >
                   About
                 </NuxtLink>
               </DrawerClose>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/explore"
+                  :class="[
+                    'text-lg font-medium transition-colors py-2',
+                    isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                  ]"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Explore
+                </NuxtLink>
+              </DrawerClose>
               <div class="flex items-center space-x-4 py-2">
                 <ThemeToggle />
               </div>
+              <DrawerClose as-child>
+                <NuxtLink
+                  to="/library"
+                  class="text-lg font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                  @click="isMobileMenuOpen = false"
+                >
+                  Library
+                </NuxtLink>
+              </DrawerClose>
               <DrawerClose as-child>
                 <NuxtLink
                   to="/settings"

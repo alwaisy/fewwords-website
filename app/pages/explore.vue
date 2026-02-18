@@ -1,0 +1,148 @@
+<script setup lang="ts">
+import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
+
+useHead({
+  title: 'Explore - Fewwords',
+  titleTemplate: null
+})
+
+interface ExploreSummary {
+  summaryId: string
+  title: string | null
+  source: string
+  essence: 'article' | 'youtube' | 'reddit'
+  createdAt: string
+}
+
+interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+// Pagination
+const page = ref(1)
+const limit = 16
+
+// Data
+const summaries = ref<ExploreSummary[]>([])
+const pagination = ref<Pagination>({ page: 1, limit: 16, total: 0, totalPages: 0 })
+
+const loading = ref(false)
+
+// Fetch data
+async function fetchData() {
+  loading.value = true
+  try {
+    const response = await $fetch<{ summaries: ExploreSummary[], pagination: Pagination }>(
+      `/api/explore?page=${page.value}&limit=${limit}`
+    )
+    summaries.value = response.summaries
+    pagination.value = response.pagination
+  } catch (error) {
+    console.error('Failed to fetch explore data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Watch for page changes
+watch(page, () => {
+  fetchData()
+})
+
+// Initial fetch
+onMounted(() => {
+  fetchData()
+})
+
+// Computed helpers
+const showPagination = computed(() => {
+  return pagination.value.total > 16
+})
+
+// Navigate to summary
+function goToSummary(summaryId: string) {
+  navigateTo(`/app/${summaryId}`)
+}
+</script>
+
+<template>
+  <main class="flex-1">
+    <section class="py-16 px-4">
+      <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-foreground mb-8">
+          Explore
+        </h1>
+
+        <!-- Loading state -->
+        <div v-if="loading" class="text-center py-12">
+          <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
+          <p class="text-sm text-muted-foreground mt-4">Loading...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="summaries.length === 0" class="text-center py-12">
+          <p class="text-muted-foreground">
+            No summaries yet. Be the first to create one!
+          </p>
+        </div>
+
+        <!-- Summary list -->
+        <div v-else class="space-y-3">
+          <div
+            v-for="summary in summaries"
+            :key="summary.summaryId"
+            class="border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
+            @click="goToSummary(summary.summaryId)"
+          >
+            <!-- Title -->
+            <h3 class="font-medium text-foreground truncate mb-2">
+              {{ summary.title || 'Untitled' }}
+            </h3>
+
+            <!-- Metadata row -->
+            <div class="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <span>{{ formatDate(summary.createdAt) }}</span>
+              <span>•</span>
+              <span>{{ extractDomain(summary.source) }}</span>
+            </div>
+
+            <!-- Type badge -->
+            <Badge variant="outline">
+              {{ getEssenceLabel(summary.essence) }}
+            </Badge>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="showPagination && !loading" class="flex items-center justify-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="pagination.page === 1"
+            @click="page--"
+          >
+            <Icon name="lucide:chevron-left" class="w-4 h-4" />
+            Prev
+          </Button>
+
+          <span class="text-sm text-muted-foreground">
+            Page {{ pagination.page }} of {{ pagination.totalPages }}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="pagination.page === pagination.totalPages"
+            @click="page++"
+          >
+            Next
+            <Icon name="lucide:chevron-right" class="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </section>
+  </main>
+</template>

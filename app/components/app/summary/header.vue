@@ -3,11 +3,13 @@ interface Props {
   title?: string;
   sourceUrl?: string;
   readerMode?: boolean;
+  isSaved?: boolean;
 }
 
 defineEmits<{
   share: [];
   save: [];
+  unsave: [];
   openSource: [];
 }>();
 
@@ -44,12 +46,22 @@ defineProps<Props>();
         Share
       </Button>
       <Button
+        v-if="!isSaved"
         variant="secondary"
         class="h-8 px-3 rounded-full text-xs"
         @click="$emit('save')"
       >
         <Icon name="lucide:bookmark" class="w-3 h-3 mr-1.5" />
         Save
+      </Button>
+      <Button
+        v-else
+        variant="secondary"
+        class="h-8 px-3 rounded-full text-xs"
+        @click="$emit('unsave')"
+      >
+        <Icon name="lucide:bookmark-check" class="w-3 h-3 mr-1.5" />
+        Saved
       </Button>
     </div>
   </div>

@@ -66,7 +66,7 @@ async function handleChangeEmail() {
     useToastify('Verification email sent! Check your inbox.', { type: 'success' });
     showEmailDialog.value = false;
     newEmail.value = '';
-  } catch (error) {
+  } catch {
     useToastify('Failed to send verification email', { type: 'error' });
   }
 }
@@ -90,9 +90,9 @@ async function handleEmailVerification(token: string) {
       
       await navigateTo('/auth/login?message=email-changed', { replace: true });
     }
-  } catch (error: any) {
+  } catch {
     emailVerifyStatus.value = 'error';
-    emailVerifyError.value = error.data?.message || 'Verification failed';
+    emailVerifyError.value = 'Verification failed';
     useToastify(emailVerifyError.value, { type: 'error' });
     
     isVerifyingEmail.value = false;
@@ -115,7 +115,7 @@ async function handleDeleteAccount() {
     // Logout and redirect
     await logout();
     await navigateTo('/');
-  } catch (error) {
+  } catch {
     useToastify('Failed to delete account', { type: 'error' });
   }
 }

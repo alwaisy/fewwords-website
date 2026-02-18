@@ -2,6 +2,8 @@ import { summaries } from '~~/db/schema'
 
 export default defineEventHandler(async (event) => {
   const db = await useDb(event)
+  const session = await getUserSession(event)
+  const userId = session?.user ? (session.user as { id: string }).id : null
 
   try {
     const body = await readBody(event)
@@ -37,6 +39,7 @@ export default defineEventHandler(async (event) => {
       essence,
       status: 'pending',
       summary: '', // Empty for now
+      userId,
     }).returning({ summaryId: summaries.summaryId })
 
     const summaryId = insertResult[0]?.summaryId
