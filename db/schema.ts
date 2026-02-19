@@ -29,18 +29,24 @@ export const users = pgTable(
     username: text("username").unique(),
     role: text("role", { enum: userRoleEnum }).notNull().default("user"),
     magicLinkToken: text("magic_link_token"),
-    magicLinkExpiresAt: timestamp("magic_link_expires_at", { withTimezone: true }),
+    magicLinkExpiresAt: timestamp("magic_link_expires_at", {
+      withTimezone: true,
+    }),
     // Email change verification
     pendingEmail: text("pending_email"),
     emailChangeToken: text("email_change_token"),
-    emailChangeExpiresAt: timestamp("email_change_expires_at", { withTimezone: true }),
+    emailChangeExpiresAt: timestamp("email_change_expires_at", {
+      withTimezone: true,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => ({
     emailIdx: index("User_email_idx").on(table.email),
-    magicLinkTokenIdx: index("User_magic_link_token_idx").on(table.magicLinkToken),
+    magicLinkTokenIdx: index("User_magic_link_token_idx").on(
+      table.magicLinkToken,
+    ),
   }),
 );
 
@@ -166,7 +172,9 @@ export const youtube = pgTable(
     transcriptTotalTokens: integer("transcript_total_tokens"),
     transcriptReasoningTokens: integer("transcript_reasoning_tokens"),
     transcriptTimeMs: integer("transcript_time_ms"),
-    transcriptCachedAt: timestamp("transcript_cached_at", { withTimezone: true }),
+    transcriptCachedAt: timestamp("transcript_cached_at", {
+      withTimezone: true,
+    }),
 
     // Total cycle time (from user submit to completed/failed)
     totalTimeMs: integer("total_time_ms"),
@@ -277,7 +285,10 @@ export const savedSummaries = pgTable(
       .defaultNow(),
   },
   (table) => ({
-    userSummaryIdx: index("SavedSummary_user_summary_idx").on(table.userId, table.summaryId),
+    userSummaryIdx: index("SavedSummary_user_summary_idx").on(
+      table.userId,
+      table.summaryId,
+    ),
   }),
 );
 
