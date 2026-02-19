@@ -167,6 +167,7 @@ async function directSummarizationFlow(
 
   if (db && summaryId) {
     await saveResult(db, summaryId, response, videoId);
+    await setStage(summaryId, "completed");
   }
 
   return response;
@@ -292,6 +293,7 @@ async function standardFlow(
 
     if (db && summaryId) {
       await saveResult(db, summaryId, response);
+      await setStage(summaryId, "completed");
     }
 
     return response;
@@ -335,6 +337,7 @@ async function standardFlow(
 
   if (db && summaryId) {
     await saveResult(db, summaryId, response);
+    await setStage(summaryId, "completed");
   }
 
   return response;

@@ -20,15 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const db = await useDb(event);
 
-  // Get total count for pagination
-  const countResult = await db
-    .select({ totalCount: count() })
-    .from(savedSummaries)
-    .where(and(eq(savedSummaries.userId, userId), ne(summaries.status, 'failed')));
-
-  const totalCount = countResult[0]?.totalCount || 0;
-
-  // Get saved summaries with pagination
+  // Get saved summaries with pagination (excluding failed)
   const saved = await db
     .select({
       summaryId: summaries.summaryId,
@@ -41,10 +33,19 @@ export default defineEventHandler(async (event) => {
     })
     .from(savedSummaries)
     .innerJoin(summaries, eq(savedSummaries.summaryId, summaries.summaryId))
-    .where(eq(savedSummaries.userId, userId))
+    .where(and(eq(savedSummaries.userId, userId), ne(summaries.status, 'failed')))
     .orderBy(desc(savedSummaries.createdAt))
     .limit(limit)
     .offset(offset);
+
+  // Get total count for pagination
+  const countResult = await db
+    .select({ totalCount: count() })
+    .from(savedSummaries)
+    .innerJoin(summaries, eq(savedSummaries.summaryId, summaries.summaryId))
+    .where(and(eq(savedSummaries.userId, userId), ne(summaries.status, 'failed')));
+
+  const totalCount = countResult[0]?.totalCount || 0;
 
   return {
     summaries: saved,

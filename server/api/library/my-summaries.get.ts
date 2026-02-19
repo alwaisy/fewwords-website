@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   const totalCount = countResult[0]?.totalCount || 0;
 
-  // Get user's summaries with pagination
+  // Get user's summaries with pagination (excluding failed)
   const userSummaries = await db
     .select({
       summaryId: summaries.summaryId,
@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
       status: summaries.status,
     })
     .from(summaries)
-    .where(eq(summaries.userId, userId))
     .where(and(eq(summaries.userId, userId), ne(summaries.status, 'failed')))
     .orderBy(desc(summaries.createdAt))
     .limit(limit)
