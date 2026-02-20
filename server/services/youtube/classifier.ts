@@ -23,8 +23,9 @@ export interface ClassifierResult {
     | "OPINION"
     | "INTERVIEW"
     | "EDUCATION"
-    | "ENTERTAINMENT"
-    | "GENERIC"; // Fallback when classifier fails
+    | "LIGHT"
+    | "GENERIC"
+    | "DIRECT"; // Fallback when classifier fails
   true_intent: string;
   focus_points: string[];
   is_worth_it: boolean;

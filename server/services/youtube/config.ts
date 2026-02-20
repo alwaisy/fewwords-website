@@ -38,9 +38,9 @@ export const CLASSIFICATION_CONFIG = {
   reasoning: undefined,
 } as const;
 
-// Stage 4: Summarization (cheaper model, text-only)
+// Stage 4: Summarization (Grok for fast, quality summaries)
 export const SUMMARIZATION_CONFIG = {
-  model: "moonshotai/kimi-k2-thinking" as LLMModel,
+  model: "x-ai/grok-4.1-fast" as LLMModel,
   temperature: 0.7,
   maxTokens: 4000,
   reasoning: undefined,

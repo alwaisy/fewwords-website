@@ -76,6 +76,42 @@ export default defineEventHandler(async (event) => {
     }
 
     const essence = detectContentType(url)
+
+    // ═══════════════════════════════════════════════════════════
+    // IDEMPOTENCY CHECK: If record already processed/processing, don't restart
+    // This is a defense-in-depth measure to prevent duplicate processing
+    // ═══════════════════════════════════════════════════════════
+    if (updateSummaryId) {
+      const existing = await db
+        .select({ status: summaries.status, isBackgroundJob: summaries.isBackgroundJob })
+        .from(summaries)
+        .where(eq(summaries.summaryId, updateSummaryId))
+        .limit(1);
+
+      if (existing.length > 0 && existing[0]) {
+        const { status } = existing[0];
+
+        // Already done or in progress - return current state
+        if (status === "processing" || status === "completed") {
+          console.log(`[API] Idempotency check: ${updateSummaryId} is ${status}, skipping`);
+          return {
+            summaryId: updateSummaryId,
+            status,
+            message: status === "completed" ? "Already completed" : "Already processing",
+          };
+        }
+
+        // Failed - could allow retry, but for now return failure
+        if (status === "failed") {
+          return {
+            summaryId: updateSummaryId,
+            status: "failed",
+            message: "Previous attempt failed. Contact support to retry.",
+          };
+        }
+      }
+    }
+
     let result
 
     switch (essence) {

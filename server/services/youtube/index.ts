@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 
 import { YOUTUBE_PROMPTS, type YouTubeVideoType } from "../../prompts/youtube";
 
-import { classifyVideo } from "./classifier";
+import { classifyVideo, type ClassifierResult } from "./classifier";
 import { SUMMARIZATION_CONFIG } from "./config";
 import { fetchYouTubeMetadata, type YouTubeVideoMetadata, type YouTubeChannelMetadata } from "./metadata";
 import { summarizeDirectVideo } from "./short-summarizer";
@@ -189,15 +189,29 @@ async function standardFlow(
   await setStage(summaryId || "", "transcript");
 
   let transcript;
+  let cachedClassifier: ClassifierResult | null = null;
   const duration = video.durationMinutes;
 
-  // Check database for cached transcript
+  // Check database for cached transcript AND classifier
+  // FIX: Use isNotNull to only get records that HAVE a transcript
+  // This prevents race condition where new empty records are returned
   if (db && videoId) {
     const cached = await db
       .select()
       .from(youtube)
-      .where(eq(youtube.videoId, videoId))
+      .where(and(
+        eq(youtube.videoId, videoId),
+        isNotNull(youtube.transcriptText)
+      ))
       .limit(1);
+
+    // DEBUG: Log what cache query returns
+    console.log(`[YouTube Cache] Query for videoId=${videoId}:`);
+    console.log(`[YouTube Cache] - Found ${cached.length} record(s) with transcript`);
+    if (cached.length > 0) {
+      console.log(`[YouTube Cache] - transcriptText length: ${cached[0].transcriptText?.length || 0}`);
+      console.log(`[YouTube Cache] - Has classifier data: ${!!cached[0].category}`);
+    }
 
     if (cached.length > 0 && cached[0].transcriptText) {
       console.log(`[YouTube] ✓ Using cached transcript for ${videoId}`);
@@ -213,6 +227,36 @@ async function standardFlow(
         },
         timeMs: cached[0].transcriptTimeMs || 0,
       };
+
+      // Also check for cached classifier data
+      if (cached[0].category) {
+        console.log(`[YouTube] ✓ Using cached classifier for ${videoId}: ${cached[0].category}`);
+        cachedClassifier = {
+          clean_title: cached[0].cleanTitle || video.title,
+          channel_bio: cached[0].channelBio || "",
+          category: cached[0].category as YouTubeVideoType,
+          true_intent: cached[0].trueIntent || "",
+          focus_points: cached[0].focusPoints ? JSON.parse(cached[0].focusPoints) : [],
+          is_worth_it: cached[0].isWorthIt ?? true,
+          reasoning: cached[0].classifierReasoning || "",
+          classifierModel: cached[0].classifierModel || "",
+          classifier_usage: {
+            promptTokens: cached[0].classifierPromptTokens || 0,
+            completionTokens: cached[0].classifierCompletionTokens || 0,
+            totalTokens: cached[0].classifierTotalTokens || 0,
+            reasoningTokens: cached[0].classifierReasoningTokens || 0,
+          },
+          classifier_time_ms: cached[0].classifierTimeMs || 0,
+          metadata: {
+            title: video.title,
+            description: video.description,
+            channel: video.channelTitle,
+            duration: video.durationMinutes,
+            tags: video.tags,
+            isAgeRestricted: video.isAgeRestricted,
+          },
+        };
+      }
     }
   }
 
@@ -223,7 +267,8 @@ async function standardFlow(
 
     // Save transcript to database
     if (db && videoId) {
-      await db
+      console.log(`[YouTube Transcript] Saving transcript for videoId=${videoId}, length=${transcript.text.length}`);
+      const updateResult = await db
         .update(youtube)
         .set({
           transcriptText: transcript.text,
@@ -237,46 +282,54 @@ async function standardFlow(
           transcriptCachedAt: new Date(),
         })
         .where(eq(youtube.videoId, videoId));
+      console.log(`[YouTube Transcript] ✓ Saved. Update result:`, JSON.stringify(updateResult));
     }
   }
 
-  // Stage 3: Classify using transcript
-  await setStage(summaryId || "", "classifying");
+  // Stage 3: Classify using transcript (skip if already cached)
+  let classifier: ClassifierResult;
 
-  const classifier = await classifyVideo(transcript.text, {
-    title: video.title,
-    description: video.description,
-    channel: video.channelTitle,
-    duration: video.durationMinutes,
-    videoUrl: url,
-    tags: video.tags,
-    isAgeRestricted: video.isAgeRestricted,
-  });
+  if (cachedClassifier) {
+    console.log(`[YouTube] ✓ Skipping classification - using cached result`);
+    classifier = cachedClassifier;
+  } else {
+    await setStage(summaryId || "", "classifying");
 
-  // Save classifier results
-  if (db && videoId) {
-    await db
-      .update(youtube)
-      .set({
-        cleanTitle: classifier.clean_title,
-        channelBio: classifier.channel_bio,
-        category: classifier.category,
-        trueIntent: classifier.true_intent,
-        focusPoints:
-          classifier.focus_points.length > 0
-            ? JSON.stringify(classifier.focus_points)
-            : null,
-        isWorthIt: classifier.is_worth_it,
-        classifierReasoning: classifier.reasoning,
-        classifierModel: classifier.classifierModel,
-        classifierReasoningEffort: undefined, // No reasoning for text classification
-        classifierPromptTokens: classifier.classifier_usage?.promptTokens || 0,
-        classifierCompletionTokens: classifier.classifier_usage?.completionTokens || 0,
-        classifierTotalTokens: classifier.classifier_usage?.totalTokens || 0,
-        classifierReasoningTokens: classifier.classifier_usage?.reasoningTokens || 0,
-        classifierTimeMs: classifier.classifier_time_ms || 0,
-      })
-      .where(eq(youtube.videoId, videoId));
+    classifier = await classifyVideo(transcript.text, {
+      title: video.title,
+      description: video.description,
+      channel: video.channelTitle,
+      duration: video.durationMinutes,
+      videoUrl: url,
+      tags: video.tags,
+      isAgeRestricted: video.isAgeRestricted,
+    });
+
+    // Save classifier results
+    if (db && videoId) {
+      await db
+        .update(youtube)
+        .set({
+          cleanTitle: classifier.clean_title,
+          channelBio: classifier.channel_bio,
+          category: classifier.category,
+          trueIntent: classifier.true_intent,
+          focusPoints:
+            classifier.focus_points.length > 0
+              ? JSON.stringify(classifier.focus_points)
+              : null,
+          isWorthIt: classifier.is_worth_it,
+          classifierReasoning: classifier.reasoning,
+          classifierModel: classifier.classifierModel,
+          classifierReasoningEffort: undefined, // No reasoning for text classification
+          classifierPromptTokens: classifier.classifier_usage?.promptTokens || 0,
+          classifierCompletionTokens: classifier.classifier_usage?.completionTokens || 0,
+          classifierTotalTokens: classifier.classifier_usage?.totalTokens || 0,
+          classifierReasoningTokens: classifier.classifier_usage?.reasoningTokens || 0,
+          classifierTimeMs: classifier.classifier_time_ms || 0,
+        })
+        .where(eq(youtube.videoId, videoId));
+    }
   }
 
   // Early exit if not worth summarizing
@@ -375,6 +428,7 @@ async function saveMetadata(
 
   if (existing.length === 0) {
     // Insert new record
+    console.log(`[YouTube Metadata] Creating NEW YouTube record for summaryId=${summaryId}, videoId=${videoId}`);
     await db.insert(youtube).values({
       summaryId: internalId,
       videoId,

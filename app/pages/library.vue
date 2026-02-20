@@ -101,9 +101,17 @@ function goToSummary(summaryId: string) {
   <main class="flex-1">
     <section class="py-16 px-4">
       <div class="max-w-2xl mx-auto">
-        <h1 class="text-3xl font-bold text-foreground mb-8">
-          Library
-        </h1>
+        <div class="flex items-center justify-between mb-8">
+          <h1 class="text-3xl font-bold text-foreground">
+            Library
+          </h1>
+          <NuxtLink to="/app">
+            <Button variant="default" size="sm">
+              <Icon name="lucide:plus" class="w-4 h-4 mr-1" />
+              Do another
+            </Button>
+          </NuxtLink>
+        </div>
 
         <!-- Tabs -->
         <div class="flex gap-4 border-b border-border mb-6">

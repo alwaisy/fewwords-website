@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
     summary: summary.summary,
     status: summary.status,
     errorMessage: summary.errorMessage,
+    isBackgroundJob: summary.isBackgroundJob,
     createdAt: summary.createdAt,
     completedAt: summary.completedAt,
   }

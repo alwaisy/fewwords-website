@@ -98,6 +98,7 @@ export const summaries = pgTable(
     stage: text("stage"), // Temporary field for multi-stage loading (metadata, classifying, summarizing)
     errorMessage: text("error_message"),
     userId: text("user_id").references(() => users.id),
+    isBackgroundJob: boolean("is_background_job").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

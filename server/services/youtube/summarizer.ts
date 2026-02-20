@@ -37,27 +37,30 @@ export async function summarizeVideo(input: SummaryInput): Promise<SummaryResult
   const typePrompt = (promptModule as Record<string, unknown>).PROMPT as string
   const promptMeta = (promptModule as Record<string, unknown>).PROMPT_META as { ID: string }
 
-  // Build enriched prompt with classifier insights
+  // Build enriched prompt with XML tags for better structure
   const enrichedPrompt = `
-You are summarizing a ${classifier.category} video.
-
-Context from analysis:
-- True Intent: ${classifier.true_intent}
-- Focus Points: ${classifier.focus_points.join('\n')}
-- Channel: ${classifier.channel_bio}
+<instructions>
+Summarize this ${classifier.category} video.
 
 ${typePrompt}
+</instructions>
 
-FULL METADATA:
-- Title: ${classifier.metadata.title}
-- Description: ${classifier.metadata.description}
-- Channel: ${classifier.metadata.channel}
-- Duration: ${classifier.metadata.duration} minutes
-- Tags: ${classifier.metadata.tags?.slice(0, 10).join(', ') || 'N/A'}
-- Age Restricted: ${classifier.metadata.isAgeRestricted ? 'Yes' : 'No'}
-
-TRANSCRIPT:
+<transcript>
 ${transcript}
+</transcript>
+
+<metadata>
+<title>${classifier.metadata.title}</title>
+<channel>${classifier.metadata.channel}</channel>
+<duration>${classifier.metadata.duration} minutes</duration>
+<tags>${classifier.metadata.tags?.slice(0, 5).join(', ') || 'N/A'}</tags>
+</metadata>
+
+<analysis>
+<intent>${classifier.true_intent}</intent>
+<focus>${classifier.focus_points.slice(0, 3).join('\n')}</focus>
+<channel_bio>${classifier.channel_bio}</channel_bio>
+</analysis>
 `.trim()
 
   const result = await callOpenRouter({

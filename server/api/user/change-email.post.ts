@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
+import { getSender } from "../../config/emails";
 import { users } from "~~/db/schema";
 
 interface ChangeEmailRequest {
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
   if (resendApiKey) {
     const resend = new Resend(resendApiKey);
     await resend.emails.send({
-      from: `${process.env.RESEND_FROM_NAME || "Fewwords"} <${process.env.RESEND_FROM_EMAIL || "magiclink@m.fewwords.app"}>`,
+      from: getSender("auth"),
       to: [newEmail],
       subject: "Confirm your new email",
       html: `

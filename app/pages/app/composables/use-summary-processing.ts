@@ -12,6 +12,7 @@ interface SummaryData {
   summary: string | null;
   status: SummaryStatus;
   errorMessage: string | null;
+  isBackgroundJob: boolean;
   createdAt: string;
   completedAt: string | null;
 }
@@ -143,54 +144,59 @@ export function useSummaryProcessing(
     return getStages.value.findIndex((s) => s.stage === currentStage.value);
   });
 
-  const connectStageStream = () => {
+  const connectStageStream = (useBgStream: boolean = false) => {
     if (eventSource) {
       return;
     }
 
     // Only run on client - EventSource doesn't exist during SSR
-    onMounted(() => {
-      // Wait for summaryId to be available
-      const tryConnect = () => {
-        if (!summary.value?.summaryId) {
-          setTimeout(tryConnect, 100);
-          return;
-        }
+    if (!import.meta.client) return;
 
-        try {
-          eventSource = new EventSource(`/api/summary/${summary.value.summaryId}/stream`);
+    // Wait for summaryId to be available
+    const tryConnect = () => {
+      if (!summary.value?.summaryId) {
+        setTimeout(tryConnect, 100);
+        return;
+      }
 
-          eventSource.onmessage = async (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data.stage !== undefined) {
-                console.log(`[Frontend SSE] Stage received: ${data.stage}`);
-                currentStage.value = data.stage;
-                // Fetch final summary data when completed
-                if (data.stage === "completed") {
-                  console.log(`[Frontend SSE] Stage is completed, calling refresh()...`);
-                  console.log(`[Frontend SSE] Before refresh - summary.value.title: ${summary.value?.title}, summary.value.summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
-                  await refresh();
-                  console.log(`[Frontend SSE] After refresh - summary.value.title: ${summary.value?.title}, summary.value.summary: ${summary.value?.summary ? '(exists)' : '(null)'}`);
-                }
+      // Choose endpoint based on background job flag
+      const endpoint = useBgStream
+        ? `/api/summary/${summary.value.summaryId}/bg-stream`
+        : `/api/summary/${summary.value.summaryId}/stream`;
+
+      console.log(`[Frontend SSE] Connecting to ${endpoint} (bgStream: ${useBgStream})`);
+
+      try {
+        eventSource = new EventSource(endpoint);
+
+        eventSource.onmessage = async (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.stage !== undefined) {
+              console.log(`[Frontend SSE] Stage received: ${data.stage}`);
+              currentStage.value = data.stage;
+              // Fetch final summary data when completed or failed
+              if (data.stage === "completed" || data.stage === "failed") {
+                console.log(`[Frontend SSE] Stage is ${data.stage}, calling refresh()...`);
+                await refresh();
               }
-            } catch {
-              // Ignore parse errors
             }
-          };
+          } catch {
+            // Ignore parse errors
+          }
+        };
 
-          eventSource.onerror = () => {
-            eventSource?.close();
-            eventSource = null;
-          };
-        } catch (err) {
-          // EventSource not available (SSR or unsupported browser)
-          console.error('[SSE] Failed to connect:', err);
-        }
-      };
+        eventSource.onerror = () => {
+          eventSource?.close();
+          eventSource = null;
+        };
+      } catch (err) {
+        // EventSource not available (SSR or unsupported browser)
+        console.error('[SSE] Failed to connect:', err);
+      }
+    };
 
-      tryConnect();
-    });
+    tryConnect();
   };
 
   const disconnectStageStream = () => {
@@ -242,26 +248,50 @@ export function useSummaryProcessing(
     watch(
       () => summary.value?.status,
       (newStatus, oldStatus) => {
-        console.log(`[Frontend Watch] Status changed: ${oldStatus} → ${newStatus}`);
+        console.log(`[Frontend Watch] Status changed: ${oldStatus} → ${newStatus} | isBackgroundJob: ${summary.value?.isBackgroundJob}`);
         console.log(`[Frontend Watch] Current data - title: ${summary.value?.title ? '(exists)' : '(null)'}, summary: ${summary.value?.summary ? '(exists, length=' + summary.value.summary.length + ')' : '(null/empty)'}`);
 
-        if (newStatus === "pending") {
+        // ═══════════════════════════════════════════════════════
+        // FLOW 1 & 2: Sync processing (Article + YouTube ≤20min)
+        // Only trigger startProcessing() for NON-background jobs
+        // ═══════════════════════════════════════════════════════
+        if (newStatus === "pending" && !summary.value?.isBackgroundJob && import.meta.client) {
           startProcessing();
           startTimer();
         }
 
-        // Start timer for processing status (for non-YouTube content that skips pending)
-        if (newStatus === "processing" && !startTime.value) {
+        // Start timer for any processing status (sync or background)
+        if (newStatus === "processing" && !startTime.value && import.meta.client) {
           startTimer();
         }
 
-        // Connect SSE for YouTube videos immediately, regardless of status
-        if (summary.value?.essence === "youtube" && !eventSource) {
-          connectStageStream();
+        // ═══════════════════════════════════════════════════════
+        // FLOW 2: SSE #1 for sync YouTube (≤20min)
+        // ═══════════════════════════════════════════════════════
+        if (
+          summary.value?.essence === "youtube" &&
+          !summary.value?.isBackgroundJob &&
+          !eventSource &&
+          import.meta.client
+        ) {
+          connectStageStream(false); // SSE #1: /stream
         }
 
-        // Keep polling for status changes (articles/reddit)
-        if (newStatus === "processing" && summary.value?.essence !== "youtube") {
+        // ═══════════════════════════════════════════════════════
+        // FLOW 3: SSE #2 for background jobs (21-180min)
+        // ═══════════════════════════════════════════════════════
+        if (
+          summary.value?.isBackgroundJob &&
+          newStatus === "processing" &&
+          !eventSource &&
+          import.meta.client
+        ) {
+          console.log(`[Frontend Watch] Background job detected - connecting to SSE #2`);
+          connectStageStream(true); // SSE #2: /bg-stream
+        }
+
+        // Keep polling for status changes (articles/reddit - FLOW 1)
+        if (newStatus === "processing" && summary.value?.essence !== "youtube" && import.meta.client) {
           // Clear any existing poll interval first
           if (pollInterval) {
             clearInterval(pollInterval);

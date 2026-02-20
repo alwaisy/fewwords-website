@@ -2,6 +2,7 @@ import { eq, or } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
+import { getSender } from "../../config/emails";
 import { users } from "~~/db/schema";
 
 export default defineEventHandler(async (event) => {
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event) => {
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
-        from: `${process.env.RESEND_FROM_NAME || 'Fewwords'} <${process.env.RESEND_FROM_EMAIL || 'magiclink@m.fewwords.app'}>`,
+        from: getSender("auth"),
         to: [email],
         subject: "Welcome to Fewwords!",
         html: `

@@ -196,7 +196,21 @@ watchStatusChanges();
             {{ liveElapsedTime }}
           </div>
 
-          <!-- Current Stage Message for YouTube (shows one at a time) -->
+          <!-- Background Job UI - User can close tab -->
+          <div v-if="summary.isBackgroundJob" class="max-w-md mx-auto space-y-3 mt-8">
+            <p class="text-sm text-muted-foreground">
+              This is a longer video. You can close this tab — we'll email you when it's ready.
+            </p>
+            <Button variant="outline" size="sm" class="gap-2" @click="copyLink">
+              <Icon name="lucide:copy" size="1rem" />
+              Copy link
+            </Button>
+            <div v-if="user" class="pt-1">
+              <NuxtLink to="/app/library" class="text-sm text-primary hover:underline">
+                View in your library
+              </NuxtLink>
+            </div>
+          </div>
         </div>
 
         <!-- Failed State -->
