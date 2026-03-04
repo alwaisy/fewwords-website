@@ -53,14 +53,14 @@ jobs:
         run: |
           echo "NODE_ENV=production" >> .env
           echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "DATABASE_URL=\"${{ secrets.DATABASE_URL }}\"" >> .env
           echo "NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}" >> .env
           echo "JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}" >> .env
           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
           echo "YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}" >> .env
-          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
+          echo "REDIS_URL=\"${{ secrets.REDIS_URL }}\"" >> .env
           echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
           echo "RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}" >> .env
           echo "RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}" >> .env
@@ -158,11 +158,6 @@ jobs:
 
             cd ~/www/fewwords
 
-            # Source .env file to load environment variables
-            set -a
-            [ -f .env ] && . ./.env
-            set +a
-
             # Extract source files
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
@@ -170,6 +165,11 @@ jobs:
             # Extract built output
             tar -xzf output.tar.gz
             rm output.tar.gz
+
+            # Source .env file to load environment variables (must be AFTER extraction)
+            set -a
+            [ -f .env ] && . ./.env
+            set +a
 
             # Install dependencies
             bun install --frozen-lockfile
