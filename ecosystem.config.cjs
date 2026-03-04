@@ -5,6 +5,7 @@ module.exports = {
       script: './.output/server/index.mjs',
       instances: 1,
       exec_mode: 'fork',
+      env_file: '.env',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
@@ -24,6 +25,7 @@ module.exports = {
       script: './.output/server/workers/index.mjs',
       instances: 1,
       exec_mode: 'fork',
+      env_file: '.env',
       env: {
         NODE_ENV: 'production',
       },
