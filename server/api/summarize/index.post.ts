@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 
-import { redis } from '../../lib/redis'
+import { getRedis } from '../../lib/redis'
 import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summarize as summarizeYouTube } from '../../services/youtube'
@@ -12,6 +12,7 @@ async function setCompletedStage(summaryId: string | undefined) {
   if (!summaryId) return;
   try {
     console.log(`[SSE Stage] Setting 'completed' stage for ${summaryId}...`);
+    const redis = getRedis();
     await redis.set(`summary:${summaryId}:stage`, 'completed', 'EX', 3600);
     console.log(`[SSE Stage] ✓ Set 'completed' stage for ${summaryId}`);
   } catch (error) {

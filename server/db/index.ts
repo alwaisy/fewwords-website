@@ -19,7 +19,8 @@ export const useDb = async (_event: H3Event) => {
     return dbInstance
   }
 
-  const databaseUrl = process.env.DATABASE_URL
+  const config = useRuntimeConfig()
+  const databaseUrl = config.private.databaseUrl
 
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is not set')
@@ -38,4 +39,7 @@ export const useDb = async (_event: H3Event) => {
 }
 
 // Legacy export for direct imports (will be phased out)
-export const db = drizzle(postgres(process.env.DATABASE_URL!), { schema })
+// NOTE: This won't work in production without env vars passed at runtime
+// Use useDb() instead
+const config = useRuntimeConfig()
+export const db = drizzle(postgres(config.private.databaseUrl!), { schema })

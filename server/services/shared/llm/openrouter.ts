@@ -1,7 +1,8 @@
 import { OpenRouter } from "@openrouter/sdk";
 
+const config = useRuntimeConfig();
 const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY!,
+  apiKey: config.private.openrouterKey!,
   xTitle: "Fewwords",
   httpReferer: "https://fewwords.app",
 });

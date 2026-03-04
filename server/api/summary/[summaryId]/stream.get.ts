@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getRouterParam } from "h3";
 
-import { redis } from "../../../lib/redis";
+import { getRedis } from "../../../lib/redis";
 
 import { summaries } from "~~/db/schema";
 
@@ -45,6 +45,7 @@ export default defineEventHandler(async (event) => {
       try {
         // Send initial stage immediately
         console.log(`[SSE] Fetching initial stage for ${summaryId}...`);
+        const redis = getRedis();
         const initialStage = (await redis.get(`summary:${summaryId}:stage`)) as string | null;
         console.log(`[SSE] Initial stage: ${initialStage}`);
         lastStage = initialStage;
@@ -94,6 +95,7 @@ export default defineEventHandler(async (event) => {
         pollInterval = setInterval(async () => {
           pollCount++;
           try {
+            const redis = getRedis();
             const currentStage = (await redis.get(`summary:${summaryId}:stage`)) as string | null;
             console.log(`[SSE] Poll #${pollCount} for ${summaryId}: currentStage=${currentStage}, lastStage=${lastStage}`);
 

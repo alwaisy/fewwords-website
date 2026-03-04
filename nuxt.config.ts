@@ -9,11 +9,25 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   runtimeConfig: {
+    // Private: server-side only (use NUXT_ prefix to override at runtime)
     private: {
+      databaseUrl: process.env.DATABASE_URL,
       jinaAiKey: process.env.JINA_AI_API_KEY,
       openrouterKey: process.env.OPENROUTER_API_KEY,
+      openaiKey: process.env.OPENAI_API_KEY,
+      anthropicKey: process.env.ANTHROPIC_API_KEY,
+      youtubeDataApiKey: process.env.YOUTUBE_DATA_API_KEY,
+      resendApiKey: process.env.RESEND_API_KEY,
+      adminEmail: process.env.ADMIN_EMAIL,
+      redisUrl: process.env.REDIS_URL,
+    },
+    // Public: exposed to client (use NUXT_PUBLIC_ prefix to override at runtime)
+    public: {
+      siteUrl: process.env.NUXT_SITE_URL,
+      baseUrl: process.env.NUXT_PUBLIC_BASE_URL,
     },
     session: {
+      password: process.env.NUXT_SESSION_PASSWORD,
       maxAge: 60 * 60 * 24 * 7, // 7 days
       rolling: true, // Extend on activity
     },

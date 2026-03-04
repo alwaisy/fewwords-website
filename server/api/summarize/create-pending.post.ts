@@ -45,9 +45,10 @@ export default defineEventHandler(async (event) => {
     // YOUTUBE: Fetch metadata FIRST to make routing decision
     // ═══════════════════════════════════════════════════════════
     if (essence === "youtube") {
+      const config = useRuntimeConfig();
       const { video } = await fetchYouTubeMetadata(
         url,
-        process.env.YOUTUBE_DATA_API_KEY!,
+        config.private.youtubeDataApiKey!,
       );
       const duration = video.durationMinutes;
 

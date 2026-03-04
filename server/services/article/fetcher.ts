@@ -55,9 +55,10 @@ export async function fetchWithJina(url: string): Promise<FetcherResponse> {
     const cleanUrl = url.replace(/^https?:\/\//, '')
     const jinaUrl = `${JINA_READER_URL}${cleanUrl}`
 
+    const config = useRuntimeConfig();
     const response = await $fetch<JinaJSONResponse>(jinaUrl, {
       headers: {
-        'Authorization': `Bearer ${process.env.JINA_AI_API_KEY}`,
+        'Authorization': `Bearer ${config.private.jinaAiKey}`,
         'Accept': 'application/json',
         'X-Engine': 'cf-browser-rendering',
       },

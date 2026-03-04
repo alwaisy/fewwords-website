@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { getSender } from "../config/emails";
-import { redis } from "../lib/redis";
+import { getRedis } from "../lib/redis";
 import type {
   YouTubeSummaryTaskName,
   YouTubeSummaryTaskData,
@@ -20,8 +20,9 @@ async function sendCompletionEmail(
   title: string,
   summaryId: string,
 ): Promise<string | null> {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const baseUrl = process.env.NUXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const config = useRuntimeConfig();
+  const resendApiKey = config.private.resendApiKey;
+  const baseUrl = config.public.baseUrl || "http://localhost:3000";
 
   if (!resendApiKey) {
     console.warn("[YouTubeWorker] RESEND_API_KEY not set, skipping email");
@@ -130,6 +131,7 @@ export default defineWorker<
         .where(eq(summaries.summaryId, summaryId));
 
       // Set Redis stage for SSE
+      const redis = getRedis();
       await redis.set(`summary:${summaryId}:stage`, "completed", "EX", 3600);
 
       // Send email notification
@@ -162,6 +164,7 @@ export default defineWorker<
         .where(eq(summaries.summaryId, summaryId));
 
       // Set Redis stage to "failed" so SSE closes the connection
+      const redis = getRedis();
       await redis.set(`summary:${summaryId}:stage`, "failed", "EX", 3600);
 
       throw error; // Re-throw for BullMQ retry logic

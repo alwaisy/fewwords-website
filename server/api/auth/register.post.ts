@@ -54,11 +54,12 @@ export default defineEventHandler(async (event) => {
       magicLinkExpiresAt: expiresAt,
     });
 
-    const baseUrl = process.env.NUXT_SITE_URL || getRequestURL(event).origin;
+    const config = useRuntimeConfig();
+    const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
     const magicLink = `${baseUrl}/auth/verify?token=${token}`;
 
     // Send email with Resend
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendApiKey = config.private.resendApiKey;
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({

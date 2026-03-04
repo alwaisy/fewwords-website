@@ -12,7 +12,8 @@ async function sendCompletionEmail(
   taskName: string,
   result: DemoTaskResult
 ) {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const config = useRuntimeConfig();
+  const resendApiKey = config.private.resendApiKey;
   const fromEmail = "testbs@m.fewwords.app";
   const fromName = "Fewwords";
 

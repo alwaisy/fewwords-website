@@ -1,6 +1,6 @@
 import { getRouterParam } from "h3";
 
-import { redis } from "../../../lib/redis";
+import { getRedis } from "../../../lib/redis";
 
 /**
  * SSE #2 Endpoint for Background Jobs
@@ -53,6 +53,7 @@ export default defineEventHandler(async (event) => {
 
       try {
         // Send initial stage immediately
+        const redis = getRedis();
         const initialStage = (await redis.get(
           `summary:${summaryId}:stage`,
         )) as string | null;
@@ -95,6 +96,7 @@ export default defineEventHandler(async (event) => {
           }
 
           try {
+            const redis = getRedis();
             const currentStage = (await redis.get(
               `summary:${summaryId}:stage`,
             )) as string | null;

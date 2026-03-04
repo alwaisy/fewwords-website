@@ -3,8 +3,9 @@ import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 
 import { WRITING_GUIDELINES } from "../../../prompts/system";
 
+const config = useRuntimeConfig();
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+  apiKey: config.private.anthropicKey!,
 });
 
 export interface AnthropicMessage {

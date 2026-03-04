@@ -5,7 +5,8 @@ let redisInstance: Redis | null = null;
 
 function getRedis(): Redis {
   if (!redisInstance) {
-    const url = process.env.REDIS_URL;
+    const config = useRuntimeConfig();
+    const url = config.private.redisUrl;
 
     if (!url) {
       throw new Error(
@@ -19,6 +20,5 @@ function getRedis(): Redis {
   return redisInstance;
 }
 
-// Export singleton instance as default
-export const redis = getRedis();
+// Export getter function - lazy initialization
 export { getRedis };

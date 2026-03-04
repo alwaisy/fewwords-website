@@ -10,7 +10,7 @@ import { summarizeVideo } from "./summarizer";
 import { fetchTranscript } from "./transcript";
 
 import { summaries, youtube } from "~~/db/schema";
-import { redis } from "~~/server/lib/redis";
+import { getRedis } from "~~/server/lib/redis";
 
 export interface YouTubeResult {
   url: string;
@@ -40,6 +40,7 @@ async function setStage(summaryId: string, stage: YouTubeStage) {
   }
 
   try {
+    const redis = getRedis();
     const key = `summary:${summaryId}:stage`;
     console.log(`[YouTube Stage] → Setting ${key} = "${stage}"`);
     await redis.set(key, stage, "EX", 3600);
@@ -85,6 +86,7 @@ export async function summarize(
   // Clear any old stage data before starting
   if (summaryId) {
     try {
+      const redis = getRedis();
       await redis.del(`summary:${summaryId}:stage`);
       console.log(`[YouTube Stage] ✓ Cleared old stage data for ${summaryId}`);
     } catch (error) {
@@ -96,9 +98,10 @@ export async function summarize(
   await setStage(summaryId || "", "metadata");
 
   // Stage 1: Fetch metadata from YouTube Data API
+  const config = useRuntimeConfig();
   const { video, channel } = await fetchYouTubeMetadata(
     url,
-    process.env.YOUTUBE_DATA_API_KEY!,
+    config.private.youtubeDataApiKey!,
   );
 
   const duration = video.durationMinutes;

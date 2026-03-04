@@ -1,8 +1,9 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
+const config = useRuntimeConfig();
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: config.private.openaiKey!,
 });
 
 export interface OpenAIMessage {
