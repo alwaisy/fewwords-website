@@ -19,6 +19,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+          cache: 'bun'
 
       # Create .env file from GitHub secrets
       - name: Create .env file
