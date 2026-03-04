@@ -128,8 +128,8 @@ jobs:
             tar -xzf output.tar.gz
             rm output.tar.gz
 
-            # Install dependencies (production only)
-            bun install --frozen-lockfile --production
+            # Install dependencies
+            bun install --frozen-lockfile
 
             # Run database migrations
             bun run db:push
