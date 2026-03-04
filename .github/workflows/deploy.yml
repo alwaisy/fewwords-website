@@ -10,6 +10,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # Export GitHub Secrets as environment variables during build
+    # Required for nuxt.config.ts to access process.env.* at build time
+    env:
+      NUXT_SITE_URL: ${{ secrets.NUXT_SITE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NUXT_SESSION_PASSWORD: ${{ secrets.NUXT_SESSION_PASSWORD }}
+      JINA_AI_API_KEY: ${{ secrets.JINA_AI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      YOUTUBE_DATA_API_KEY: ${{ secrets.YOUTUBE_DATA_API_KEY }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+      RESEND_FROM_NAME: ${{ secrets.RESEND_FROM_NAME }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -155,12 +172,18 @@ jobs:
             # Run database migrations
             bun run db:push
 
-            # Restart PM2
-            if pm2 describe fewwords > /dev/null 2>&1; then
-              pm2 restart fewwords
-            else
-              pm2 start ecosystem.config.cjs
-            fi
+            # Cleanup: Stop fewwords PM2 processes by name
+            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
+            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
+
+            # Cleanup: Kill any node processes on port 3000
+            fuser -k 3000/tcp 2>/dev/null || true
+
+            # Wait for port to be free
+            sleep 2
+
+            # Start PM2 fresh
+            pm2 start ecosystem.config.cjs
             pm2 save
 
             echo "Deployment complete!"
