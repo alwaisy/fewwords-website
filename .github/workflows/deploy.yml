@@ -70,18 +70,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Cache Nuxt build
-      - name: Cache Nuxt build
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nuxt
-            .output
-          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/*.[jt]s', '**/*.vue') }}
-          restore-keys: |
-            ${{ runner.os }}-nuxt-
-
       # Build Nuxt application (builds to .output/)
+      # Note: Nuxt build cache disabled to prevent asset hash mismatches
       - name: Build Nuxt app
         run: bun run build
 
