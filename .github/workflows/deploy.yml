@@ -37,18 +37,7 @@ jobs:
         with:
           bun-version: latest
 
-      # Cache Bun dependencies
-      - name: Cache Bun
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      # Create .env file from GitHub secrets
+      # Install dependencies
       - name: Create .env file
         run: |
           echo "NODE_ENV=production" >> .env
