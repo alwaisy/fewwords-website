@@ -158,6 +158,11 @@ jobs:
 
             cd ~/www/fewwords
 
+            # Source .env file to load environment variables
+            set -a
+            [ -f .env ] && . ./.env
+            set +a
+
             # Extract source files
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
