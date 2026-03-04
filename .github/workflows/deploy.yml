@@ -113,6 +113,10 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
+            # Load bun
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+
             cd ~/www/fewwords
 
             # Extract source files
@@ -133,7 +137,7 @@ jobs:
             if pm2 describe fewwords > /dev/null 2>&1; then
               pm2 restart fewwords
             else
-              pm2 start ecosystem.config.js
+              pm2 start ecosystem.config.cjs
             fi
             pm2 save
 
