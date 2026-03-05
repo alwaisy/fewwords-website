@@ -5,7 +5,7 @@
 export const PROMPT_INFO = {
   TYPE: "DECISION",
   PREVIOUS_NAME: "v3 (V3_DECISION_BRIEF / Aggressive Decision Brief)",
-  MIGRATION: "v3, v3.1, v3.2, v3.3, v3.4 → decision/v-1.ts",
+  MIGRATION: "v3, v3.1, v3.2, v3.3, v3.4 → decision/v1.5.ts",
   PURPOSE: "Help reader make quick decisions on time-sensitive content",
   BEST_FOR: [
     "News and market updates",
@@ -18,5 +18,5 @@ export const PROMPT_INFO = {
 } as const;
 
 // Latest version export
-export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v-1';
-export { ARTICLE_PROMPT } from './v-1';
+export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v1.5';
+export { ARTICLE_PROMPT } from './v1.5';

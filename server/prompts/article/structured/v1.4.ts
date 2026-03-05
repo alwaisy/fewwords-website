@@ -39,9 +39,9 @@ One actionable or memorable conclusion. Answer ONE of these based on article typ
 - Ensure Main Idea and Takeaway serve different purposes`;
 
 export const PROMPT_META = {
-  NAME: "Article Structured v1",
+  NAME: "Article Structured v1.4",
   DESCRIPTION: "Structured summary with dynamic headers for essays, research, opinion, analysis",
-  ID: "article-structured-v1",
+  ID: "article-structured-v1.4",
   ESSENCE: "article",
   TYPE: "STRUCTURED",
 };

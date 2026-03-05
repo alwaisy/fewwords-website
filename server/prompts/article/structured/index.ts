@@ -5,7 +5,7 @@
 export const PROMPT_INFO = {
   TYPE: "STRUCTURED",
   PREVIOUS_NAME: "v1 (V1_STRUCTURED)",
-  MIGRATION: "v1, v1.1, v1.2, v1.3 → structured/v-1.ts",
+  MIGRATION: "v1, v1.1, v1.2, v1.3 → structured/v1.4.ts",
   PURPOSE: "Long-form content summarization with context and nuance",
   BEST_FOR: [
     "Essays and research papers",
@@ -18,5 +18,5 @@ export const PROMPT_INFO = {
 } as const;
 
 // Latest version export
-export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v-1';
-export { ARTICLE_PROMPT } from './v-1';
+export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v1.4';
+export { ARTICLE_PROMPT } from './v1.4';

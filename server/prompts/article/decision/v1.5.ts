@@ -46,9 +46,9 @@ Speak the information as your own. Never mention "the author" or "the article."
 The reader should be able to make a decision or take action after reading this.`;
 
 export const PROMPT_META = {
-  NAME: "Article Decision Brief v1",
+  NAME: "Article Decision Brief v1.5",
   DESCRIPTION: "Decision-focused, aggressive tone, 200-word limit. Not a summary, confirmation.",
-  ID: "article-decision-v1",
+  ID: "article-decision-v1.5",
   ESSENCE: "article",
   TYPE: "DECISION",
 };
