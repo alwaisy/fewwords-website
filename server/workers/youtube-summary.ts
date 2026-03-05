@@ -10,7 +10,7 @@ import type {
 import { summarize } from "../services/youtube";
 
 import { defineWorker } from "#processor";
-import { summaries } from "~~/db/schema";
+import { summaries, youtube } from "~~/db/schema";
 import { db } from "~~/server/db/index";
 
 // Send completion email using Resend
@@ -123,12 +123,31 @@ export default defineWorker<
 
       job.updateProgress(90);
 
+      // Fetch the original createdAt for total time calculation
+      const summaryRecord = await db
+        .select({ createdAt: summaries.createdAt })
+        .from(summaries)
+        .where(eq(summaries.summaryId, summaryId))
+        .limit(1);
+
+      const originalCreatedAt = summaryRecord[0]?.createdAt;
+      const completedAt = new Date();
+
       // Belt and suspenders: ensure status is "completed"
       // (saveResult() should do this, but let's be sure)
       await db
         .update(summaries)
-        .set({ status: "completed", completedAt: new Date() })
+        .set({ status: "completed", completedAt })
         .where(eq(summaries.summaryId, summaryId));
+
+      // Store total cycle time to youtube table (matches normal API flow)
+      if (originalCreatedAt) {
+        const totalTimeMs = completedAt.getTime() - originalCreatedAt.getTime();
+        await db
+          .update(youtube)
+          .set({ totalTimeMs })
+          .where(eq(youtube.summaryId, summaryId));
+      }
 
       // Set Redis stage for SSE
       const redis = getRedis();

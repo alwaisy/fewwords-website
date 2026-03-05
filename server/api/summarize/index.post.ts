@@ -150,9 +150,6 @@ export default defineEventHandler(async (event) => {
     // Extract reasoning (articles have it, YouTube has it from classifier)
     const reasoning = 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
 
-    // Get summary record ID for metadata relation
-    let summaryInternalId: string | undefined
-
     if (updateSummaryId) {
       // Fetch the original createdAt for total time calculation
       const existingSummary = await db.select({ id: summaries.id, createdAt: summaries.createdAt })

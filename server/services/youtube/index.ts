@@ -460,6 +460,7 @@ async function saveResult(
   result: YouTubeResult,
   _videoId?: string,
 ) {
+  // Update summaries table with final result
   await db
     .update(summaries)
     .set({
