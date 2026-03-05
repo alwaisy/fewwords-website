@@ -1,5 +1,7 @@
 import { PROMPT_VERSIONS, type PromptCategory } from "../../prompts/article";
-import { callOpenAI } from "../shared/llm";
+import { callOpenRouter } from "../shared/llm";
+
+import { CLASSIFIER_CONFIG } from "./config";
 
 const CLASSIFIER_PROMPT = `### ROLE
 You are a content classifier. Your job is to analyze an article and select the best summarization strategy.
@@ -41,6 +43,7 @@ export interface ClassifierUsageStats {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
+  reasoningTokens: number;
   timeMs: number;
 }
 
@@ -56,8 +59,8 @@ export async function classifyArticle(
 ): Promise<ClassifierResult> {
   const startTime = Date.now();
 
-  const llmResult = await callOpenAI({
-    model: "gpt-5-nano",
+  const llmResult = await callOpenRouter({
+    model: CLASSIFIER_CONFIG.model,
     messages: [
       { role: "system", content: "You are a content classifier." },
       {
@@ -65,6 +68,9 @@ export async function classifyArticle(
         content: `${CLASSIFIER_PROMPT}\n\nContent:\n\n${content}`,
       },
     ],
+    reasoning: {
+      max_tokens: CLASSIFIER_CONFIG.thinkingBudgetTokens,
+    },
   });
 
   const endTime = Date.now();
@@ -87,6 +93,7 @@ export async function classifyArticle(
         promptTokens: llmResult.usage?.promptTokens || 0,
         completionTokens: llmResult.usage?.completionTokens || 0,
         totalTokens: llmResult.usage?.totalTokens || 0,
+        reasoningTokens: llmResult.usage?.reasoningTokens || 0,
         timeMs,
       },
     };
@@ -105,6 +112,7 @@ export async function classifyArticle(
       promptTokens: llmResult.usage?.promptTokens || 0,
       completionTokens: llmResult.usage?.completionTokens || 0,
       totalTokens: llmResult.usage?.totalTokens || 0,
+      reasoningTokens: llmResult.usage?.reasoningTokens || 0,
       timeMs,
     },
   };

@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
+
 import { users } from "~~/db/schema";
 
 interface ChangeEmailRequest {

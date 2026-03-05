@@ -113,6 +113,24 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // PRE-CREATE SUMMARY RECORD: Required for YouTube metadata saving
+    // ═══════════════════════════════════════════════════════════
+    let summaryInternalId: string | undefined
+    if (!updateSummaryId) {
+      // Create pending summary record first so modules have a summaryId to work with
+      const insertResult = await db.insert(summaries).values({
+        source: url,
+        essence,
+        status: 'processing',
+        userId,
+      }).returning({ id: summaries.id, summaryId: summaries.summaryId })
+
+      const insertedRecord = insertResult[0]
+      updateSummaryId = insertedRecord?.summaryId // Use this for all processing
+      summaryInternalId = insertedRecord?.id
+    }
+
     let result
 
     switch (essence) {

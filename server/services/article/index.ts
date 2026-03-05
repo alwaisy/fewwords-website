@@ -3,7 +3,7 @@ import { WRITING_GUIDELINES } from '../../prompts/system'
 import { callOpenRouter } from '../shared/llm'
 
 import { classifyArticle, type ClassifierResult } from './classifier'
-import { ARTICLE_CONFIG } from './config'
+import { ARTICLE_CONFIG, CLASSIFIER_CONFIG } from './config'
 import { fetchWithJina } from './fetcher'
 
 
@@ -23,6 +23,7 @@ export interface ArticleMetadata {
   classifierPromptTokens?: number
   classifierCompletionTokens?: number
   classifierTotalTokens?: number
+  classifierReasoningTokens?: number
   classifierTimeMs?: number
 }
 
@@ -38,6 +39,7 @@ export interface ArticleResult {
     promptTokens: number
     completionTokens: number
     totalTokens: number
+    reasoningTokens?: number
   }
   metadata: ArticleMetadata // Article metadata for storage
 }
@@ -58,7 +60,7 @@ export async function summarize(url: string): Promise<ArticleResult> {
     throw new Error(`Prompt version ${classifierResult.version} not found`)
   }
 
-  // Step 4: Call LLM with selected prompt
+  // Step 4: Call LLM with selected prompt (Mercury 2 uses effort instead of reasoning)
   const llmResult = await callOpenRouter({
     model: ARTICLE_CONFIG.model,
     messages: [
@@ -68,6 +70,9 @@ export async function summarize(url: string): Promise<ArticleResult> {
         content: `${prompt}\n\nContent:\n\n${content}`,
       },
     ],
+    reasoning: {
+      effort: "medium", // Mercury 2 uses "effort" parameter
+    },
   })
 
   // Extract title from LLM response (handles both TITLE: and **TITLE:** formats)
@@ -94,6 +99,7 @@ export async function summarize(url: string): Promise<ArticleResult> {
       promptTokens: llmResult.usage.promptTokens,
       completionTokens: llmResult.usage.completionTokens,
       totalTokens: llmResult.usage.totalTokens,
+      reasoningTokens: llmResult.usage.reasoningTokens,
     } : undefined,
     metadata: {
       // Stage 1: SEO metadata
@@ -107,10 +113,11 @@ export async function summarize(url: string): Promise<ArticleResult> {
       wordCount: metadata.wordCount,
       readingTimeMinutes: metadata.readingTimeMinutes,
       // Stage 2: Classifier stats
-      classifierModel: 'gpt-5-nano',
+      classifierModel: CLASSIFIER_CONFIG.model,
       classifierPromptTokens: classifierResult.usage.promptTokens,
       classifierCompletionTokens: classifierResult.usage.completionTokens,
       classifierTotalTokens: classifierResult.usage.totalTokens,
+      classifierReasoningTokens: classifierResult.usage.reasoningTokens,
       classifierTimeMs: classifierResult.usage.timeMs,
     },
   }
