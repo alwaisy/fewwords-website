@@ -1,28 +1,34 @@
 import * as v1 from "./v1";
 import * as v1_1 from "./v1.1";
 import * as v1_2 from "./v1.2";
+import * as v1_3 from "./v1.3";
 import * as v2 from "./v2";
 import * as v2_1 from "./v2.1";
 import * as v2_3 from "./v2.3";
 import * as v2_4 from "./v2.4";
+import * as v2_5 from "./v2.5";
 import * as v3 from "./v3";
 import * as v3_1 from "./v3.1";
 import * as v3_2 from "./v3.2";
 import * as v3_3 from "./v3.3";
+import * as v3_4 from "./v3.4";
 
 // All prompt versions
 export const ARTICLE_PROMPTS = {
   v1,
   'v1.1': v1_1,
   'v1.2': v1_2,
+  'v1.3': v1_3,
   v2,
   'v2.1': v2_1,
   'v2.3': v2_3,
   'v2.4': v2_4,
+  'v2.5': v2_5,
   v3,
   'v3.1': v3_1,
   'v3.2': v3_2,
   'v3.3': v3_3,
+  'v3.4': v3_4,
 } as const;
 
 // Extract latest version for each category (v1, v2, v3)
