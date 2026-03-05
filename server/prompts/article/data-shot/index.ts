@@ -5,7 +5,7 @@
 export const PROMPT_INFO = {
   TYPE: "DATA_SHOT",
   PREVIOUS_NAME: "v2 (V2_DATA_SHOT / No BS Text Shot)",
-  MIGRATION: "v2, v2.1, v2.3, v2.4, v2.5 → data-shot/v-1.ts",
+  MIGRATION: "v2, v2.1, v2.3, v2.4, v2.5 → data-shot/v1.6.ts",
   PURPOSE: "Cut through SEO padding and extract raw data",
   BEST_FOR: [
     "Product specs and buying guides",
@@ -18,5 +18,5 @@ export const PROMPT_INFO = {
 } as const;
 
 // Latest version export
-export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v-1';
-export { ARTICLE_PROMPT } from './v-1';
+export { ARTICLE_PROMPT as PROMPT, PROMPT_META } from './v1.6';
+export { ARTICLE_PROMPT } from './v1.6';
