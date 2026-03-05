@@ -52,9 +52,9 @@ Choose labels that match the content type. Default to "Facts" + "So What" if uns
 * Cold weather performance remains the primary engineering bottleneck for LFP chemistry adoption in northern climates.`;
 
 export const PROMPT_META = {
-  NAME: "Article Summarizer v2.5",
-  DESCRIPTION: "No BS Text Shot with formatting rules. Removed 'The {noun}' pattern.",
-  ID: "article-prompt-v2.5",
+  NAME: "Article Data Shot v1",
+  DESCRIPTION: "Cuts through SEO padding. Fact extraction focus.",
+  ID: "article-data-shot-v1",
   ESSENCE: "article",
-  NOTES: "Adopted YouTube formatting rules. Removed 'The {noun}' pattern from label guide.",
+  TYPE: "DATA_SHOT",
 };

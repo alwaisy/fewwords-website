@@ -1,94 +1,63 @@
-import * as v1 from "./v1";
-import * as v1_1 from "./v1.1";
-import * as v1_2 from "./v1.2";
-import * as v1_3 from "./v1.3";
-import * as v2 from "./v2";
-import * as v2_1 from "./v2.1";
-import * as v2_3 from "./v2.3";
-import * as v2_4 from "./v2.4";
-import * as v2_5 from "./v2.5";
-import * as v3 from "./v3";
-import * as v3_1 from "./v3.1";
-import * as v3_2 from "./v3.2";
-import * as v3_3 from "./v3.3";
-import * as v3_4 from "./v3.4";
+// Article prompts - organized by type (matches YouTube folder structure)
+// Each type has its own folder with index.ts (PROMPT_INFO) and v-1.ts (actual prompt)
 
-// All prompt versions
+import * as dataShot from "./data-shot";
+import * as decision from "./decision";
+import * as structured from "./structured";
+
+// Re-export types and prompts from each folder
+export { PROMPT_INFO as STRUCTURED_INFO, PROMPT as STRUCTURED_PROMPT, PROMPT_META as STRUCTURED_META, ARTICLE_PROMPT as STRUCTURED_ARTICLE_PROMPT } from "./structured";
+export { PROMPT_INFO as DATA_SHOT_INFO, PROMPT as DATA_SHOT_PROMPT, PROMPT_META as DATA_SHOT_META, ARTICLE_PROMPT as DATA_SHOT_ARTICLE_PROMPT } from "./data-shot";
+export { PROMPT_INFO as DECISION_INFO, PROMPT as DECISION_PROMPT, PROMPT_META as DECISION_META, ARTICLE_PROMPT as DECISION_ARTICLE_PROMPT } from "./decision";
+
+// All prompt types
 export const ARTICLE_PROMPTS = {
-  v1,
-  'v1.1': v1_1,
-  'v1.2': v1_2,
-  'v1.3': v1_3,
-  v2,
-  'v2.1': v2_1,
-  'v2.3': v2_3,
-  'v2.4': v2_4,
-  'v2.5': v2_5,
-  v3,
-  'v3.1': v3_1,
-  'v3.2': v3_2,
-  'v3.3': v3_3,
-  'v3.4': v3_4,
+  structured,
+  dataShot,
+  decision,
 } as const;
 
-// Extract latest version for each category (v1, v2, v3)
-function getLatestVersions(): Record<'v1' | 'v2' | 'v3', string> {
-  const versions = Object.keys(ARTICLE_PROMPTS) as string[];
+// Type alias for backward compatibility with classifier
+export type PromptCategory = 'v1' | 'v2' | 'v3';
 
-  const latest = {
-    v1: 'v1',
-    v2: 'v2',
-    v3: 'v3',
-  };
+// Map old category names to new folder names
+const CATEGORY_MAP: Record<PromptCategory, keyof typeof ARTICLE_PROMPTS> = {
+  v1: 'structured',
+  v2: 'dataShot',
+  v3: 'decision',
+} as const;
 
-  for (const category of ['v1', 'v2', 'v3'] as const) {
-    // Find all versions for this category (v1.1, v1.2, etc.)
-    const categoryVersions = versions.filter(v => v.startsWith(category + '.'));
-
-    if (categoryVersions.length > 0) {
-      // Sort by version number (patch version)
-      categoryVersions.sort((a, b) => {
-        const aNum = Number.parseInt(a.split('.')[1] || '0', 10);
-        const bNum = Number.parseInt(b.split('.')[1] || '0', 10);
-        return bNum - aNum; // Descending order
-      });
-
-      // First one is the latest
-      latest[category] = categoryVersions[0]!;
-    }
-  }
-
-  return latest;
+// Get prompt by category (backward compatible)
+export function getPrompt(category: PromptCategory) {
+  const folder = CATEGORY_MAP[category];
+  return ARTICLE_PROMPTS[folder]?.ARTICLE_PROMPT;
 }
 
-export const PROMPT_VERSIONS = getLatestVersions();
-
-export type PromptCategory = keyof typeof PROMPT_VERSIONS;
-
-// Get prompt by version
-export function getPrompt(version: string) {
-  return ARTICLE_PROMPTS[version as keyof typeof ARTICLE_PROMPTS]?.ARTICLE_PROMPT;
-}
-
-// Get meta by version
-export function getPromptMeta(version: string) {
-  return ARTICLE_PROMPTS[version as keyof typeof ARTICLE_PROMPTS]?.PROMPT_META;
+// Get meta by category (backward compatible)
+export function getPromptMeta(category: PromptCategory) {
+  const folder = CATEGORY_MAP[category];
+  return ARTICLE_PROMPTS[folder]?.PROMPT_META;
 }
 
 // Get latest prompt for a category
 export function getLatestPrompt(category: PromptCategory) {
-  const version = PROMPT_VERSIONS[category];
-  return getPrompt(version!);
+  return getPrompt(category);
 }
 
 // Get latest meta for a category
 export function getLatestPromptMeta(category: PromptCategory) {
-  const version = PROMPT_VERSIONS[category];
-  return getPromptMeta(version!);
+  return getPromptMeta(category);
 }
 
-// Default export (current latest)
-export const ARTICLE_PROMPT = ARTICLE_PROMPTS[PROMPT_VERSIONS.v1 as keyof typeof ARTICLE_PROMPTS].ARTICLE_PROMPT;
-export const PROMPT_META = ARTICLE_PROMPTS[PROMPT_VERSIONS.v1 as keyof typeof ARTICLE_PROMPTS].PROMPT_META;
+// Legacy version mapping for backward compatibility
+export const PROMPT_VERSIONS: Record<PromptCategory, string> = {
+  v1: 'v1.3',
+  v2: 'v2.5',
+  v3: 'v3.4',
+};
+
+// Default export (structured/v1 is the default)
+export const ARTICLE_PROMPT = ARTICLE_PROMPTS.structured.ARTICLE_PROMPT;
+export const PROMPT_META = ARTICLE_PROMPTS.structured.PROMPT_META;
 
 export type PromptVersion = keyof typeof ARTICLE_PROMPTS;

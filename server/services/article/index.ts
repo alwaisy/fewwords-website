@@ -53,11 +53,11 @@ export async function summarize(url: string): Promise<ArticleResult> {
   const classifierResult: ClassifierResult = await classifyArticle(content)
 
   // Step 3: Get the appropriate prompt for this category
-  const prompt = getPrompt(classifierResult.version)
-  const promptMeta = getPromptMeta(classifierResult.version)
+  const prompt = getPrompt(classifierResult.category)
+  const promptMeta = getPromptMeta(classifierResult.category)
 
   if (!prompt || !promptMeta) {
-    throw new Error(`Prompt version ${classifierResult.version} not found`)
+    throw new Error(`Prompt category ${classifierResult.category} not found`)
   }
 
   // Step 4: Call LLM with selected prompt (Mercury 2 uses effort instead of reasoning)
