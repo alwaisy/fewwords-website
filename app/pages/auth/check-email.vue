@@ -13,7 +13,7 @@ const email = route.query.email as string || 'your email'
 const from = route.query.from as string || 'login' // 'register' or 'login'
 
 const isResending = ref(false)
-const timeLeft = ref(15 * 60) // 15 minutes in seconds
+const timeLeft = ref(10 * 60) // 10 minutes in seconds
 const router = useRouter()
 
 // Countdown timer
@@ -44,7 +44,7 @@ async function handleResend() {
   setTimeout(() => {
     isResending.value = false
     // Reset timer on resend
-    timeLeft.value = 15 * 60
+    timeLeft.value = 10 * 60
   }, 2000)
 }
 
@@ -63,16 +63,16 @@ function goBack() {
         Check your email
       </h1>
       <p class="text-muted-foreground">
-        I sent a magic link to <span class="text-foreground font-medium">{{ email }}</span>
+        I sent a 6-digit code to <span class="text-foreground font-medium">{{ email }}</span>
       </p>
     </div>
 
     <div class="bg-muted/30 border border-border rounded-lg p-6 mb-8">
       <p class="text-sm text-muted-foreground mb-2">
-        Link expires in <span class="text-foreground italic">{{ formattedTime }}</span>
+        Code expires in <span class="text-foreground italic">{{ formattedTime }}</span>
       </p>
       <p class="text-sm text-muted-foreground">
-        Click the link to sign in
+        Enter the code to sign in
       </p>
     </div>
 
@@ -85,7 +85,7 @@ function goBack() {
         @click="handleResend"
       >
         <Icon v-if="isResending" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-        {{ isResending ? 'Sending...' : 'Resend link' }}
+        {{ isResending ? 'Sending...' : 'Resend code' }}
       </Button>
 
       <Button

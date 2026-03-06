@@ -22,7 +22,7 @@ async function handleRegister() {
 
   if (result.success) {
     useToastify(result.message || 'Account created! Check your email.', { type: 'success' })
-    router.push({ path: '/auth/check-email', query: { email: email.value, from: 'register' } })
+    router.push({ path: '/auth/verify', query: { email: email.value } })
   }
   else {
     useToastify(result.message || 'Failed to create account', { type: 'error' })
@@ -88,7 +88,7 @@ async function handleRegister() {
 
         <Button type="submit" variant="default" size="lg" class="w-full" :disabled="isLoading">
           <Icon v-if="isLoading" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-          {{ isLoading ? 'Creating...' : 'Send verification link →' }}
+          {{ isLoading ? 'Creating...' : 'Send code →' }}
         </Button>
 
         <Button

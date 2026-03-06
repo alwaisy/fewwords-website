@@ -23,7 +23,7 @@ export const useAuth = () => {
   }
 
   /**
-   * Send magic link for login
+   * Send OTP code for login
    */
   const login = async (email: string) => {
     try {
@@ -43,7 +43,7 @@ export const useAuth = () => {
       return { success: true, message: response.message }
     }
     catch (e) {
-      const errorMessage = e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Failed to send magic link'
+      const errorMessage = e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Failed to send verification code'
       error.value = errorMessage
       return { success: false, message: errorMessage }
     }
@@ -53,7 +53,7 @@ export const useAuth = () => {
   }
 
   /**
-   * Register new user and send magic link
+   * Register new user and send OTP code
    */
   const register = async (email: string, name: string, username: string) => {
     try {
@@ -83,16 +83,16 @@ export const useAuth = () => {
   }
 
   /**
-   * Verify magic link token - syncs session with server
+   * Verify OTP code - syncs session with server
    */
-  const verify = async (token: string) => {
+  const verify = async (code: string) => {
     try {
       isLoading.value = true
       error.value = null
 
       const response = await $fetch<{ success: boolean; user?: import('#auth-utils').User; message: string }>('/api/auth/verify', {
         method: 'POST',
-        body: { token },
+        body: { code },
       })
 
       if (response.success) {

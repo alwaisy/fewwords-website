@@ -4,25 +4,25 @@ import { users } from "~~/db/schema";
 
 export default defineEventHandler(async (event) => {
   try {
-    const { token } = await readBody(event);
+    const { code } = await readBody(event);
 
-    if (!token) {
+    if (!code) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Token is required",
+        statusMessage: "Verification code is required",
       });
     }
 
     const db = await useDb(event);
 
-    // Find user with valid magic link token
+    // Find user with valid OTP code
     const userRows = await db
       .select()
       .from(users)
       .where(
         and(
-          eq(users.magicLinkToken, token),
-          gt(users.magicLinkExpiresAt, new Date())
+          eq(users.otpCode, code),
+          gt(users.otpExpiresAt, new Date())
         )
       );
 
@@ -31,16 +31,16 @@ export default defineEventHandler(async (event) => {
     if (!user) {
       return {
         success: false,
-        message: "Invalid or expired magic link",
+        message: "Invalid or expired code",
       };
     }
 
-    // Clear magic link token and mark email as verified
+    // Clear OTP code and mark email as verified
     await db
       .update(users)
       .set({
-        magicLinkToken: null,
-        magicLinkExpiresAt: null,
+        otpCode: null,
+        otpExpiresAt: null,
         emailVerified: true,
       })
       .where(eq(users.id, user.id));
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
   } catch {
     throw createError({
       statusCode: 500,
-      statusMessage: "Verification failed",
+      statusMessage: "Failed to verify code",
     });
   }
 });

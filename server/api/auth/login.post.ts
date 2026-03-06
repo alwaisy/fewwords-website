@@ -1,11 +1,15 @@
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
-import { authEmail } from "../../templates/emails";
+import { otpEmail } from "../../templates/emails";
 
 import { users } from "~~/db/schema";
+
+// Generate 6-digit OTP code
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -37,40 +41,35 @@ export default defineEventHandler(async (event) => {
       return {
         success: true,
         exists: false,
-        message: "If an account exists, a magic link has been sent to your email.",
+        message: "If an account exists, a verification code has been sent to your email.",
       };
     }
 
-    // Generate magic link token (valid for 15 minutes)
-    const token = nanoid(32);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Generate OTP code (valid for 10 minutes)
+    const otpCode = generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Update user with magic link token
+    // Update user with OTP code
     await db
       .update(users)
       .set({
-        magicLinkToken: token,
-        magicLinkExpiresAt: expiresAt,
+        otpCode,
+        otpExpiresAt: expiresAt,
       })
       .where(eq(users.id, user.id));
 
     const config = useRuntimeConfig();
-    const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
-    const magicLink = `${baseUrl}/auth/verify?token=${token}`;
-
-    // Send email with Resend
     const resendApiKey = config.private.resendApiKey;
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
         from: getSender("auth"),
         to: [email],
-        subject: "Your magic link is here",
-        html: authEmail({
+        subject: `Your code: ${otpCode}`,
+        html: otpEmail({
           greeting: `Hey ${user.name}!`,
-          message: "Click the button below to sign in to Fewwords:",
-          buttonText: "Sign in",
-          buttonUrl: magicLink,
+          message: "Enter this code to sign in to Fewwords:",
+          otpCode,
         }),
       });
     }
@@ -78,12 +77,12 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       exists: true,
-      message: "Magic link sent! Check your email.",
+      message: "Verification code sent! Check your email.",
     };
   } catch {
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to send magic link",
+      statusMessage: "Failed to send verification code",
     });
   }
 });

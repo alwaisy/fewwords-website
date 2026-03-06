@@ -1,11 +1,15 @@
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
-import { authEmail } from "../../templates/emails";
+import { otpEmail } from "../../templates/emails";
 
 import { users } from "~~/db/schema";
+
+// Generate 6-digit OTP code
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -28,20 +32,20 @@ export default defineEventHandler(async (event) => {
 
     const existingEmailUser = existingEmailRows[0];
 
-    // Email exists but not verified - resend magic link
+    // Email exists but not verified - resend OTP
     if (existingEmailUser && !existingEmailUser.emailVerified) {
-      const token = nanoid(32);
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      const otpCode = generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       // Update username only if they provided a different one
       const updateData: {
-        magicLinkToken: string;
-        magicLinkExpiresAt: Date;
+        otpCode: string;
+        otpExpiresAt: Date;
         name?: string;
         username?: string;
       } = {
-        magicLinkToken: token,
-        magicLinkExpiresAt: expiresAt,
+        otpCode,
+        otpExpiresAt: expiresAt,
       };
 
       // Only update name if provided
@@ -60,21 +64,17 @@ export default defineEventHandler(async (event) => {
         .where(eq(users.id, existingEmailUser.id));
 
       const config = useRuntimeConfig();
-      const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
-      const magicLink = `${baseUrl}/auth/verify?token=${token}`;
-
       const resendApiKey = config.private.resendApiKey;
       if (resendApiKey) {
         const resend = new Resend(resendApiKey);
         await resend.emails.send({
           from: getSender("auth"),
           to: [email],
-          subject: "Welcome to Fewwords!",
-          html: authEmail({
+          subject: `Your code: ${otpCode}`,
+          html: otpEmail({
             greeting: `Welcome to Fewwords, ${name}!`,
-            message: "Click the button below to verify your email and sign in:",
-            buttonText: "Verify email",
-            buttonUrl: magicLink,
+            message: "Enter this code to verify your email and sign in:",
+            otpCode,
           }),
         });
       }
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       return {
         success: true,
         exists: false,
-        message: "Account created! Check your email for a magic link.",
+        message: "Account created! Check your email for a verification code.",
       };
     }
 
@@ -110,36 +110,31 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Generate magic link token (valid for 15 minutes)
-    const token = nanoid(32);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Generate OTP code (valid for 10 minutes)
+    const otpCode = generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Create user with magic link token
+    // Create user with OTP code
     await db.insert(users).values({
       email,
       name,
       username,
-      magicLinkToken: token,
-      magicLinkExpiresAt: expiresAt,
+      otpCode,
+      otpExpiresAt: expiresAt,
     });
 
     const config = useRuntimeConfig();
-    const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
-    const magicLink = `${baseUrl}/auth/verify?token=${token}`;
-
-    // Send email with Resend
     const resendApiKey = config.private.resendApiKey;
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
         from: getSender("auth"),
         to: [email],
-        subject: "Welcome to Fewwords!",
-        html: authEmail({
+        subject: `Your code: ${otpCode}`,
+        html: otpEmail({
           greeting: `Welcome to Fewwords, ${name}!`,
-          message: "Click the button below to verify your email and sign in:",
-          buttonText: "Verify email",
-          buttonUrl: magicLink,
+          message: "Enter this code to verify your email and sign in:",
+          otpCode,
         }),
       });
     }
@@ -147,7 +142,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       exists: false,
-      message: "Account created! Check your email for a magic link.",
+      message: "Account created! Check your email for a verification code.",
     };
   } catch {
     throw createError({

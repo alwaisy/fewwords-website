@@ -140,6 +140,37 @@ export function authEmail(params: {
 }
 
 /**
+ * OTP email template - for login/register verification codes
+ */
+export function otpEmail(params: {
+  greeting: string;
+  message: string;
+  otpCode: string;
+}): string {
+  return emailWrapper(`
+    <div class="container">
+      <div class="card">
+        <div class="header">
+          <h1>Fewwords</h1>
+        </div>
+        <div class="content" style="text-align: center;">
+          <p class="greeting">${params.greeting}</p>
+          <p class="message">${params.message}</p>
+          <div style="background: ${theme.background}; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <span style="font-size: 32px; font-weight: 700; color: ${theme.primary}; letter-spacing: 8px; font-family: monospace;">${params.otpCode}</span>
+          </div>
+          <p class="expiry">This code expires in 10 minutes.</p>
+          <p class="ignore">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+        <div class="footer">
+          <p class="footer-text">Fewwords - Summarize anything, instantly.</p>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+/**
  * Notification email template - for summary ready, etc.
  */
 export function notificationEmail(params: {

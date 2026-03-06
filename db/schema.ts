@@ -29,8 +29,8 @@ export const users = pgTable(
     username: text("username").unique(),
     role: text("role", { enum: userRoleEnum }).notNull().default("user"),
     emailVerified: boolean("email_verified").notNull().default(false),
-    magicLinkToken: text("magic_link_token"),
-    magicLinkExpiresAt: timestamp("magic_link_expires_at", {
+    otpCode: text("otp_code"),
+    otpExpiresAt: timestamp("otp_expires_at", {
       withTimezone: true,
     }),
     // Email change verification
@@ -45,9 +45,7 @@ export const users = pgTable(
   },
   (table) => ({
     emailIdx: index("User_email_idx").on(table.email),
-    magicLinkTokenIdx: index("User_magic_link_token_idx").on(
-      table.magicLinkToken,
-    ),
+    otpCodeIdx: index("User_otp_code_idx").on(table.otpCode),
   }),
 );
 
