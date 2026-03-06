@@ -84,8 +84,8 @@ jobs:
         run: |
           tar -czf output.tar.gz .output/
 
-      # Setup directories on VPS
-      - name: Setup directories on VPS
+      # Prep VPS: Stop services and wipe folder
+      - name: Prep VPS (Stop & Wipe)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -93,7 +93,18 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
-            mkdir -p ~/www/fewwords
+            echo "Stopping PM2 services..."
+            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
+            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
+
+            # Kill any stray processes on port 3000
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 2
+
+            echo "Nuking project folder..."
+            rm -rf ~/www/fewwords
+
+            echo "Recreating fresh directories..."
             mkdir -p ~/www/fewwords/logs
 
       # Transfer source files
@@ -137,30 +148,10 @@ jobs:
 
             cd ~/www/fewwords
 
-            # STEP 1: STOP SERVICES FIRST (critical - prevents crashes)
-            echo "Stopping PM2 services..."
-            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
-            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
+            echo "Extracting files..."
+            tar -xzf deploy.tar.gz && rm deploy.tar.gz
+            tar -xzf output.tar.gz && rm output.tar.gz
 
-            # Kill any stray processes on port 3000
-            fuser -k 3000/tcp 2>/dev/null || true
-            sleep 2
-
-            # STEP 2: CLEAN AND EXTRACT FILES
-            echo "Cleaning directory and extracting new files..."
-
-            # Remove all existing files except .env and tarballs
-            find . -maxdepth 1 ! -name '.env' ! -name 'deploy.tar.gz' ! -name 'output.tar.gz' ! -name '.' -exec rm -rf {} +
-
-            # Extract source files
-            tar -xzf deploy.tar.gz
-            rm deploy.tar.gz
-
-            # Extract built output (overwrites existing)
-            tar -xzf output.tar.gz
-            rm output.tar.gz
-
-            # STEP 3: INSTALL DEPENDENCIES
             # Source .env file to load environment variables
             set -a
             [ -f .env ] && . ./.env
@@ -169,11 +160,9 @@ jobs:
             echo "Installing dependencies..."
             bun install --frozen-lockfile
 
-            # STEP 4: DATABASE MIGRATIONS
             echo "Running database migrations..."
             bun run db:push
 
-            # STEP 5: START SERVICES
             echo "Starting PM2 services..."
             pm2 start ecosystem.config.cjs
             pm2 save
