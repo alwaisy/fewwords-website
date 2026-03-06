@@ -31,29 +31,12 @@ async function handleSubmit() {
 // Conversational hero messages
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
   const hour = new Date().getHours();
-  
+
   if (hour >= 5 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 17) return 'afternoon';
   if (hour >= 17 && hour < 21) return 'evening';
   return 'night';
 };
-
-// Check if first visit
-const isFirstVisit = ref(false);
-
-onMounted(() => {
-  try {
-    const visited = localStorage.getItem('fewwords-visited');
-    isFirstVisit.value = !visited;
-    
-    if (!visited) {
-      localStorage.setItem('fewwords-visited', 'true');
-    }
-  } catch {
-    // localStorage disabled, treat as returning user
-    isFirstVisit.value = false;
-  }
-});
 
 // Message collections
 const messages = {
@@ -89,25 +72,42 @@ const messages = {
   ],
 };
 
-// Get current message
-const heroMessage = computed(() => {
-  const timeOfDay = getTimeOfDay();
-  
-  // Prioritize first-time messages
-  if (isFirstVisit.value) {
-    const firstMessages = messages.firstVisit;
-    return firstMessages[Math.floor(Math.random() * firstMessages.length)];
-  }
-  
-  // Returning user + time-based
-  const timeMessages = messages[timeOfDay];
-  const returningMessages = messages.returning;
-  
-  // Mix time-based with returning messages (50/50 chance)
-  if (Math.random() > 0.5) {
-    return timeMessages[Math.floor(Math.random() * timeMessages.length)];
-  } else {
-    return returningMessages[Math.floor(Math.random() * returningMessages.length)];
+// Get a random message from array
+function getRandomMessage(arr: string[]): string {
+  const index = Math.floor(Math.random() * arr.length);
+  return arr[index]!;
+}
+
+// Hero message - set on client side after hydration to prevent mismatch
+const heroMessage = ref('Welcome! What can I help you with?');
+
+onMounted(() => {
+  try {
+    const visited = localStorage.getItem('fewwords-visited');
+    const isFirstVisit = !visited;
+
+    if (!visited) {
+      localStorage.setItem('fewwords-visited', 'true');
+    }
+
+    // Set message after client-side mount
+    if (isFirstVisit) {
+      heroMessage.value = getRandomMessage(messages.firstVisit);
+    } else {
+      const timeOfDay = getTimeOfDay();
+      const timeMessages = messages[timeOfDay];
+      const returningMessages = messages.returning;
+
+      // Mix time-based with returning messages (50/50 chance)
+      if (Math.random() > 0.5) {
+        heroMessage.value = getRandomMessage(timeMessages);
+      } else {
+        heroMessage.value = getRandomMessage(returningMessages);
+      }
+    }
+  } catch {
+    // localStorage disabled, show default returning message
+    heroMessage.value = getRandomMessage(messages.returning);
   }
 });
 </script>
