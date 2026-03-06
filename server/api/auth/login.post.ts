@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
+import { authEmail } from "../../templates/emails";
 
 import { users } from "~~/db/schema";
 
@@ -65,15 +66,12 @@ export default defineEventHandler(async (event) => {
         from: getSender("auth"),
         to: [email],
         subject: "Your magic link is here",
-        html: `
-          <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Hey ${user.name}!</h2>
-            <p style="color: #666; line-height: 1.6;">Click the button below to sign in to Fewwords:</p>
-            <a href="${magicLink}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Sign in</a>
-            <p style="color: #999; font-size: 14px; margin-top: 24px;">This link expires in 15 minutes.</p>
-            <p style="color: #999; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
-          </div>
-        `,
+        html: authEmail({
+          greeting: `Hey ${user.name}!`,
+          message: "Click the button below to sign in to Fewwords:",
+          buttonText: "Sign in",
+          buttonUrl: magicLink,
+        }),
       });
     }
 

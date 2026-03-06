@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
+import { authEmail } from "../../templates/emails";
 
 import { users } from "~~/db/schema";
 
@@ -74,15 +75,12 @@ export default defineEventHandler(async (event) => {
       from: getSender("auth"),
       to: [newEmail],
       subject: "Confirm your new email",
-      html: `
-        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Hey ${userName}!</h2>
-          <p style="color: #666; line-height: 1.6;">You requested to change your email address. Click the button below to confirm:</p>
-          <a href="${verifyLink}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Confirm email change</a>
-          <p style="color: #999; font-size: 14px; margin-top: 24px;">This link expires in 15 minutes.</p>
-          <p style="color: #999; font-size: 14px;">If you didn't request this change, you can safely ignore this email.</p>
-        </div>
-      `,
+      html: authEmail({
+        greeting: `Hey ${userName}!`,
+        message: "You requested to change your email address. Click the button below to confirm:",
+        buttonText: "Confirm email change",
+        buttonUrl: verifyLink,
+      }),
     });
   }
 

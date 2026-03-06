@@ -8,6 +8,7 @@ import type {
   YouTubeSummaryTaskResult,
 } from "../queues/youtube-summary";
 import { summarize } from "../services/youtube";
+import { notificationEmail } from "../templates/emails";
 
 import { defineWorker } from "#processor";
 import { summaries, youtube } from "~~/db/schema";
@@ -40,49 +41,16 @@ async function sendCompletionEmail(
         from: getSender("notify"),
         to: email,
         subject: `Your summary is ready: ${title}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>
-                body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #1a1a1a; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
-                .header h1 { color: white; margin: 0; font-size: 24px; }
-                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
-                .title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #1a1a1a; }
-                .button { display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-                .button:hover { background: #5568d3; }
-                .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
-                .footer a { color: #667eea; text-decoration: none; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1>Summary Ready!</h1>
-                </div>
-                <div class="content">
-                  <p>Hi,</p>
-                  <p>Your video summary is now ready.</p>
-
-                  <div class="title">"${title}"</div>
-
-                  <div style="text-align: center;">
-                    <a href="${baseUrl}/app/${summaryId}" class="button">View Summary</a>
-                  </div>
-
-                  <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-                    Or find it later in your <a href="${baseUrl}/app/library">library</a>.
-                  </p>
-                </div>
-                <div class="footer">
-                  <p>This is an automated message from Fewwords.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
+        html: notificationEmail({
+          title: "Summary Ready!",
+          message: `Your video summary for "${title}" is now ready.`,
+          buttonText: "View Summary",
+          buttonUrl: `${baseUrl}/app/${summaryId}`,
+          secondaryLink: {
+            text: "Or find it later in your library",
+            url: `${baseUrl}/app/library`,
+          },
+        }),
       }),
     });
 
