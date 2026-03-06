@@ -24,18 +24,73 @@ export default defineEventHandler(async (event) => {
     const existingUserRows = await db
       .select()
       .from(users)
-      .where(or(eq(users.email, email), eq(users.username, username)));
+      .where(eq(users.email, email));
 
     const existingUser = existingUserRows[0];
 
     if (existingUser) {
-      if (existingUser.email === email) {
+      const now = new Date();
+      const isExpired =
+        !existingUser.magicLinkExpiresAt ||
+        existingUser.magicLinkExpiresAt < now;
+
+      if (isExpired) {
+        // Magic link expired - re-send with existing username
+        const token = nanoid(32);
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        await db
+          .update(users)
+          .set({
+            magicLinkToken: token,
+            magicLinkExpiresAt: expiresAt,
+            name, // Update name in case they changed it
+          })
+          .where(eq(users.id, existingUser.id));
+
+        const config = useRuntimeConfig();
+        const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
+        const magicLink = `${baseUrl}/auth/verify?token=${token}`;
+
+        const resendApiKey = config.private.resendApiKey;
+        if (resendApiKey) {
+          const resend = new Resend(resendApiKey);
+          await resend.emails.send({
+            from: getSender("auth"),
+            to: [email],
+            subject: "Welcome to Fewwords!",
+            html: authEmail({
+              greeting: `Welcome to Fewwords, ${name}!`,
+              message: "Click the button below to verify your email and sign in:",
+              buttonText: "Verify email",
+              buttonUrl: magicLink,
+            }),
+          });
+        }
+
         return {
-          success: false,
-          exists: true,
-          message: "An account with this email already exists",
+          success: true,
+          exists: false,
+          message: "Account created! Check your email for a magic link.",
         };
       }
+
+      // Email exists with valid magic link
+      return {
+        success: false,
+        exists: true,
+        message: "An account with this email already exists",
+      };
+    }
+
+    // Also check if username is taken by a DIFFERENT email
+    const usernameTaken = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+
+    if (usernameTaken.length > 0) {
       return {
         success: false,
         exists: true,
