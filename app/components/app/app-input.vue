@@ -2,13 +2,16 @@
 const router = useRouter();
 const inputUrl = ref("");
 const isFocused = ref(false);
+const isSubmitting = ref(false);
 
 interface CreatePendingResponse {
   summaryId: string;
 }
 
 async function handleSubmit() {
-  if (!inputUrl.value) return;
+  if (!inputUrl.value || isSubmitting.value) return;
+
+  isSubmitting.value = true;
 
   try {
     // Create pending record
@@ -25,6 +28,9 @@ async function handleSubmit() {
     }
   } catch {
     // TODO: Show error to user
+    useToastify('Failed to create summary. Try again.', { type: 'error' });
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
@@ -123,7 +129,10 @@ onMounted(() => {
 
     <form
       class="relative flex items-center gap-3 bg-secondary/20 border rounded-full px-5 py-3.5 transition-all duration-200"
-      :class="isFocused ? 'border-3 border-secondary transition-all' : ''"
+      :class="[
+        isFocused ? 'border-3 border-secondary transition-all' : '',
+        isSubmitting ? 'opacity-50 animate-pulse' : ''
+      ]"
       @submit.prevent="handleSubmit"
     >
       <Icon
@@ -136,6 +145,7 @@ onMounted(() => {
         type="url"
         placeholder="Paste article or video URL..."
         class="border-0 shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 focus:outline-0 focus-visible:ring-0"
+        :disabled="isSubmitting"
         required
         @focus="isFocused = true"
         @blur="isFocused = false"
@@ -143,7 +153,7 @@ onMounted(() => {
 
       <!-- Clear button (shows when typing) -->
       <Button
-        v-if="inputUrl"
+        v-if="inputUrl && !isSubmitting"
         type="button"
         variant="ghost"
         size="icon"
@@ -158,7 +168,7 @@ onMounted(() => {
         variant="ghost"
         size="icon"
         class="rounded-full shrink-0 h-9 w-9 bg-primary/10 hover:bg-primary/20 transition-colors disabled:opacity-40 disabled:hover:bg-primary/10"
-        :disabled="!inputUrl"
+        :disabled="!inputUrl || isSubmitting"
       >
         <Icon name="lucide:arrow-right" class="size-5 text-primary" />
       </Button>
