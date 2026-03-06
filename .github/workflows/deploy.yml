@@ -137,36 +137,44 @@ jobs:
 
             cd ~/www/fewwords
 
+            # STEP 1: STOP SERVICES FIRST (critical - prevents crashes)
+            echo "Stopping PM2 services..."
+            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
+            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
+
+            # Kill any stray processes on port 3000
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 2
+
+            # STEP 2: CLEAN AND EXTRACT FILES
+            echo "Cleaning directory and extracting new files..."
+
+            # Remove all existing files except .env and tarballs
+            find . -maxdepth 1 ! -name '.env' ! -name 'deploy.tar.gz' ! -name 'output.tar.gz' ! -name '.' -exec rm -rf {} +
+
             # Extract source files
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
 
-            # Extract built output
+            # Extract built output (overwrites existing)
             tar -xzf output.tar.gz
             rm output.tar.gz
 
-            # Source .env file to load environment variables (must be AFTER extraction)
+            # STEP 3: INSTALL DEPENDENCIES
+            # Source .env file to load environment variables
             set -a
             [ -f .env ] && . ./.env
             set +a
 
-            # Install dependencies
+            echo "Installing dependencies..."
             bun install --frozen-lockfile
 
-            # Run database migrations
+            # STEP 4: DATABASE MIGRATIONS
+            echo "Running database migrations..."
             bun run db:push
 
-            # Cleanup: Stop fewwords PM2 processes by name
-            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
-            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
-
-            # Cleanup: Kill any node processes on port 3000
-            fuser -k 3000/tcp 2>/dev/null || true
-
-            # Wait for port to be free
-            sleep 2
-
-            # Start PM2 fresh
+            # STEP 5: START SERVICES
+            echo "Starting PM2 services..."
             pm2 start ecosystem.config.cjs
             pm2 save
 
