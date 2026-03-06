@@ -28,6 +28,7 @@ export const users = pgTable(
     name: text("name").notNull(),
     username: text("username").unique(),
     role: text("role", { enum: userRoleEnum }).notNull().default("user"),
+    emailVerified: boolean("email_verified").notNull().default(false),
     magicLinkToken: text("magic_link_token"),
     magicLinkExpiresAt: timestamp("magic_link_expires_at", {
       withTimezone: true,

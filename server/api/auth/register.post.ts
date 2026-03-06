@@ -1,4 +1,4 @@
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { Resend } from "resend";
 
@@ -20,62 +20,74 @@ export default defineEventHandler(async (event) => {
 
     const db = await useDb(event);
 
-    // Check if user already exists
-    const existingUserRows = await db
+    // STEP 1: Check if email already exists (ALWAYS check email first)
+    const existingEmailRows = await db
       .select()
       .from(users)
       .where(eq(users.email, email));
 
-    const existingUser = existingUserRows[0];
+    const existingEmailUser = existingEmailRows[0];
 
-    if (existingUser) {
-      const now = new Date();
-      const isExpired =
-        !existingUser.magicLinkExpiresAt ||
-        existingUser.magicLinkExpiresAt < now;
+    // Email exists but not verified - resend magic link
+    if (existingEmailUser && !existingEmailUser.emailVerified) {
+      const token = nanoid(32);
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      if (isExpired) {
-        // Magic link expired - re-send with existing username
-        const token = nanoid(32);
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      // Update username only if they provided a different one
+      const updateData: {
+        magicLinkToken: string;
+        magicLinkExpiresAt: Date;
+        name?: string;
+        username?: string;
+      } = {
+        magicLinkToken: token,
+        magicLinkExpiresAt: expiresAt,
+      };
 
-        await db
-          .update(users)
-          .set({
-            magicLinkToken: token,
-            magicLinkExpiresAt: expiresAt,
-            name, // Update name in case they changed it
-          })
-          .where(eq(users.id, existingUser.id));
-
-        const config = useRuntimeConfig();
-        const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
-        const magicLink = `${baseUrl}/auth/verify?token=${token}`;
-
-        const resendApiKey = config.private.resendApiKey;
-        if (resendApiKey) {
-          const resend = new Resend(resendApiKey);
-          await resend.emails.send({
-            from: getSender("auth"),
-            to: [email],
-            subject: "Welcome to Fewwords!",
-            html: authEmail({
-              greeting: `Welcome to Fewwords, ${name}!`,
-              message: "Click the button below to verify your email and sign in:",
-              buttonText: "Verify email",
-              buttonUrl: magicLink,
-            }),
-          });
-        }
-
-        return {
-          success: true,
-          exists: false,
-          message: "Account created! Check your email for a magic link.",
-        };
+      // Only update name if provided
+      if (name && name !== existingEmailUser.name) {
+        updateData.name = name;
       }
 
-      // Email exists with valid magic link
+      // Only update username if provided and different from old one
+      if (username && username !== existingEmailUser.username) {
+        updateData.username = username;
+      }
+
+      await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, existingEmailUser.id));
+
+      const config = useRuntimeConfig();
+      const baseUrl = config.public.siteUrl || getRequestURL(event).origin;
+      const magicLink = `${baseUrl}/auth/verify?token=${token}`;
+
+      const resendApiKey = config.private.resendApiKey;
+      if (resendApiKey) {
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: getSender("auth"),
+          to: [email],
+          subject: "Welcome to Fewwords!",
+          html: authEmail({
+            greeting: `Welcome to Fewwords, ${name}!`,
+            message: "Click the button below to verify your email and sign in:",
+            buttonText: "Verify email",
+            buttonUrl: magicLink,
+          }),
+        });
+      }
+
+      return {
+        success: true,
+        exists: false,
+        message: "Account created! Check your email for a magic link.",
+      };
+    }
+
+    // Email exists and verified - block
+    if (existingEmailUser && existingEmailUser.emailVerified) {
       return {
         success: false,
         exists: true,
@@ -83,7 +95,7 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Also check if username is taken by a DIFFERENT email
+    // STEP 2: Check if username is taken by someone else
     const usernameTaken = await db
       .select()
       .from(users)

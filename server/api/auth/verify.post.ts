@@ -35,12 +35,13 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Clear magic link token
+    // Clear magic link token and mark email as verified
     await db
       .update(users)
       .set({
         magicLinkToken: null,
         magicLinkExpiresAt: null,
+        emailVerified: true,
       })
       .where(eq(users.id, user.id));
 
