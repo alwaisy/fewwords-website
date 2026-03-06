@@ -54,6 +54,7 @@ export default defineNuxtConfig({
     "nuxt-toastify",
     "nuxt-auth-utils",
     "nuxt-processor",
+    "nuxt-ssr-api-logger",
   ],
 
   processor: {

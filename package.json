@@ -57,6 +57,7 @@
     "nanoid": "^5.1.6",
     "nuxt": "^4.3.0",
     "nuxt-processor": "^0.0.15",
+    "nuxt-ssr-api-logger": "2.0.2",
     "nuxt-toastify": "1.1.0",
     "openai": "^6.18.0",
     "postgres": "^3.4.8",
