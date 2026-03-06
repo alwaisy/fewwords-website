@@ -161,7 +161,7 @@ jobs:
             bun install --frozen-lockfile
 
             echo "Running database migrations..."
-            bun run db:push
+            bun run db:push --force
 
             echo "Starting PM2 services..."
             pm2 start ecosystem.config.cjs
