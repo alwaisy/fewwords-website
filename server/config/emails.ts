@@ -10,7 +10,7 @@ export const emailConfig = {
   domain: "m.fewwords.app",
 
   // admin email
-  adminEmail: process.env.ADMIN_EMAIL,
+  // adminEmail: process.env.ADMIN_EMAIL,
 
   // Sender addresses
   senders: {
