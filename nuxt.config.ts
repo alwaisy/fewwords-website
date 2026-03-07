@@ -39,6 +39,10 @@ export default defineNuxtConfig({
     },
   },
 
+  experimental: {
+    emitRouteChunkError: "automatic-immediate",
+  },
+
   modules: [
     "@nuxt/eslint",
     "@nuxt/fonts",
