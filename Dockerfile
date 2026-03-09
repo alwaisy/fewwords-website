@@ -1,4 +1,4 @@
-# Use Node 22 Alpine as the base for maximum compatibility with native modules
+# Use Node 22 Alpine for stable build tools and native module support
 FROM node:22-alpine AS base
 
 # Install Bun globally
@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Stage 2: Install dependencies
 FROM base AS install
-# Install build dependencies for native modules like better-sqlite3
+# Install build tools for native modules (better-sqlite3)
 RUN apk add --no-cache python3 make g++
 
 COPY package.json bun.lock ./
@@ -19,7 +19,7 @@ FROM base AS build
 COPY --from=install /app/node_modules node_modules
 COPY . .
 
-# Set environment variables for build (passed from GitHub Actions)
+# Set environment variables for build
 ARG NUXT_SITE_URL
 ARG DATABASE_URL
 ARG NUXT_SESSION_PASSWORD
@@ -35,7 +35,7 @@ ARG RESEND_FROM_NAME
 ARG ADMIN_EMAIL
 
 ENV NODE_ENV=production
-# Set Nitro preset to bun for the build
+# Set Nitro preset to bun to optimize for Bun runtime
 ENV NITRO_PRESET=bun
 RUN bun run build
 
@@ -46,15 +46,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy only the necessary files for the runtime
+# Copy build output and essential files
 COPY --from=build /app/.output .output
 COPY --from=build /app/db db
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
 COPY --from=build /app/bun.lock .
 
+# Ensure static assets are in the path Bun Nitro preset expects (fixes ENOENT)
+RUN mkdir -p .output/server/public && \
+    cp -r .output/public/* .output/server/public/ 2>/dev/null || true
+
 # Install production dependencies + drizzle-kit
-# Native modules are compiled here using build tools, then tools are removed to keep image slim
 RUN apk add --no-cache python3 make g++ && \
     bun install --frozen-lockfile --production && \
     bun add drizzle-kit && \
