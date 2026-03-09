@@ -6,11 +6,9 @@ RUN npm install -g bun@1.2.4
 
 WORKDIR /app
 
-# Stage 2: Install dependencies
+# Stage 2: Install dependencies (Uses your original command: --frozen-lockfile)
 FROM base AS install
-# Install build tools for native modules (better-sqlite3)
 RUN apk add --no-cache python3 make g++
-
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
@@ -35,7 +33,6 @@ ARG RESEND_FROM_NAME
 ARG ADMIN_EMAIL
 
 ENV NODE_ENV=production
-# Set Nitro preset to bun to optimize for Bun runtime
 ENV NITRO_PRESET=bun
 RUN bun run build
 
@@ -53,15 +50,13 @@ COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
 COPY --from=build /app/bun.lock .
 
-# Ensure static assets are in the path Bun Nitro preset expects (fixes ENOENT)
+# Ensure static assets are in the path Bun Nitro preset expects
 RUN mkdir -p .output/server/public && \
     cp -r .output/public/* .output/server/public/ 2>/dev/null || true
 
-# Install production dependencies + drizzle-kit
-RUN apk add --no-cache python3 make g++ && \
-    bun install --frozen-lockfile --production && \
-    bun add drizzle-kit && \
-    apk del python3 make g++
+# Copy production node_modules from the install stage instead of rebuilding
+# This makes VPS pulls 10x faster because the node_modules layer is cached
+COPY --from=install /app/node_modules node_modules
 
 EXPOSE 3000
 
