@@ -35,6 +35,8 @@ ARG RESEND_FROM_NAME
 ARG ADMIN_EMAIL
 
 ENV NODE_ENV=production
+# Set Nitro preset to bun for the build
+ENV NITRO_PRESET=bun
 RUN bun run build
 
 # Stage 4: Production image
@@ -60,5 +62,5 @@ RUN apk add --no-cache python3 make g++ && \
 
 EXPOSE 3000
 
-# Use Node to run the server for better native module support
-CMD ["node", ".output/server/index.mjs"]
+# Run with Bun as requested
+CMD ["bun", "run", ".output/server/index.mjs"]
