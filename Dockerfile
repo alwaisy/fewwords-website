@@ -1,9 +1,16 @@
-# Stage 1: Base image
-FROM oven/bun:1.2.4-alpine AS base
+# Use Node 22 Alpine as the base for maximum compatibility with native modules
+FROM node:22-alpine AS base
+
+# Install Bun globally
+RUN npm install -g bun@1.2.4
+
 WORKDIR /app
 
 # Stage 2: Install dependencies
 FROM base AS install
+# Install build dependencies for native modules like better-sqlite3
+RUN apk add --no-cache python3 make g++
+
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
@@ -12,7 +19,7 @@ FROM base AS build
 COPY --from=install /app/node_modules node_modules
 COPY . .
 
-# Set environment variables for build
+# Set environment variables for build (passed from GitHub Actions)
 ARG NUXT_SITE_URL
 ARG DATABASE_URL
 ARG NUXT_SESSION_PASSWORD
@@ -37,18 +44,21 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy build output and migration essentials
+# Copy only the necessary files for the runtime
 COPY --from=build /app/.output .output
 COPY --from=build /app/db db
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
 COPY --from=build /app/bun.lock .
 
-# Install production dependencies + drizzle-kit for migrations
-RUN bun install --frozen-lockfile --production && \
-    bun add drizzle-kit
+# Install production dependencies + drizzle-kit
+# Native modules are compiled here using build tools, then tools are removed to keep image slim
+RUN apk add --no-cache python3 make g++ && \
+    bun install --frozen-lockfile --production && \
+    bun add drizzle-kit && \
+    apk del python3 make g++
 
 EXPOSE 3000
 
-# Default to web server
-CMD ["bun", "run", ".output/server/index.mjs"]
+# Use Node to run the server for better native module support
+CMD ["node", ".output/server/index.mjs"]

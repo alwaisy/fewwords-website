@@ -5,7 +5,8 @@ services:
     restart: unless-stopped
     network_mode: host
     env_file: .env
-    command: bun run .output/server/index.mjs
+    # Using node for runtime stability with native modules
+    command: node .output/server/index.mjs
 
   worker:
     image: ghcr.io/alwaisy/fewwords-website:latest
@@ -13,4 +14,5 @@ services:
     restart: unless-stopped
     network_mode: host
     env_file: .env
-    command: bun run .output/server/workers/index.mjs
+    # Using node for runtime stability with native modules
+    command: node .output/server/workers/index.mjs
