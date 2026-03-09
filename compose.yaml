@@ -1,0 +1,16 @@
+services:
+  web:
+    image: ghcr.io/alwaisy/fewwords-website:latest
+    container_name: fewwords-web
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    command: bun run .output/server/index.mjs
+
+  worker:
+    image: ghcr.io/alwaisy/fewwords-website:latest
+    container_name: fewwords-worker
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    command: bun run .output/server/workers/index.mjs

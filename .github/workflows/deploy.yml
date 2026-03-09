@@ -1,4 +1,4 @@
-name: Deploy Fewwords to Production
+name: Deploy Fewwords (Docker)
 
 on:
   push:
@@ -7,129 +7,74 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
-    # Export GitHub Secrets as environment variables during build
-    # Required for nuxt.config.ts to access process.env.* at build time
-    env:
-      NUXT_SITE_URL: ${{ secrets.NUXT_SITE_URL }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      NUXT_SESSION_PASSWORD: ${{ secrets.NUXT_SESSION_PASSWORD }}
-      JINA_AI_API_KEY: ${{ secrets.JINA_AI_API_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      YOUTUBE_DATA_API_KEY: ${{ secrets.YOUTUBE_DATA_API_KEY }}
-      REDIS_URL: ${{ secrets.REDIS_URL }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
-      RESEND_FROM_NAME: ${{ secrets.RESEND_FROM_NAME }}
-      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Setup Bun (package manager)
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # Install dependencies
-      - name: Create .env file
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/alwaisy/fewwords-website:latest
+          build-args: |
+            NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}
+            JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}
+            OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+            YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}
+            RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+
+      - name: Create .env file for VPS
         run: |
           echo "NODE_ENV=production" >> .env
           echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
-          echo "DATABASE_URL=\"${{ secrets.DATABASE_URL }}\"" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
           echo "NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}" >> .env
           echo "JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}" >> .env
           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
           echo "YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}" >> .env
-          echo "REDIS_URL=\"${{ secrets.REDIS_URL }}\"" >> .env
+          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
           echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
           echo "RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}" >> .env
           echo "RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}" >> .env
           echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
 
-      # Install dependencies
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      # Build Nuxt application (builds to .output/)
-      # Note: Nuxt build cache disabled to prevent asset hash mismatches
-      - name: Build Nuxt app
-        run: bun run build
-
-      # Create deployment package
-      - name: Create deployment package
-        run: |
-          tar -czf deploy.tar.gz \
-            --exclude=node_modules \
-            --exclude=.git \
-            --exclude=.github \
-            --exclude=dev-docs \
-            --exclude='*.log' \
-            --exclude='.cache' \
-            --exclude='.nuxt' \
-            --exclude='.output' \
-            --warning=no-file-changed \
-            . 2>&1 | grep -v "file changed as we read it" || true
-
-      # Add the built .output directory to the package
-      - name: Add built output to package
-        run: |
-          tar -czf output.tar.gz .output/
-
-      # Prep VPS: Stop services and wipe folder
-      - name: Prep VPS (Stop & Wipe)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT }}
-          script: |
-            echo "Stopping PM2 services..."
-            pm2 stop fewwords-web fewwords-worker 2>/dev/null || true
-            pm2 delete fewwords-web fewwords-worker 2>/dev/null || true
-
-            # Kill any stray processes on port 3000
-            fuser -k 3000/tcp 2>/dev/null || true
-            sleep 2
-
-            echo "Nuking project folder..."
-            rm -rf ~/www/fewwords
-
-            echo "Recreating fresh directories..."
-            mkdir -p ~/www/fewwords/logs
-
-      # Transfer source files
-      - name: Transfer source files
+      - name: Transfer deployment files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
-          source: "deploy.tar.gz"
+          source: ".env,compose.yaml"
           target: "~/www/fewwords"
 
-      # Transfer built output
-      - name: Transfer built output
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT }}
-          source: "output.tar.gz"
-          target: "~/www/fewwords"
-
-      # Deploy on VPS
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -138,33 +83,22 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
-            # Load nvm
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            # Load bun
-            export BUN_INSTALL="$HOME/.bun"
-            export PATH="$BUN_INSTALL/bin:$PATH"
-
             cd ~/www/fewwords
-
-            echo "Extracting files..."
-            tar -xzf deploy.tar.gz && rm deploy.tar.gz
-            tar -xzf output.tar.gz && rm output.tar.gz
-
-            # Source .env file to load environment variables
-            set -a
-            [ -f .env ] && . ./.env
-            set +a
-
-            echo "Installing dependencies..."
-            bun install --frozen-lockfile
-
-            echo "Running database migrations..."
-            bun run db:push
-
-            echo "Starting PM2 services..."
-            pm2 start ecosystem.config.cjs
-            pm2 save
-
-            echo "Deployment complete!"
+            
+            # Login to GHCR on VPS
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest image
+            docker compose pull
+            
+            # Run migrations (using one-off container)
+            docker compose run --rm web bun run db:push
+            
+            # Stop existing services gracefully
+            docker compose down --remove-orphans || true
+            
+            # Start fresh containers
+            docker compose up -d
+            
+            # Clean up old images to save disk space
+            docker image prune -af
