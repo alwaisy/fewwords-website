@@ -1,198 +1,103 @@
 # Fewwords
 
-AI-powered content summarization service. Users paste URLs (articles, YouTube, Reddit) and get concise, actionable summaries using intelligent content classification and optimal summarization strategies.
+AI-powered content summarization service for articles, YouTube videos, and Reddit threads. It uses intelligent content classification and type-specific prompts to deliver concise, actionable insights.
 
 ## Build & Test
 
 • Install dependencies: `bun install`
-• Development server: `bun run dev` (http://localhost:3000)
-• Development with worker: `bun run dev:full` (server + background processor)
-• Build: `bun run build`
-• Preview: `bun run preview`
-• Type check: `bun run type` (or `nuxt typecheck`)
-• Lint: `bun run lint`
-• Auto-fix lint: `bun run lint:fix`
-• Full check: `bun run check` (lint + type + fix)
-• Add Shadcn component: `bun run shadcn <component-name>`
-
-## Database Commands
-
-• Start PostgreSQL: `bun run db:start:pg`
-• Stop PostgreSQL: `bun run db:stop:pg`
-• Reset database: `bun run db:reset` (down -v + up)
-• Push schema: `bun run db:push`
-• Generate migrations: `bun run db:generate`
-• Run migrations: `bun run db:migrate`
-• Open Drizzle Studio: `bun run db:studio`
+• Development server (web + worker): `bun run dev:full`
+• Web server only: `bun run dev`
+• Build for production: `bun run build`
+• Preview production: `bun run preview`
+• Lint code: `bun run lint`
+• Auto-fix lint issues: `bun run lint:fix`
+• Type check: `bun run type`
+• Full check (lint + type): `bun run check`
+• Start local services (PG + Redis): `bun run db:start:pg`
+• Stop local services: `bun run db:stop:pg`
+• Push DB schema: `bun run db:push`
 • Seed database: `bun run db:seed`
 • Seed admin user: `bun run db:seed:admin`
+• Add shadcn component: `bun run shadcn <name>`
 
 ## Project Layout
 
-├─ app/ → Nuxt app directory (auto-imports enabled)
-│ ├─ components/ → Vue components (auto-imported)
-│ │ ├─ home/ → Landing page sections
-│ │ ├─ layout/ → Header, footer
-│ │ ├─ app/ → App-specific components
-│ │ └─ ui/ → Shadcn Vue components (no prefix)
-│ ├─ composables/ → Vue composables (auto-imported)
-│ ├─ layouts/ → Nuxt layout components
-│ ├─ pages/ → File-based routing
-│ └─ pages/app/ → Main app pages (input, processing, results)
-├─ server/ → Nitro server code
-│ ├─ api/ → API routes (REST conventions)
-│ ├─ db/ → Database singleton (`useDb(event)`)
-│ ├─ lib/ → Shared utilities (Redis, etc.)
-│ ├─ queues/ → BullMQ queue definitions
-│ ├─ workers/ → Background job processors
-│ ├─ services/ → Business logic layer
-│ │ ├─ article/ → Article summarization
-│ │ ├─ youtube/ → YouTube 3-stage pipeline
-│ │ ├─ reddit/ → Reddit summarization
-│ │ └─ shared/ → LLM provider SDKs
-│ └─ prompts/ → Prompt templates with versioning
-│ ├─ article/ → v1, v2, v3 strategies
-│ └─ youtube/ → Type-specific prompts
-├─ db/ → Database schema and migrations (Drizzle ORM)
-├─ layers/admin/ → Admin layer (extends main app)
-└─ database/ → Docker Compose for local PostgreSQL (port 5433)
-
-Path aliases: `@/` and `~/` resolve to `app/`, `~~/` resolves to project root.
+├─ app/ → Nuxt frontend (pages, components, composables)
+│  ├─ components/ui/ → Shadcn components (no prefix)
+│  ├─ components/app/ → App-specific UI components
+│  └─ pages/ → File-based routing (kebab-case)
+├─ server/ → Nitro backend (API, services, workers, prompts)
+│  ├─ api/ → REST API endpoints
+│  ├─ services/ → Core business logic (article, youtube, reddit)
+│  ├─ prompts/ → Strategy-specific LLM prompts (v[Major].[Minor].ts)
+│  ├─ queues/ → BullMQ queue definitions
+│  └─ workers/ → Background job processors
+├─ db/ → Drizzle schema, seeds, and migrations
+├─ layers/admin/ → Admin panel UI and logic
+└─ database/ → Docker Compose for local development
 
 ## Architecture Overview
 
-Nuxt 4 full-stack application with service-oriented architecture. Each content type (article, YouTube, Reddit) has dedicated service modules. Request flow: URL submission → content type detection → content fetching → LLM classification → summarization with type-specific prompts → PostgreSQL storage.
+Fewwords follows a modular service-oriented architecture within a Nuxt 4 framework. The core logic centers on a **URL → Summary** pipeline that detects content types and applies specialized summarization strategies.
 
-**Prompt Versioning:** Dynamic version detection without hardcoding. Add new versions to `server/prompts/article/` or `server/prompts/youtube/type/` - `getLatestVersions()` automatically detects latest patch version.
-
-**Article Classification:** GPT-5 Mini reasoning selects optimal strategy: v1 structured (essays, research), v2 data-shot (tutorials, specs), v3 decision brief (news, time-sensitive). Falls back to v1 on failure.
-
-**YouTube Pipeline:** 3-stage pipeline with real-time progress via SSE: (1) Metadata fetch, (2) Classification (worth watching?), (3) Summarization. Early exit if not worth it. Stage updates via Redis (`summary:{id}:stage`), SSE polls every 500ms.
-
-**Database:** Singleton pattern via `useDb(event)`. Public IDs: `few-XYZ` (nanoid 3 chars), internal UUIDs. Long-running summaries use pending flow.
-
-**LLM Integration:** Official SDKs (OpenRouter default, OpenAI, Anthropic). Multi-provider with reasoning (high/medium/low effort).
+1. **Request Flow:** A `POST /api/summarize` request triggers content detection. Articles are fetched via Jina AI, while YouTube metadata comes from the YouTube Data API.
+2. **Article Classification:** Articles are classified into three strategies: `v1 (Structured)`, `v2 (Data Shot)`, or `v3 (Decision Brief)`.
+3. **YouTube 3-Stage Pipeline:** YouTube videos follow a distinct Metadata → AI Classifying → Type-Specific Summarization flow, with progress updates streamed via Server-Sent Events (SSE).
+4. **Data Layer:** Drizzle ORM manages a PostgreSQL database (port 5433). A singleton `useDb(event)` pattern handles connection pooling in Nitro routes.
+5. **Background Processing:** Long-running tasks (YouTube) are offloaded to BullMQ workers via `nuxt-processor`.
 
 ## Development Patterns & Constraints
 
+### Writing Rules (STRICT MANDATE)
+• **Banned AI Words:** NEVER use: delve, realm, harness, unlock, tapestry, paradigm, cutting-edge, revolutionize, landscape, potential, findings, intricate, showcasing, crucial, pivotal, surpass, meticulously, vibrant, unparalleled, underscore, leverage, synergy, innovative, game-changer, testament, commendable, highlight, emphasize, boast, groundbreaking, align, foster, showcase, enhance, holistic, garner, accentuate, pioneering, trailblazing, unleash, versatile, transformative, redefine, seamless, optimize, scalable, robust, breakthrough, empower, streamline, intelligent, smart, next-gen, frictionless, elevate, adaptive, effortless, data-driven, insightful, proactive, mission-critical, visionary, disruptive, reimagine, agile.
+• **Pattern Constraints:** Avoid "In a world where...", "Most people vs few who...", "Stop doing X. Start doing Y."
+• **Formatting:** Replace em-dashes ("—") with periods or commas.
+• **Style:** Natural, warm, conversational. Short sentences. No jargon. Be direct.
+
 ### Coding Style
-• TypeScript strict mode enabled
-• Nuxt auto-imports: components, composables, utilities (no manual imports)
-• Type imports: `import type { ... }`
-• Shadcn components: no prefix, in `app/components/ui/`
-• Function components with `<script setup>` syntax
-• VeeValidate + Zod for form validation
-• Naming: camelCase (vars/funcs), PascalCase (components/types), KEBAB_CASE (files)
-• **File naming:** KEBAB_CASE enforced by ESLint (except Nuxt dynamic routes like `[id].vue`)
-
-### File Organization
-• Colocation: components near usage
-• Barrel exports: `server/prompts/*/index.ts`
-• Services: index.ts orchestrators per content type
-• API routes: REST conventions (`/api/summarize`, `/api/summary/:id`)
-• YouTube prompts: `type/v-1.ts`, `type/index.ts` exports `PROMPT`
-
-### Styling
-• Tailwind CSS v4 via @tailwindcss/vite
-• Pink/purple theme, dark mode support
-• Shadcn Vue (New York style), Reka UI primitives
-• Fonts: Poppins (sans), Playfair Display (serif), Space Mono (mono)
-• Toast: nuxt-toastify (colored, top-center, 4s auto-close, slide)
+• **Language:** TypeScript strict mode. Use `import type` for all type-only imports.
+• **Naming:** Files and folders MUST use `KEBAB_CASE` (except Nuxt dynamic routes).
+• **Components:** Vue 3 Composition API with `<script setup>`. Shadcn components have **no prefix**.
+• **Auto-imports:** Nuxt auto-imports components, composables, and utils. Do not add manual imports for these.
+• **Path Aliases:** Use `~~/` for root, `@/` or `~/` for `app/`.
 
 ### Error Handling
-• Zod schemas for runtime validation
-• Toast notifications for user feedback
-• Database errors → 500 responses
-• Edge cases throw errors (not completed results): live streams, <5min, >3hr videos
-
-### Async Patterns
-• Async/await preferred
-• Pending summary flow for long LLM calls
-• SSE for YouTube stage updates (Redis-polling)
-• Connection pooling: Drizzle (max 10 connections)
+• **API:** Use H3 `createError` for structured error responses.
+• **UI:** Use `nuxt-toastify` for user feedback (colored theme, top-center).
 
 ## Security
 
-• Session-based auth (nuxt-auth-utils, encrypted HttpOnly cookies)
-• `maxAge: 7 days`, `rolling: true`
-• Magic link auth (15 min token expiry)
-• Roles: `user` (default) | `admin`
-• Admin middleware: `app/middleware/admin.ts` uses `useUserSession()`
-• Server routes: `getUserSession(event)` directly
-• API keys in environment variables
-• DOMPurify for HTML sanitization
-• Jina AI for content extraction
-• SQL injection protection via Drizzle
-• No auth on public summaries (few-XYZ IDs)
+• **Authentication:** `nuxt-auth-utils` session-based auth with magic links.
+• **Authorization:** Role-based (`user` | `admin`). Admin routes protected by `admin.ts` middleware.
+• **Secrets:** Strictly managed via `runtimeConfig`. Never log or commit `.env` values.
+• **Session:** Rolling 7-day session window.
 
 ## Git Workflows
 
-• Main branch: `master`
-• Feature branches: `feature/add-llm-streaming` format
-• Commit messages: Conventional commits (`feat:`, `fix:`, `chore:`)
-• Droid Shield pre-commit hook checks for secrets
-• Protected: `master` branch
+• **Commit Conventions:** Follow existing repository style (typically concise and descriptive).
+• **Branching:** Master branch triggers automatic deployment via GitHub Actions.
+• **PR Requirements:** Must pass `bun run check` (linting + type checking).
 
 ## Evidence Required for Every PR
 
-• All tests passing: `bun run check`
-• Database migrations if schema changed: `bun run db:push`
-• Diff confined to relevant directories
-• **Proof artifact:**
-  - Bug fix → reproduction case, fix explanation
-  - Feature → working demo, type safety maintained
-  - Prompt changes → test outputs showing improvement
-• One-paragraph description covering intent and approach
-• No unexplained dependencies added
-• AGENTS.md updated if architecture changed
+• `bun run check` must pass without errors.
+• New features must include relevant test cases (if applicable) or verification logic.
+• AI-generated summaries must adhere to the `WRITING_GUIDELINES` in `server/prompts/system.ts`.
+• No regressions in the 3-stage YouTube pipeline or article classification.
 
 ## External Services
 
-• Jina AI - `JINA_AI_API_KEY` - Article content fetching
-• OpenRouter - `OPENROUTER_API_KEY` - Default LLM provider
-• OpenAI - `OPENAI_API_KEY` - Article classification (GPT-5 Mini)
-• Anthropic - `ANTHROPIC_API_KEY` - Optional Claude access
-• YouTube Data API v3 - `YOUTUBE_DATA_API_KEY` - Video metadata
-• PostgreSQL - `DATABASE_URL` - Local on port 5433 (Docker)
-• Redis - `REDIS_URL` - SSE stage updates (port 6380 local)
-• Resend - `RESEND_API_KEY` - Magic link emails
+• **Jina AI** - `JINA_AI_API_KEY` - Article content extraction.
+• **OpenRouter** - `OPENROUTER_API_KEY` - Default LLM provider (multi-model).
+• **OpenAI** - `OPENAI_API_KEY` - Article classification (GPT-5 Mini).
+• **YouTube API** - `YOUTUBE_DATA_API_KEY` - Video metadata fetching.
+• **Resend** - `RESEND_API_KEY` - Magic link email delivery.
+• **Upstash Redis** - `REDIS_URL` - Real-time progress updates (SSE).
 
 ## Gotchas & Common Pitfalls
 
-• **Bun not npm/yarn/pnpm** - Project uses Bun
-• **Auto-imports** - No manual imports for components/composables/utilities
-• **Path aliases** - `~/` or `@/` for app, `~~/` for project root
-• **Database singleton** - Access via `useDb(event)`, don't import directly
-• **Prompt versioning** - Add to `server/prompts/`, update `index.ts`, auto-detected
-• **YouTube prompts** - Folder structure: `type/v-1.ts`, `type/index.ts` exports `PROMPT`
-• **dev-docs/** excluded from linting - See `--ignore-pattern 'dev-docs/**'`
-• **Summary IDs** - Public: `few-XYZ` (nanoid 3), internal: UUID
-• **PostgreSQL port 5433** - Docker uses 5433 to avoid system PG on 5432
-• **YouTube Shorts rejected** - Immediate error, don't process
-• **Classification defaults to v1** - Falls back if classifier fails
-• **LLM response parsing** - Article summaries extract TITLE (supports `TITLE:` and `**TITLE:**`)
-• **Admin middleware** - Use `useUserSession()` composable, NOT `getUserSession(event)`
-• **Redis stage updates** - SSE polls every 500ms, sets `summary:{summaryId}:stage`
-• **Layer architecture** - Admin in `layers/admin/` with `~admin` alias
-• **YouTube SSE completed** - MUST call `setStage(summaryId, "completed")` after save or frontend stuck on loading
-• **Library filtering** - Use `ne(summaries.status, 'failed')` with proper JOINs
-• **Drizzle Studio shows pluralized names** - Table `"YouTube"` displays as `Youtubes` (same table)
-
-## Performance Considerations
-
-• Pending summary flow for long LLM calls
-• Jina AI API for fast extraction
-• Prompt classification reduces token usage
-• Dynamic prompt versioning (no hardcoding)
-• Database indexes on essence, created_at, status
-• SSE for YouTube updates (less overhead than polling)
-• Redis for ephemeral stage data (EX 3600)
-• Streaming not yet implemented
-
-## Deployment
-
-• Build: `bun run build`
-• Preview: `bun run preview`
-• Set all .env variables before deployment
-• Run migrations: `bun run db:push` or `bun run db:migrate`
-• Hosting: Vercel, Netlify, Cloudflare, Node.js servers
+• **Database Port:** PostgreSQL runs on **5433** via Docker to avoid conflicts with system PG.
+• **Package Manager:** Use **Bun only**. Never use npm/yarn/pnpm.
+• **YouTube Shorts:** Immediately rejected with a specific user message.
+• **SSE Race Condition:** Stage updates to Redis must happen **after** DB writes to prevent client-side desync.
+• **Type Aliases:** Always use `~~/db/schema` when importing database types to avoid circular dependencies.

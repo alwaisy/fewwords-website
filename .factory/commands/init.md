@@ -8,9 +8,11 @@ Act as a Senior Lead Architect. I want to initialize this repository for AI-assi
 ## Primary Tasks
 
 ### 1. Deep Codebase Analysis
+
 Recursively scan the project (ignoring node_modules, .git, dist, build, .next, .nuxt) to identify:
 
 **Tech Stack Detection:**
+
 - Languages: TypeScript, JavaScript, Python, Go, Rust, etc.
 - Frameworks: Nuxt, Next.js, Express, Django, FastAPI, etc.
 - Package managers: Bun, npm, pnpm, yarn, pip, cargo
@@ -21,6 +23,7 @@ Recursively scan the project (ignoring node_modules, .git, dist, build, .next, .
 - Styling: Tailwind, CSS Modules, styled-components, SCSS
 
 **Architecture Patterns:**
+
 - Overall pattern: MVC, DDD, microservices, monorepo, etc.
 - Routing: App Router vs Pages Router, file-based vs config
 - API style: REST, GraphQL, tRPC, gRPC
@@ -30,6 +33,7 @@ Recursively scan the project (ignoring node_modules, .git, dist, build, .next, .
 - Data flow and request lifecycle
 
 **Coding Standards & Conventions:**
+
 - Naming: camelCase, snake_case, PascalCase, kebab-case
 - File structure: colocation, separation of concerns, barrel exports
 - Component patterns: functional vs class, hooks vs HOCs
@@ -41,6 +45,7 @@ Recursively scan the project (ignoring node_modules, .git, dist, build, .next, .
 - Git workflow: branching strategy, commit message format
 
 **Project-Specific Patterns:**
+
 - API route organization
 - Database schema and migration patterns
 - Environment variable usage
@@ -50,7 +55,9 @@ Recursively scan the project (ignoring node_modules, .git, dist, build, .next, .
 - Security measures (input validation, sanitization)
 
 ### 2. Context Gathering
+
 Read and integrate from existing files:
+
 - **README.md** - project overview, setup instructions, key features
 - **AGENTS.md** (if exists) - preserve valuable content, improve structure
 - **CLAUDE.md** - convert to AGENTS.md format, merge insights
@@ -91,8 +98,8 @@ Follow Droid's template structure but enhance with all best practices:
 
 ├─ [directory]/ → [purpose]
 ├─ [directory]/ → [purpose]
-│  ├─ [subdir]/ → [sub-purpose]
-│  └─ [subdir]/ → [sub-purpose]
+│ ├─ [subdir]/ → [sub-purpose]
+│ └─ [subdir]/ → [sub-purpose]
 └─ [directory]/ → [purpose]
 
 [Show 5-10 key directories with their purposes]
@@ -102,6 +109,7 @@ Follow Droid's template structure but enhance with all best practices:
 ## Architecture Overview
 
 [2-3 paragraphs covering:
+
 1. Overall structure and pattern (MVC, DDD, layer architecture)
 2. Key modules and their responsibilities
 3. Request/response flow and data lifecycle
@@ -111,6 +119,7 @@ Follow Droid's template structure but enhance with all best practices:
 ## Development Patterns & Constraints
 
 ### Coding Style
+
 • [Language]: [specific rules, e.g., TypeScript strict mode]
 • Formatting: [quotes style, semicolons, trailing commas, line length]
 • Indentation: [tabs vs spaces, size]
@@ -119,6 +128,7 @@ Follow Droid's template structure but enhance with all best practices:
 • Exports: [named vs default, consistency patterns]
 
 ### Component/File Patterns
+
 • [Component structure: functional, hooks, props pattern]
 • [File organization: colocation, separation, index files]
 • [Type definitions: where they live, how they're imported]
@@ -126,17 +136,20 @@ Follow Droid's template structure but enhance with all best practices:
 • [Asset handling: images, fonts, static files]
 
 ### Error Handling
+
 • [Approach: try/catch, error boundaries, Result types]
 • [Logging strategy: console, winston, pino]
 • [User feedback: toast notifications, error pages]
 • [Monitoring: Sentry, analytics]
 
 ### Async Patterns
+
 • [Preferred: async/await, promises, callbacks]
 • [Loading states: how they're managed]
 • [Caching strategy: React Query, SWR, custom]
 
 ### Testing Patterns
+
 • [Unit vs integration vs e2e balance]
 • [Mocking strategy: what gets mocked]
 • [Test naming conventions]
@@ -172,13 +185,14 @@ A pull request is reviewable when it includes:
 • Lint and type check passing: `[command to verify]`
 • Diff confined to agreed paths: [list allowed directories]
 • **Proof artifact**:
-  - Bug fix → failing test added first, now passes
-  - Feature → new tests or screenshots demonstrating behavior
-  - Refactor → performance benchmarks or coverage maintained
-• One-paragraph description covering intent and approach
-• No drop in test coverage
-• No unexplained runtime dependencies added
-• Documentation updated if API/user-facing changed
+
+- Bug fix → failing test added first, now passes
+- Feature → new tests or screenshots demonstrating behavior
+- Refactor → performance benchmarks or coverage maintained
+  • One-paragraph description covering intent and approach
+  • No drop in test coverage
+  • No unexplained runtime dependencies added
+  • Documentation updated if API/user-facing changed
 
 ## External Services
 
@@ -216,7 +230,7 @@ A pull request is reviewable when it includes:
 
 ---
 
-**Keep it concise but complete. Aim for 100-200 lines. Every line should provide actionable information not easily discoverable from README or code structure.**
+**Keep it concise but complete. Aim for 140-200 lines. Every line should provide actionable information not easily discoverable from README or code structure.**
 ```
 
 ## Important Guidelines
@@ -230,7 +244,7 @@ A pull request is reviewable when it includes:
 ✅ Reference existing docs with links instead of duplicating
 ✅ Be specific and actionable
 ✅ Include project-specific workflows and gotchas
-✅ Keep it concise (100-200 lines recommended)
+✅ Keep it concise (140-200 lines recommended)
 
 **DO NOT:**
 ❌ Create CLAUDE.md - create AGENTS.md instead
@@ -249,11 +263,12 @@ If `$ARGUMENTS` contains "overwrite", replace existing AGENTS.md entirely.
 If `$ARGUMENTS` contains "update" or is empty, improve existing AGENTS.md.
 
 After creating/updating AGENTS.md:
+
 1. Confirm the file was written successfully with path
 2. Provide summary of sections added/changed
 3. Highlight key architectural decisions discovered
 4. Note any missing documentation that would be valuable
-5. Mention file size (aim for 100-200 lines)
+5. Mention file size (aim for 140-200 lines)
 
 ---
 
@@ -262,9 +277,11 @@ After creating/updating AGENTS.md:
 ## Primary Tasks
 
 ### 1. Codebase Analysis
+
 Recursively scan the project (ignoring node_modules, .git, dist, build) to identify:
 
 **Tech Stack Detection:**
+
 - Languages: TypeScript, JavaScript, Python, Go, Rust, etc.
 - Frameworks: Nuxt, Next.js, Express, Django, FastAPI, etc.
 - Package managers: Bun, npm, pnpm, yarn, pip, cargo
@@ -273,6 +290,7 @@ Recursively scan the project (ignoring node_modules, .git, dist, build) to ident
 - Testing frameworks: Vitest, Jest, Pytest, etc.
 
 **Architecture Patterns:**
+
 - App Router vs Pages Router
 - MVC, DDD, or microservices
 - Monorepo structure (if applicable)
@@ -281,6 +299,7 @@ Recursively scan the project (ignoring node_modules, .git, dist, build) to ident
 - Authentication/authorization patterns
 
 **Coding Standards:**
+
 - Naming conventions (camelCase, snake_case, PascalCase)
 - File organization patterns
 - Preferred code patterns (functional vs class-based)
@@ -289,17 +308,20 @@ Recursively scan the project (ignoring node_modules, .git, dist, build) to ident
 - Async patterns (async/await, promises, callbacks)
 
 ### 2. Context Gathering
+
 Read and integrate from existing files:
+
 - README.md - project overview and setup
 - AGENTS.md (if exists) - preserve and improve
 - CLAUDE.md - convert to AGENTS.md format
-- .cursorrules or .cursor/rules/** - Cursor-specific rules
+- .cursorrules or .cursor/rules/\*\* - Cursor-specific rules
 - .github/copilot-instructions.md - Copilot rules
 - package.json - scripts and dependencies
 - tsconfig.json - TypeScript configuration
 - .env.example - environment variables
 
 ### 3. AGENTS.md Structure
+
 Create/update AGENTS.md following Droid's template with these sections:
 
 ```markdown
@@ -331,6 +353,7 @@ Create/update AGENTS.md following Droid's template with these sections:
 ## Architecture Overview
 
 [One paragraph describing:
+
 - Overall structure and pattern (MVC, DDD, etc.)
 - Major modules and their interactions
 - Data flow and request lifecycle
@@ -399,6 +422,7 @@ Coding style
 ## Important Guidelines
 
 **DO:**
+
 - Follow Droid's AGENTS.md template structure exactly
 - Use `# Build & Test`, `# Architecture Overview`, etc. sections
 - Keep it concise (≤150 lines recommended)
@@ -408,6 +432,7 @@ Coding style
 - Be specific and actionable
 
 **DO NOT:**
+
 - Repeat information easily discoverable from README
 - Include generic advice ("write clean code", "add tests")
 - List every component or file structure
@@ -421,6 +446,7 @@ If `$ARGUMENTS` contains "overwrite", replace existing AGENTS.md entirely.
 If `$ARGUMENTS` contains "update" or is empty, improve existing AGENTS.md.
 
 After creating/updating AGENTS.md:
+
 1. Confirm the file was written successfully
 2. Provide a brief summary of what was added/changed
 3. Mention key architectural decisions discovered
