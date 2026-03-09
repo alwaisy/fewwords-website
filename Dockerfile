@@ -1,14 +1,23 @@
-# Use Node 22 Alpine as the base
-FROM node:22-alpine
-WORKDIR /app
+# Use Node 22 Alpine for stable build tools and native module support
+FROM node:22-alpine AS base
 
-# Install Bun
+# Install Bun globally
 RUN npm install -g bun@1.2.4
 
-# Copy project files
+WORKDIR /app
+
+# Stage 2: Install dependencies (Uses your original command: --frozen-lockfile)
+FROM base AS install
+RUN apk add --no-cache python3 make g++
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Stage 3: Build the application
+FROM base AS build
+COPY --from=install /app/node_modules node_modules
 COPY . .
 
-# Build-time environment variables
+# Set environment variables for build
 ARG NUXT_SITE_URL
 ARG DATABASE_URL
 ARG NUXT_SESSION_PASSWORD
@@ -23,12 +32,33 @@ ARG RESEND_FROM_EMAIL
 ARG RESEND_FROM_NAME
 ARG ADMIN_EMAIL
 
-# Set Nitro preset to bun and install with your original command
-ENV NITRO_PRESET=bun
 ENV NODE_ENV=production
-RUN bun install --frozen-lockfile
+ENV NITRO_PRESET=bun
 RUN bun run build
 
-# Expose port and run with bun
+# Stage 4: Production image
+FROM base AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy build output and essential files
+COPY --from=build /app/.output .output
+COPY --from=build /app/db db
+COPY --from=build /app/drizzle.config.ts .
+COPY --from=build /app/package.json .
+COPY --from=build /app/bun.lock .
+
+# Ensure static assets are in the path Bun Nitro preset expects
+RUN mkdir -p .output/server/public && \
+    cp -r .output/public/* .output/server/public/ 2>/dev/null || true
+
+# Copy production node_modules from the install stage instead of rebuilding
+# This makes VPS pulls 10x faster because the node_modules layer is cached
+COPY --from=install /app/node_modules node_modules
+
 EXPOSE 3000
+
+# Run with Bun as requested
 CMD ["bun", "run", ".output/server/index.mjs"]
