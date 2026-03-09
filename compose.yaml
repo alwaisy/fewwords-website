@@ -5,7 +5,8 @@ services:
     restart: unless-stopped
     network_mode: host
     env_file: .env
-    # Running with Bun runtime as requested
+    environment:
+      - PORT=3000
     command: bun run .output/server/index.mjs
 
   worker:
@@ -14,5 +15,6 @@ services:
     restart: unless-stopped
     network_mode: host
     env_file: .env
-    # Running with Bun runtime as requested
+    environment:
+      - PORT=3001
     command: bun run .output/server/workers/index.mjs
