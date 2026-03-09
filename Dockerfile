@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Stage 2: Install dependencies
 FROM base AS install
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Stage 3: Build the application
@@ -42,7 +42,7 @@ COPY --from=build /app/.output .output
 COPY --from=build /app/db db
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
-COPY --from=build /app/bun.lockb .
+COPY --from=build /app/bun.lock .
 
 # Install production dependencies + drizzle-kit for migrations
 RUN bun install --frozen-lockfile --production && \
