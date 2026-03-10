@@ -39,16 +39,20 @@ export default defineEventHandler(async (event) => {
       const MAX_POLL_COUNT = 900; // 900 * 500ms = 7.5 minutes max
       const POLL_INTERVAL_MS = 500;
 
+      // Bind controller methods to prevent 'this' context loss
+      const enqueue = controller.enqueue.bind(controller);
+      const close = controller.close.bind(controller);
+
       // Helper to send SSE message
       const sendEvent = (data: unknown) => {
         const message = `data: ${JSON.stringify(data)}\n\n`;
         console.log(`[SSE#2] → Sending to ${summaryId}:`, message.trim());
-        controller.enqueue(encoder.encode(message));
+        enqueue(encoder.encode(message));
       };
 
       // Helper to send keep-alive comments
       const sendKeepAlive = () => {
-        controller.enqueue(encoder.encode(": keep-alive\n\n"));
+        enqueue(encoder.encode(": keep-alive\n\n"));
       };
 
       try {
@@ -66,7 +70,7 @@ export default defineEventHandler(async (event) => {
           console.log(
             `[SSE#2] ✓ Already ${initialStage} - closing stream for ${summaryId}`,
           );
-          controller.close();
+          close();
           return;
         }
 
@@ -91,7 +95,7 @@ export default defineEventHandler(async (event) => {
               clearInterval(pollInterval);
               pollInterval = null;
             }
-            controller.close();
+            close();
             return;
           }
 
@@ -118,7 +122,7 @@ export default defineEventHandler(async (event) => {
                   clearInterval(pollInterval);
                   pollInterval = null;
                 }
-                controller.close();
+                close();
               }
             }
           } catch (err) {
@@ -141,7 +145,7 @@ export default defineEventHandler(async (event) => {
             clearInterval(keepAliveInterval);
           }
           try {
-            controller.close();
+            close();
           } catch {
             // Stream might already be closed
           }

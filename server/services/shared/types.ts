@@ -5,6 +5,7 @@ export type LLMProvider = "openrouter" | "openai" | "anthropic";
 export type OpenRouterModel =
   | "inception/mercury-2"
   | "google/gemini-3-flash-preview"
+  | "google/gemini-3.1-flash-lite-preview"
   | "prime-intellect/intellect-3"
   | "moonshotai/kimi-k2-thinking"
   | "anthropic/claude-haiku-4-5-20251001"

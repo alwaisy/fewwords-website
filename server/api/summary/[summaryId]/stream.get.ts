@@ -30,16 +30,20 @@ export default defineEventHandler(async (event) => {
       let lastStage: string | null = null;
       let pollInterval: NodeJS.Timeout | null = null;
 
+      // Bind controller methods to prevent 'this' context loss
+      const enqueue = controller.enqueue.bind(controller);
+      const close = controller.close.bind(controller);
+
       // Helper to send SSE message
       const sendEvent = (data: unknown) => {
         const message = `data: ${JSON.stringify(data)}\n\n`;
         console.log(`[SSE] → Sending message: ${message.trim()}`);
-        controller.enqueue(encoder.encode(message));
+        enqueue(encoder.encode(message));
       };
 
       // Helper to send keep-alive comments
       const sendKeepAlive = () => {
-        controller.enqueue(encoder.encode(": keep-alive\n\n"));
+        enqueue(encoder.encode(": keep-alive\n\n"));
       };
 
       try {
@@ -54,7 +58,7 @@ export default defineEventHandler(async (event) => {
         // Stop immediately if already completed
         if (initialStage === "completed") {
           console.log(`[SSE] ✓ Already completed - closing stream for ${summaryId}`);
-          controller.close();
+          close();
           return;
         }
 
@@ -74,7 +78,7 @@ export default defineEventHandler(async (event) => {
           // If summary is already completed/failed, close the stream
           if (dbStatus === "completed" || dbStatus === "failed") {
             console.log(`[SSE] ✓ Summary already ${dbStatus} in DB - closing stream for ${summaryId}`);
-            controller.close();
+            close();
             return;
           }
 
@@ -84,7 +88,7 @@ export default defineEventHandler(async (event) => {
           } else {
             // No record found or unknown status - don't poll forever
             console.log(`[SSE] No valid summary found, closing stream for ${summaryId}`);
-            controller.close();
+            close();
             return;
           }
         }
@@ -112,7 +116,7 @@ export default defineEventHandler(async (event) => {
                   clearInterval(pollInterval);
                   pollInterval = null;
                 }
-                controller.close();
+                close();
               }
             } else {
               console.log(`[SSE] - No change (stage still: ${currentStage})`);
@@ -136,7 +140,7 @@ export default defineEventHandler(async (event) => {
           clearInterval(keepAliveInterval);
 
           try {
-            controller.close();
+            close();
           } catch (error) {
             // Stream might already be closed
             console.error("[SSE] Error closing controller:", error);
