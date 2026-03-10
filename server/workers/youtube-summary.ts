@@ -23,7 +23,7 @@ async function sendCompletionEmail(
 ): Promise<string | null> {
   const config = useRuntimeConfig();
   const resendApiKey = config.private.resendApiKey;
-  const baseUrl = config.public.baseUrl || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
 
   if (!resendApiKey) {
     console.warn("[YouTubeWorker] RESEND_API_KEY not set, skipping email");
