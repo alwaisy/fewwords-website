@@ -35,6 +35,7 @@ jobs:
           tags: ghcr.io/alwaisy/fewwords-website:latest
           build-args: |
             NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}
+            NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}
             JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}
@@ -52,6 +53,7 @@ jobs:
         run: |
           echo "NODE_ENV=production" >> .env
           echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
+          echo "NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
           echo "NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}" >> .env
           echo "JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}" >> .env
