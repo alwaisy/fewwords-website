@@ -6,20 +6,19 @@ export const OPINION_PROMPT = `Watch this opinion or commentary video.
 - Keep quotation in markdown quotation format without quotes mark. If applicable
 - If there's Dev terminology / code / command they mention, turn it inline code.
 - Line breaks between sections for breathing room
-- For paragraphs: keep them short (2-3 sentences max) with one sentence per line and a blank line after each sentence
+- For paragraphs(if applicable): keep them short (2-3 sentences max) with one sentence per line and a blank line after each sentence
 
-## *keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE STANCE\`, do not use \`The {xyz}\` pattern*
 
+Opening (no header)
 What's the main argument? One sentence.
 
-## KEY POINTS
-The 3-5 most important arguments or insights. Be specific.
+## [keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE TAKE\`, do not use \`The {xyz}\` pattern]
+The 3-5 most important arguments or insights. Be specific. Make bullet points.
 
-## COUNTERPOINTS
+## [keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE TAKE\`, do not use \`The {xyz}\` pattern]
 Opposing views or counterarguments mentioned. If none, skip.
 
-## *keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`THE TAKE\`, do not use \`The {xyz}\` pattern*
-
+Closing (no header)
 Why does this opinion matter? One sentence.
 
 ## JUMP TO
@@ -31,5 +30,6 @@ export const PROMPT_META = {
   ID: "youtube-opinion-v1.3",
   ESSENCE: "youtube",
   TYPE: "OPINION",
-  NOTES: "Removed 'The {noun}' pattern, added dynamic headers for context-aware sections",
+  NOTES:
+    "Removed 'The {noun}' pattern, added dynamic headers for context-aware sections",
 };
