@@ -91,11 +91,11 @@ function goToSummary(summaryId: string) {
 
         <!-- Summary list -->
         <div v-else class="space-y-3">
-          <div
+          <NuxtLink
             v-for="summary in summaries"
             :key="summary.summaryId"
-            class="border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
-            @click="goToSummary(summary.summaryId)"
+            :to="\`/app/\${summary.summaryId}\`"
+            class="block border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
           >
             <!-- Title -->
             <h3 class="font-medium text-foreground truncate mb-2">
@@ -113,7 +113,7 @@ function goToSummary(summaryId: string) {
             <Badge variant="outline">
               {{ getEssenceLabel(summary.essence) }}
             </Badge>
-          </div>
+          </NuxtLink>
         </div>
 
         <!-- Pagination -->
