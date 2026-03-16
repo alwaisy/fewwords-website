@@ -47,7 +47,7 @@ defineProps<Props>();
       </Button>
       <Button
         v-if="!isSaved"
-        variant="secondary"
+        variant="ghost"
         class="h-8 px-3 rounded-full text-xs"
         @click="$emit('save')"
       >
