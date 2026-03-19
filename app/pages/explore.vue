@@ -61,11 +61,6 @@ onMounted(() => {
 const showPagination = computed(() => {
   return pagination.value.total > 16
 })
-
-// Navigate to summary
-function goToSummary(summaryId: string) {
-  navigateTo(`/app/${summaryId}`)
-}
 </script>
 
 <template>
@@ -94,7 +89,7 @@ function goToSummary(summaryId: string) {
           <NuxtLink
             v-for="summary in summaries"
             :key="summary.summaryId"
-            :to="\`/app/\${summary.summaryId}\`"
+            :to="`/app/${summary.summaryId}`"
             class="block border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
           >
             <!-- Title -->
