@@ -1,0 +1,28 @@
+# Fewwords
+
+> Close your tabs, keep the insight. Paste a URL, get the gist in 60 seconds.
+
+Fewwords is the "tab graveyard" antidote. It’s an AI-powered content summarization service built for people who have 20+ unread tabs and know they’ll never get to them. It works on articles, YouTube videos, and Reddit threads—anything with a URL.
+
+The goal is simple: skip the fluff, skip the 20-minute intros, and get the actual value in a readable, bulleted format. No "AI-speak," no weird formatting, just the takeaways you actually need.
+
+## Why use Fewwords instead of ChatGPT?
+- **No Copy-Pasting:** You don't copy text anymore. Just grab the URL and you're done.
+- **No Prompt Engineering:** You don't have to write "summarize this" anymore. It already knows the best strategy for the specific content type (article vs video vs thread).
+- **Shareable Insights:** Summaries are clean and shareable via link. Your friends don't even need an account to read them.
+
+## Key Features
+- **URL-to-Insight:** Paste a link, get a summary in ~60 seconds.
+- **Multi-Format Support:** Works on blogs, YouTube videos, and Reddit posts.
+- **Personal Library:** Save summaries to your own collection to reference later.
+- **Bookmarklet:** One-click summarization from any page you're reading.
+
+## Core Links
+- [Home](https://fewwords.app): The main dashboard to paste URLs and start summarising.
+- [Explore](https://fewwords.app/explore): See what others are reading and get the gist of trending content.
+- [About](https://fewwords.app/about): The philosophy behind fighting information overload.
+- [Library](https://fewwords.app/library): Your personal collection of insights and saved tabs (requires login).
+
+## Optional
+- [Settings](https://fewwords.app/settings): Manage your account and preferences.
+- [Demo](https://fewwords.app/demo): See a live example of how it transforms long content into quick wins.

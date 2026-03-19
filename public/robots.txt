@@ -1,2 +1,5 @@
-User-Agent: *
-Disallow:
+User-agent: *
+Allow: /
+
+Sitemap: https://fewwords.app/sitemap.xml
+llms: https://fewwords.app/llms.txt
