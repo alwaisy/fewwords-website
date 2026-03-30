@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
-
 import landingCopy from "~/content/landing-copy";
-const { tabCount } = useTabCount();
-const renderedHeadline = computed(() =>
-  landingCopy.hero_section.headline.replace(
-    "{tabCount}",
-    String(tabCount.value),
-  ),
-);
 </script>
 
 <template>
@@ -17,7 +8,7 @@ const renderedHeadline = computed(() =>
       <h1
         class="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-[0.95] tracking-tight"
       >
-        {{ renderedHeadline }}
+        {{ landingCopy.hero_section.headline }}
       </h1>
       <p class="text-2xl text-muted-foreground mb-12 max-w-2xl leading-relaxed">
         {{ landingCopy.hero_section.subheadline }}

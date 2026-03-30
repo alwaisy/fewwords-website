@@ -1,10 +1,6 @@
 <script setup lang="ts">
-const { tabCount } = useTabCount();
-
 useHead({
-  title: computed(
-    () => `You Have ${tabCount.value} Unread Tabs. I Know, I Had 87 Too.`,
-  ),
+  title: "Fewwords — The quick & painless way to read the internet",
   titleTemplate: null,
 });
 </script>
