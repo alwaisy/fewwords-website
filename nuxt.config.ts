@@ -43,7 +43,7 @@ export default defineNuxtConfig({
     emitRouteChunkError: "automatic-immediate",
   },
 
-  modules: [
+   modules: [
     "@nuxt/eslint",
     "@nuxt/fonts",
     "@nuxt/hints",
@@ -59,6 +59,7 @@ export default defineNuxtConfig({
     "nuxt-auth-utils",
     "nuxt-processor",
     "nuxt-ssr-api-logger",
+    "nuxt-umami",
   ],
 
   processor: {
@@ -68,13 +69,21 @@ export default defineNuxtConfig({
     },
   },
 
-  toastify: {
+   toastify: {
     autoClose: 4000,
     position: "top-center",
     theme: "colored",
     pauseOnHover: false,
     hideProgressBar: true,
     transition: "slide",
+  },
+
+  umami: {
+    enabled: process.env.NODE_ENV === "production",
+    autoTrack: true,
+    useDirective: true,
+    id: process.env.NUXT_UMAMI_ID,
+    host: process.env.NUXT_UMAMI_HOST,
   },
 
   colorMode: {

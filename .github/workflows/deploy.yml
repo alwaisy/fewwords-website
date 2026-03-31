@@ -30,10 +30,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          push: true
-          tags: ghcr.io/alwaisy/fewwords-website:latest
-          build-args: |
+           context: .
+           push: true
+           tags: ghcr.io/alwaisy/fewwords-website:latest
+           build-args: |
             NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}
             NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
@@ -48,6 +48,8 @@ jobs:
             RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}
             RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}
+            NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}
 
       - name: Create .env file for VPS
         run: |

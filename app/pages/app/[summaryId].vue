@@ -2,6 +2,8 @@
 import { useErrorMessage } from "./composables/use-error-message";
 import { useSummaryProcessing } from "./composables/use-summary-processing";
 
+import { umTrackEvent } from '#umami';
+
 const route = useRoute();
 const router = useRouter();
 const summaryId = route.params.summaryId as string;
@@ -95,6 +97,7 @@ watchEffect(() => {
 function copyLink() {
   navigator.clipboard.writeText(window.location.href);
   useToastify("Link copied!");
+  umTrackEvent('summary-share', { summaryId: summary.value?.summaryId });
 }
 
 function openSource() {
@@ -116,6 +119,7 @@ async function saveSummary() {
     });
     isSaved.value = true;
     useToastify("Saved to library!", { type: "success" });
+    umTrackEvent('summary-save', { summaryId });
   } catch {
     useToastify("Failed to save", { type: "error" });
   }
@@ -131,12 +135,14 @@ async function unsaveSummary() {
     });
     isSaved.value = false;
     useToastify("Removed from library", { type: "info" });
+    umTrackEvent('summary-unsave', { summaryId });
   } catch {
     useToastify("Failed to unsave", { type: "error" });
   }
 }
 
 function doAnother() {
+  umTrackEvent('summary-new');
   router.push("/app");
 }
 

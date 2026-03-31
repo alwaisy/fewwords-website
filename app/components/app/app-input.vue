@@ -42,7 +42,23 @@ async function handleSubmit() {
   }
 }
 
-// Conversational hero messages
+// Helper to detect content type for tracking
+function detectEssence(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      return 'youtube';
+    }
+    if (hostname.includes('reddit.com')) {
+      return 'reddit';
+    }
+    return 'article';
+  } catch {
+    return 'unknown';
+  }
+}
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
   const hour = new Date().getHours();
 
@@ -172,6 +188,11 @@ onMounted(() => {
       </Button>
 
       <Button
+        v-umami="{
+          name: 'url-submit',
+          url: inputUrl,
+          essence: detectEssence(inputUrl)
+        }"
         type="submit"
         variant="ghost"
         size="icon"
