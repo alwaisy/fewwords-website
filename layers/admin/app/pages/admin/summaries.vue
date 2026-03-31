@@ -27,14 +27,18 @@ useHead({
 const page = ref(0);
 const pageSize = ref(10);
 
+// Read initial search from query params (e.g. from LLM Usage table link)
+const route = useRoute();
+const initialSearch = (route.query.search as string) || "";
+
 // Server-side filter state (use "all" for Select compatibility, convert to "" for API)
-const search = ref("");
+const search = ref(initialSearch);
 const essenceFilter = ref("all");
 const statusFilter = ref("all");
 const modelFilter = ref("all");
 
 // Debounced search for API calls
-const debouncedSearch = ref("");
+const debouncedSearch = ref(initialSearch);
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 watch(search, (newVal) => {
