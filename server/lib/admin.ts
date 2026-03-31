@@ -1,8 +1,7 @@
 
 import type { Article, Summary, YouTube } from "~~/db/schema";
 
-// Base type with common fields
-type BaseLlmUsage = {
+export type FlattenedLlmUsage = {
   summaryId: string;
   essence: "article" | "youtube" | "reddit";
   status: string;
@@ -14,42 +13,21 @@ type BaseLlmUsage = {
   summaryCompletionTokens: number | null;
   summaryTotalTokens: number | null;
   holisticTotalTokens: number;
-};
-
-// YouTube-specific extension
-type YoutubeLlmUsage = BaseLlmUsage & {
-  essence: "youtube";
+  // Classifier stage (article + youtube)
   classifierModel: string | null;
   classifierTimeMs: number | null;
   classifierPromptTokens: number | null;
   classifierCompletionTokens: number | null;
   classifierTotalTokens: number | null;
+  // Transcript stage (youtube only)
   transcriptModel: string | null;
   transcriptTimeMs: number | null;
   transcriptPromptTokens: number | null;
   transcriptCompletionTokens: number | null;
   transcriptTotalTokens: number | null;
+  // Total cycle time
   totalTimeMs: number | null;
 };
-
-// Article-specific extension
-type ArticleLlmUsage = BaseLlmUsage & {
-  essence: "article";
-  classifierModel: string | null;
-  classifierTimeMs: number | null;
-  classifierPromptTokens: number | null;
-  classifierCompletionTokens: number | null;
-  classifierTotalTokens: number | null;
-  totalTimeMs: number | null;
-};
-
-// Fallback for Reddit or missing relations
-type FallbackLlmUsage = BaseLlmUsage & {
-  essence: "reddit";
-};
-
-// The final discriminated union type
-export type FlattenedLlmUsage = YoutubeLlmUsage | ArticleLlmUsage | FallbackLlmUsage;
 
 
 /**
@@ -65,8 +43,9 @@ export function flattenLlmUsage(
   article: Article | null,
 ): FlattenedLlmUsage {
   // Common fields from the Summary table
-  const base = {
+  const base: FlattenedLlmUsage = {
     summaryId: summary.summaryId,
+    essence: summary.essence,
     status: summary.status,
     createdAt: summary.createdAt,
     summaryModel: summary.model,
@@ -75,54 +54,53 @@ export function flattenLlmUsage(
     summaryPromptTokens: summary.promptTokens,
     summaryCompletionTokens: summary.completionTokens,
     summaryTotalTokens: summary.totalTokens,
+    holisticTotalTokens: 0,
+    classifierModel: null,
+    classifierTimeMs: null,
+    classifierPromptTokens: null,
+    classifierCompletionTokens: null,
+    classifierTotalTokens: null,
+    transcriptModel: null,
+    transcriptTimeMs: null,
+    transcriptPromptTokens: null,
+    transcriptCompletionTokens: null,
+    transcriptTotalTokens: null,
+    totalTimeMs: null,
   };
 
   if (summary.essence === "youtube" && youtube) {
-    const holisticTotalTokens =
+    base.holisticTotalTokens =
       (base.summaryTotalTokens || 0) +
       (youtube.classifierTotalTokens || 0) +
       (youtube.transcriptTotalTokens || 0);
-
-    return {
-      ...base,
-      essence: "youtube",
-      holisticTotalTokens,
-      classifierModel: youtube.classifierModel,
-      classifierTimeMs: youtube.classifierTimeMs,
-      classifierPromptTokens: youtube.classifierPromptTokens,
-      classifierCompletionTokens: youtube.classifierCompletionTokens,
-      classifierTotalTokens: youtube.classifierTotalTokens,
-      transcriptModel: youtube.transcriptModel,
-      transcriptTimeMs: youtube.transcriptTimeMs,
-      transcriptPromptTokens: youtube.transcriptPromptTokens,
-      transcriptCompletionTokens: youtube.transcriptCompletionTokens,
-      transcriptTotalTokens: youtube.transcriptTotalTokens,
-      totalTimeMs: youtube.totalTimeMs,
-    };
+    base.classifierModel = youtube.classifierModel;
+    base.classifierTimeMs = youtube.classifierTimeMs;
+    base.classifierPromptTokens = youtube.classifierPromptTokens;
+    base.classifierCompletionTokens = youtube.classifierCompletionTokens;
+    base.classifierTotalTokens = youtube.classifierTotalTokens;
+    base.transcriptModel = youtube.transcriptModel;
+    base.transcriptTimeMs = youtube.transcriptTimeMs;
+    base.transcriptPromptTokens = youtube.transcriptPromptTokens;
+    base.transcriptCompletionTokens = youtube.transcriptCompletionTokens;
+    base.transcriptTotalTokens = youtube.transcriptTotalTokens;
+    base.totalTimeMs = youtube.totalTimeMs;
+    return base;
   }
 
   if (summary.essence === "article" && article) {
-    const holisticTotalTokens =
+    base.holisticTotalTokens =
       (base.summaryTotalTokens || 0) +
       (article.classifierTotalTokens || 0);
-
-    return {
-      ...base,
-      essence: "article",
-      holisticTotalTokens,
-      classifierModel: article.classifierModel,
-      classifierTimeMs: article.classifierTimeMs,
-      classifierPromptTokens: article.classifierPromptTokens,
-      classifierCompletionTokens: article.classifierCompletionTokens,
-      classifierTotalTokens: article.classifierTotalTokens,
-      totalTimeMs: article.totalTimeMs,
-    };
+    base.classifierModel = article.classifierModel;
+    base.classifierTimeMs = article.classifierTimeMs;
+    base.classifierPromptTokens = article.classifierPromptTokens;
+    base.classifierCompletionTokens = article.classifierCompletionTokens;
+    base.classifierTotalTokens = article.classifierTotalTokens;
+    base.totalTimeMs = article.totalTimeMs;
+    return base;
   }
 
   // Fallback for Reddit or if relations are missing
-  return {
-    ...base,
-    holisticTotalTokens: base.summaryTotalTokens || 0,
-    essence: "reddit",
-  };
+  base.holisticTotalTokens = base.summaryTotalTokens || 0;
+  return base;
 }

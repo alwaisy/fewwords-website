@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { FlattenedLlmUsage } from "~~/server/lib/admin";
+
 import { formatNumber, formatTime } from "../../lib/formatters";
+
+import type { FlattenedLlmUsage } from "~~/server/lib/admin";
 
 const props = defineProps<{
   llmUsage: FlattenedLlmUsage;
