@@ -2,8 +2,6 @@
 import { useErrorMessage } from "./composables/use-error-message";
 import { useSummaryProcessing } from "./composables/use-summary-processing";
 
-import { umTrackEvent } from '#umami';
-
 const route = useRoute();
 const router = useRouter();
 const summaryId = route.params.summaryId as string;
