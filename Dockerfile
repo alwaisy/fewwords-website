@@ -51,6 +51,9 @@ COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
 COPY --from=build /app/bun.lock .
 
+# Copy test scripts for production debugging
+COPY test-production test-production
+
 # Ensure static assets are in the path Bun Nitro preset expects
 RUN mkdir -p .output/server/public && \
     cp -r .output/public/* .output/server/public/ 2>/dev/null || true

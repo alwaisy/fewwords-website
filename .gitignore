@@ -26,6 +26,9 @@ logs
 # Dev docs
 dev-docs/
 
+# Test production (shipped to Docker, not to git)
+test-production/
+
 # Landing page experiments (don't ship)
 app/components/lp-fw/
 app/pages/lp-fw.vue
