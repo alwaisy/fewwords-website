@@ -51,23 +51,25 @@ jobs:
             NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}
             NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}
 
-      - name: Create .env file for VPS
-        run: |
-          echo "NODE_ENV=production" >> .env
-          echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
-          echo "NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}" >> .env
-          echo "JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}" >> .env
-          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
-          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
-          echo "YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}" >> .env
-          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
-          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
-          echo "RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}" >> .env
-          echo "RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}" >> .env
-          echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
+       - name: Create .env file for VPS
+         run: |
+           echo "NODE_ENV=production" >> .env
+           echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
+           echo "NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}" >> .env
+           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+           echo "NUXT_SESSION_PASSWORD=${{ secrets.NUXT_SESSION_PASSWORD }}" >> .env
+           echo "JINA_AI_API_KEY=${{ secrets.JINA_AI_API_KEY }}" >> .env
+           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
+           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+           echo "YOUTUBE_DATA_API_KEY=${{ secrets.YOUTUBE_DATA_API_KEY }}" >> .env
+           echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
+           echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
+           echo "RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}" >> .env
+           echo "RESEND_FROM_NAME=${{ secrets.RESEND_FROM_NAME }}" >> .env
+           echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
+           echo "NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}" >> .env
+           echo "NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}" >> .env
 
       - name: Transfer deployment files to VPS
         uses: appleboy/scp-action@v0.1.7
