@@ -172,20 +172,26 @@ watch(
 
 /* Code blocks */
 .summary-wrapper :deep(pre) {
-  background-color: hsl(var(--muted) / 0.4);
-  border-radius: 3px;
-  padding: 1rem;
+  background-color: color-mix(in srgb, var(--muted) 50%, transparent);
+  border-radius: 6px;
+  padding: 0.75rem;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
-  border: none;
+  overflow-x: auto;
 }
 
 .summary-wrapper :deep(pre code) {
   background-color: transparent;
-  color: hsl(var(--foreground));
+  color: #2d2621;
   padding: 0;
-  font-weight: 400;
-  font-size: 0.875em;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+:root.dark .summary-wrapper :deep(pre code) {
+  color: #e8e0d4;
 }
 
 /* Blockquote */
