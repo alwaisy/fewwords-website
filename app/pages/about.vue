@@ -74,7 +74,7 @@ useHead({
         </div>
 
         <div class="flex items-center justify-center pt-8">
-          <Button as-child size="lg">
+          <Button as-child size="lg" v-umami="'about-cta'">
             <NuxtLink to="/">Summarize something →</NuxtLink>
           </Button>
         </div>
