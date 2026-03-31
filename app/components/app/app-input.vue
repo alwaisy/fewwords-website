@@ -26,9 +26,17 @@ async function handleSubmit() {
     if (response?.summaryId) {
       await router.replace(`/app/${response.summaryId}`);
     }
-  } catch {
-    // TODO: Show error to user
-    useToastify('Failed to create summary. Try again.', { type: 'error' });
+  } catch (error: unknown) {
+    const message =
+      error && typeof error === "object" && "data" in error
+        ? (error.data as { statusMessage?: string })?.statusMessage
+        : undefined;
+
+    if (message) {
+      useToastify(message, { type: 'error' });
+    } else {
+      useToastify('Failed to create summary. Try again.', { type: 'error' });
+    }
   } finally {
     isSubmitting.value = false;
   }
