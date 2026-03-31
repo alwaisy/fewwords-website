@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LucideIcon } from "lucide-vue-next";
-import { Command, FileText, LayoutDashboard, Users } from "lucide-vue-next";
+import { Command, FileText, FileJson, LayoutDashboard, Users } from "lucide-vue-next";
 
 // Get user from useAuth (consistent with rest of app)
 const { user } = useAuth();
@@ -56,6 +56,7 @@ const sidebarData: SidebarData = {
       items: [
         { title: "Stats", url: "/admin", icon: LayoutDashboard },
         { title: "Summaries", url: "/admin/summaries", icon: FileText },
+        { title: "LLM Usage", url: "/admin/llm-usage", icon: FileJson },
         { title: "Users", url: "/admin/users", icon: Users },
       ],
     },
