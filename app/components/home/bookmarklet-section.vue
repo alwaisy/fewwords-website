@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import landingCopy from '~/content/landing-copy'
 
-const config = useRuntimeConfig()
-const siteUrl = config.public.siteUrl as string || ''
-
-const bookmarkletUrl = `javascript:(function(){window.location.href='${siteUrl}/app?url='+encodeURIComponent(window.location.href)})()`
+const bookmarkletUrl = useState('bookmarklet-url', () => {
+  const origin = useRequestURL().origin
+  return `javascript:(function(){window.location.href='${origin}/app?url='+encodeURIComponent(window.location.href)})()`
+})
 </script>
 
 <template>
-  <section class="py-24 px-4 bg-muted/30">
+  <section id="bookmarklet" class="py-24 px-4 bg-muted/30">
     <div class="max-w-3xl mx-auto text-center">
       <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">
         {{ landingCopy.bookmarklet_section.headline }}

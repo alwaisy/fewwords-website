@@ -17,7 +17,7 @@ import landingCopy from "~/content/landing-copy";
         <Button size="lg" class="text-lg px-8 py-6" as-child>
           <NuxtLink to="/app">{{ landingCopy.hero_section.cta }}</NuxtLink>
         </Button>
-        <Button size="lg" variant="link" class="text-lg text-muted-foreground" as-child>
+        <Button size="lg" variant="ghost" class="text-lg px-8 py-6" as-child>
           <a href="#bookmarklet">Get the one-click bookmarklet</a>
         </Button>
       </div>
