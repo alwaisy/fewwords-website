@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { marked } from "marked";
+import { sanitizeMarkdown } from "~/lib/markdown";
 
 useHead({
   title: "Terms of Service - Fewwords",
@@ -11,7 +11,7 @@ useHead({
   ],
 });
 
-const content = marked.parse(`# Terms of Service
+const rawMarkdown = `# Terms of Service
 
 **Last updated: April 1, 2026**
 
@@ -105,11 +105,13 @@ These terms are governed by the laws of the jurisdiction where the service opera
 ## Contact
 
 Questions about these terms? Reach out at [hello@fewwords.app](mailto:hello@fewwords.app).
-`);
+`;
+
+const content = sanitizeMarkdown(rawMarkdown);
 </script>
 
 <template>
   <main class="flex-1 py-16 px-4">
-    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert max-w-none" v-html="content" />
+    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert" v-html="content" />
   </main>
 </template>

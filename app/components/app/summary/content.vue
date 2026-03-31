@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import DOMPurify from "dompurify";
-import { parse } from "marked";
 import { computed, watch } from "vue";
 
-import { convertYoutubeTimestamps } from "~/utils/markdown";
+import { convertYoutubeTimestamps, sanitizeMarkdown } from "~/lib/markdown";
 
 interface Props {
   content?: string;
@@ -48,19 +46,10 @@ const transformedContent = computed(() => {
   return content;
 });
 
-// Parse markdown to sanitized HTML (client-side only)
+// Parse markdown to sanitized HTML
 const renderedHtml = computed(() => {
   if (!transformedContent.value) return "";
-
-  // Parse markdown to HTML
-  const rawHtml = parse(transformedContent.value) as string;
-
-  // Sanitize with DOMPurify (only on client)
-  if (import.meta.client) {
-    return DOMPurify.sanitize(rawHtml);
-  }
-
-  return rawHtml;
+  return sanitizeMarkdown(transformedContent.value);
 });
 
 // Debug watch

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { marked } from "marked";
+import { sanitizeMarkdown } from "~/lib/markdown";
 
 useHead({
   title: "Privacy Policy - Fewwords",
@@ -11,7 +11,7 @@ useHead({
   ],
 });
 
-const content = marked.parse(`# Privacy Policy
+const rawMarkdown = `# Privacy Policy
 
 **Last updated: April 1, 2026**
 
@@ -119,11 +119,13 @@ If we make significant changes, we'll notify you via email or a notice on the si
 ## Contact
 
 Questions or concerns about privacy? Reach out at [hello@fewwords.app](mailto:hello@fewwords.app).
-`);
+`;
+
+const content = sanitizeMarkdown(rawMarkdown);
 </script>
 
 <template>
   <main class="flex-1 py-16 px-4">
-    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert max-w-none" v-html="content" />
+    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert" v-html="content" />
   </main>
 </template>

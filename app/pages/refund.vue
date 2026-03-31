@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { marked } from "marked";
+import { sanitizeMarkdown } from "~/lib/markdown";
 
 useHead({
   title: "Refund Policy - Fewwords",
@@ -11,7 +11,7 @@ useHead({
   ],
 });
 
-const content = marked.parse(`# Refund Policy
+const rawMarkdown = `# Refund Policy
 
 **Last updated: April 1, 2026**
 
@@ -71,11 +71,13 @@ We'll update this page when paid plans become available. If we change the refund
 ## Contact
 
 Questions? Email [hello@fewwords.app](mailto:hello@fewwords.app).
-`);
+`;
+
+const content = sanitizeMarkdown(rawMarkdown);
 </script>
 
 <template>
   <main class="flex-1 py-16 px-4">
-    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert max-w-none" v-html="content" />
+    <div class="max-w-3xl mx-auto prose prose-muted dark:prose-invert" v-html="content" />
   </main>
 </template>
