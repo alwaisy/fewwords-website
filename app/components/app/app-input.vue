@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const router = useRouter();
-const inputUrl = ref("");
+const route = useRoute();
+const inputUrl = ref((route.query.url as string) || "");
 const isFocused = ref(false);
 const isSubmitting = ref(false);
 
@@ -112,6 +113,11 @@ function getRandomMessage(arr: string[]): string {
 const heroMessage = ref('Welcome! What can I help you with?');
 
 onMounted(() => {
+  // Auto-submit if URL was pre-filled from query param (bookmarklet or /{URL} redirect)
+  if (inputUrl.value) {
+    setTimeout(() => handleSubmit(), 300);
+  }
+
   try {
     const visited = localStorage.getItem('fewwords-visited');
     const isFirstVisit = !visited;

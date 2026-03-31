@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import landingCopy from '~/content/landing-copy'
 
-const bookmarkletUrl = 'javascript:(function(){window.location.href=%27https://fewwords.com/app?url=%27+encodeURIComponent(window.location.href)})()'
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl as string || ''
+
+const bookmarkletUrl = `javascript:(function(){window.location.href='${siteUrl}/app?url='+encodeURIComponent(window.location.href)})()`
 </script>
 
 <template>
@@ -17,12 +20,10 @@ const bookmarkletUrl = 'javascript:(function(){window.location.href=%27https://f
       <div class="mb-12">
         <a
           :href="bookmarkletUrl"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors cursor-grab"
-          onclick="return false;"
-          draggable="true"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors cursor-grab active:cursor-grabbing select-none"
         >
           <Icon name="lucide:bookmark" class="w-5 h-5" />
-          Summary Fewwords
+          Summarize with Fewwords
         </a>
         <p class="mt-4 text-sm text-muted-foreground">Drag this to your bookmarks bar</p>
       </div>
