@@ -11,13 +11,7 @@
           </p>
         </div>
 
-        <!-- <nav class="flex gap-6">
-          <NuxtLink
-            to="/privacy"
-            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Privacy
-          </NuxtLink>
+        <nav class="flex gap-6">
           <NuxtLink
             to="/terms"
             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -25,12 +19,24 @@
             Terms
           </NuxtLink>
           <NuxtLink
+            to="/privacy"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Privacy
+          </NuxtLink>
+          <NuxtLink
+            to="/refund"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Refunds
+          </NuxtLink>
+          <NuxtLink
             to="/contact"
             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Contact
           </NuxtLink>
-        </nav> -->
+        </nav>
         <p class="text-sm text-muted-foreground">
           &copy; {{ new Date().getFullYear() }} Fewwords. All rights reserved.
         </p>
