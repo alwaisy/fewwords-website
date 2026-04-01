@@ -54,6 +54,9 @@ export default defineEventHandler(async (event) => {
         username: user.username ?? undefined,
         role: user.role,
         createdAt: user.createdAt.toISOString(),
+        plan: user.plan,
+        wordsUsed: user.wordsUsed,
+        wordsLimit: user.wordsLimit,
       },
     };
 
@@ -69,6 +72,9 @@ export default defineEventHandler(async (event) => {
         username: user.username,
         role: user.role,
         createdAt: user.createdAt.toISOString(),
+        plan: user.plan,
+        wordsUsed: user.wordsUsed,
+        wordsLimit: user.wordsLimit,
       },
     };
   } catch {

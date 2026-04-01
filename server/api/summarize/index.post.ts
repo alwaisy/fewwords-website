@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 
 import { getRedis } from '../../lib/redis'
 import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
+import { countWords, incrementWordCount } from '../../services/quota'
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 
@@ -182,6 +183,16 @@ export default defineEventHandler(async (event) => {
       summaryInternalId = updated[0]?.id
       const completedAt = new Date()
 
+      // Count output words and store on summary + increment user quota
+      const outputWordCount = result.summary ? countWords(result.summary) : 0
+      if (outputWordCount > 0) {
+        await db.update(summaries)
+          .set({ wordCount: outputWordCount })
+          .where(eq(summaries.summaryId, updateSummaryId))
+
+        await incrementWordCount(event, userId, outputWordCount)
+      }
+
       // Store article metadata if essence is article
       if (essence === 'article' && summaryInternalId && 'metadata' in result) {
         const metadata = (result as { metadata: ArticleMetadata }).metadata
@@ -246,6 +257,16 @@ export default defineEventHandler(async (event) => {
     const insertedRecord = insertResult[0]
     const summaryId = insertedRecord?.summaryId
     summaryInternalId = insertedRecord?.id
+
+    // Count output words and store on summary + increment user quota
+    const outputWordCount = result.summary ? countWords(result.summary) : 0
+    if (outputWordCount > 0 && summaryId) {
+      await db.update(summaries)
+        .set({ wordCount: outputWordCount })
+        .where(eq(summaries.summaryId, summaryId))
+
+      await incrementWordCount(event, userId, outputWordCount)
+    }
 
     // Store article metadata if essence is article
     if (essence === 'article' && summaryInternalId && 'metadata' in result) {

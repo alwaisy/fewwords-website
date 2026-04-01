@@ -1,4 +1,5 @@
 import youtubeSummaryQueue from "../../queues/youtube-summary";
+import { checkQuota } from "../../services/quota";
 import { fetchYouTubeMetadata } from "../../services/youtube/metadata";
 
 import { summaries } from "~~/db/schema";
@@ -16,6 +17,17 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: "URL is required",
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // QUOTA CHECK: Before any processing
+    // ═══════════════════════════════════════════════════════
+    const quota = await checkQuota(event, userId);
+    if (!quota.allowed) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: quota.reason ?? "Usage limit reached.",
       });
     }
 

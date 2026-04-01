@@ -112,6 +112,10 @@ function isActive(path: string): boolean {
           <DropdownMenuContent align="end" class="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <div class="px-2 py-1.5">
+              <AppUsageBar />
+            </div>
+            <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
               <NuxtLink to="/library">Library</NuxtLink>
             </DropdownMenuItem>

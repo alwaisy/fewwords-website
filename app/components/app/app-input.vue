@@ -5,6 +5,10 @@ const inputUrl = ref((route.query.url as string) || "");
 const isFocused = ref(false);
 const isSubmitting = ref(false);
 
+const emit = defineEmits<{
+  submitted: []
+}>()
+
 interface CreatePendingResponse {
   summaryId: string;
 }
@@ -25,13 +29,24 @@ async function handleSubmit() {
     );
 
     if (response?.summaryId) {
+      emit('submitted')
       await router.replace(`/app/${response.summaryId}`);
     }
   } catch (error: unknown) {
+    const statusCode =
+      error && typeof error === "object" && "statusCode" in error
+        ? (error as { statusCode: number }).statusCode
+        : undefined;
+
     const message =
       error && typeof error === "object" && "data" in error
         ? (error.data as { statusMessage?: string })?.statusMessage
         : undefined;
+
+    // Quota exceeded: refresh quota so the gate shows
+    if (statusCode === 403) {
+      emit('submitted') // Triggers quota refresh in parent
+    }
 
     if (message) {
       useToastify(message, { type: 'error' });

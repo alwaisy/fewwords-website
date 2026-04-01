@@ -17,6 +17,16 @@ const generateId = () => crypto.randomUUID();
 export const userRoleEnum = ["user", "admin"] as const;
 export type UserRole = (typeof userRoleEnum)[number];
 
+// Plan types
+export const planEnum = ["free", "pro"] as const;
+export type Plan = (typeof planEnum)[number];
+
+// Word limits per plan
+export const PLAN_WORD_LIMITS = {
+  free: 5000,
+  pro: 20000,
+} as const;
+
 // Users table for authentication
 export const users = pgTable(
   "User",
@@ -39,6 +49,14 @@ export const users = pgTable(
     emailChangeExpiresAt: timestamp("email_change_expires_at", {
       withTimezone: true,
     }),
+    // Subscription
+    plan: text("plan", { enum: planEnum }).notNull().default("free"),
+    wordsUsed: integer("words_used").notNull().default(0),
+    wordsLimit: integer("words_limit").notNull().default(PLAN_WORD_LIMITS.free),
+    periodResetAt: timestamp("period_reset_at", { withTimezone: true }),
+    // Paddle billing (nullable until billing is set up)
+    paddleCustomerId: text("paddle_customer_id"),
+    paddleSubscriptionId: text("paddle_subscription_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -46,6 +64,7 @@ export const users = pgTable(
   (table) => ({
     emailIdx: index("User_email_idx").on(table.email),
     otpCodeIdx: index("User_otp_code_idx").on(table.otpCode),
+    planIdx: index("User_plan_idx").on(table.plan),
   }),
 );
 
@@ -92,6 +111,7 @@ export const summaries = pgTable(
     completionTokens: integer("completion_tokens"),
     totalTokens: integer("total_tokens"),
     isPublic: boolean("is_public").notNull().default(true),
+    wordCount: integer("word_count"), // Output word count (what user receives)
     responseTimeMs: integer("response_time_ms"),
     status: text("status", { enum: statusEnum }).notNull().default("pending"),
     stage: text("stage"), // Temporary field for multi-stage loading (metadata, classifying, summarizing)
@@ -294,3 +314,24 @@ export const savedSummaries = pgTable(
 
 export type SavedSummary = typeof savedSummaries.$inferSelect;
 export type NewSavedSummary = typeof savedSummaries.$inferInsert;
+
+// Waitlist table for paid plan interest
+export const waitlist = pgTable(
+  "Waitlist",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    email: text("email").notNull(),
+    userId: text("user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    emailIdx: index("Waitlist_email_idx").on(table.email),
+  }),
+);
+
+export type Waitlist = typeof waitlist.$inferSelect;
+export type NewWaitlist = typeof waitlist.$inferInsert;
