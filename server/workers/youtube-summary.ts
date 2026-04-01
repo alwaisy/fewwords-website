@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { getSender } from "../config/emails";
+import { addError } from "../lib/errors";
 import { getRedis } from "../lib/redis";
 import type {
   YouTubeSummaryTaskName,
@@ -128,6 +129,25 @@ export default defineWorker<
         emailError = await sendCompletionEmail(notifyEmail, result.title, summaryId);
       }
 
+      // Save email error to DB as structured error log
+      if (emailError) {
+        const currentRecord = await db
+          .select({ errorMessage: summaries.errorMessage })
+          .from(summaries)
+          .where(eq(summaries.summaryId, summaryId))
+          .limit(1);
+
+        const updatedErrors = addError(currentRecord[0]?.errorMessage ?? null, {
+          type: "email",
+          message: emailError,
+        });
+
+        await db
+          .update(summaries)
+          .set({ errorMessage: updatedErrors })
+          .where(eq(summaries.summaryId, summaryId));
+      }
+
       job.updateProgress(100);
 
       console.log(`[YouTubeWorker] Job completed for ${summaryId}`);
@@ -147,7 +167,14 @@ export default defineWorker<
 
       await db
         .update(summaries)
-        .set({ status: "failed", errorMessage })
+        .set({
+          status: "failed",
+          errorMessage: addError(null, {
+            type: "unknown",
+            message: errorMessage,
+            raw: error instanceof Error ? error.stack : undefined,
+          }),
+        })
         .where(eq(summaries.summaryId, summaryId));
 
       // Set Redis stage to "failed" so SSE closes the connection

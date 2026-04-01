@@ -5,6 +5,7 @@ import { computed } from "vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Article, Summary, YouTube } from "~~/db/schema";
+import { parseErrorLog } from "~~/server/lib/errors";
 
 const props = defineProps<{
   summary: Summary & {
@@ -32,6 +33,8 @@ const domain = computed(() => {
     return props.summary.source.replace(/^https?:\/\/(www\.)?/, "");
   }
 });
+
+const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 </script>
 
 <template>
@@ -151,11 +154,32 @@ const domain = computed(() => {
           </div>
         </div>
 
-        <!-- Error Message -->
-        <div v-if="summary.errorMessage" class="space-y-3">
-          <h3 class="text-sm font-medium text-destructive">Error</h3>
-          <div class="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-            {{ summary.errorMessage }}
+        <!-- Error Log -->
+        <div v-if="errorLog.length" class="space-y-3">
+          <h3 class="text-sm font-medium text-destructive">
+            Errors ({{ errorLog.length }})
+          </h3>
+          <div
+            v-for="(error, i) in errorLog"
+            :key="i"
+            class="p-3 bg-destructive/10 rounded-md space-y-1"
+          >
+            <div class="flex items-center gap-2">
+              <Badge :variant="error.type === 'email' ? 'secondary' : 'destructive'">
+                {{ error.type }}
+              </Badge>
+              <span v-if="error.retryCount" class="text-xs text-muted-foreground">
+                retry #{{ error.retryCount }}
+              </span>
+            </div>
+            <p class="text-sm text-destructive">{{ error.message }}</p>
+            <p class="text-xs text-muted-foreground">
+              {{ new Date(error.timestamp).toLocaleString() }}
+            </p>
+            <pre
+              v-if="error.raw"
+              class="text-xs text-muted-foreground mt-1 p-2 bg-muted rounded overflow-x-auto"
+            >{{ error.raw }}</pre>
           </div>
         </div>
         </div>
