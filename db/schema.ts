@@ -23,7 +23,7 @@ export type Plan = (typeof planEnum)[number];
 
 // Word limits per plan
 export const PLAN_WORD_LIMITS = {
-  free: 5000,
+  free: 2500,
   pro: 20000,
 } as const;
 

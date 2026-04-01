@@ -3,8 +3,8 @@ import type { H3Event } from "h3";
 
 import { users, PLAN_WORD_LIMITS } from "~~/db/schema";
 
-// Anonymous threshold: gate at 1800 (before 2000 hard limit)
-const ANON_GATE_THRESHOLD = 1800;
+// Anonymous threshold: gate at 900 (before 1000 hard limit)
+const ANON_GATE_THRESHOLD = 900;
 
 export interface QuotaResult {
   allowed: boolean;
