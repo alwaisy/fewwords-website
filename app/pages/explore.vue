@@ -127,17 +127,16 @@ const showPagination = computed(() => {
             Page {{ pagination.page }} of {{ pagination.totalPages }}
           </span>
 
-  <Button
-    v-umami="'explore-load-more'"
-    variant="outline"
-    size="lg"
-    class="w-full sm:w-auto"
-    :disabled="isLoading || !hasMore"
-    @click="loadMore"
-  >
-    <span v-if="isLoading">Loading...</span>
-    <span v-else>Load More</span>
-  </Button>
+          <Button
+            v-umami="'explore-load-more'"
+            variant="outline"
+            size="sm"
+            :disabled="pagination.page === pagination.totalPages"
+            @click="page++"
+          >
+            Next
+            <Icon name="lucide:chevron-right" class="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </section>
