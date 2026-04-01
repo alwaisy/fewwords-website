@@ -51,8 +51,8 @@ jobs:
             NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}
             NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}
 
-       - name: Create .env file for VPS
-         run: |
+      - name: Create .env file for VPS
+        run: |
            echo "NODE_ENV=production" >> .env
            echo "NUXT_SITE_URL=${{ secrets.NUXT_SITE_URL }}" >> .env
            echo "NUXT_PUBLIC_BASE_URL=${{ secrets.NUXT_PUBLIC_BASE_URL }}" >> .env
