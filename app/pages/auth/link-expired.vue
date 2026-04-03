@@ -1,8 +1,9 @@
 <script setup lang="ts">
-useHead({
-  title: 'Link Expired - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Link Expired - Fewwords",
+  titleTemplate: null,
+  robots: { index: false, follow: false },
+});
 
 definePageMeta({
   layout: 'auth'

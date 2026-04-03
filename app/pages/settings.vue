@@ -1,8 +1,9 @@
 <script setup lang="ts">
-useHead({
-  title: 'Settings - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Settings - Fewwords",
+  titleTemplate: null,
+  robots: { index: false, follow: false },
+});
 
 definePageMeta({
   middleware: 'auth'

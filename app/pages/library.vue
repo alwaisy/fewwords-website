@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
-useHead({
-  title: 'Library - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Library - Fewwords",
+  titleTemplate: null,
+  description: "Your saved and created summaries in Fewwords.",
+  ogTitle: "Library - Fewwords",
+  ogDescription: "Your saved and created summaries in Fewwords.",
+  twitterTitle: "Library - Fewwords",
+  twitterDescription: "Your saved and created summaries in Fewwords.",
+});
 
 definePageMeta({
   middleware: 'auth'

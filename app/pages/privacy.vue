@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
-useHead({
+useSeoMeta({
   title: "Privacy Policy - Fewwords",
-  meta: [
-    {
-      name: "description",
-      content: "Privacy Policy for Fewwords. What we collect, why, and how we protect it.",
-    },
-  ],
+  description: "Privacy Policy for Fewwords. What we collect, why, and how we protect it.",
+  ogTitle: "Privacy Policy - Fewwords",
+  ogDescription: "Privacy Policy for Fewwords. What we collect, why, and how we protect it.",
+  twitterTitle: "Privacy Policy - Fewwords",
+  twitterDescription: "Privacy Policy for Fewwords. What we collect, why, and how we protect it.",
 });
 
 const rawMarkdown = `# Privacy Policy

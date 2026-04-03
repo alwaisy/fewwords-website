@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
-useHead({
-  title: 'Explore - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Explore - Fewwords",
+  titleTemplate: null,
+  description: "Browse public summaries created by the Fewwords community.",
+  ogTitle: "Explore - Fewwords",
+  ogDescription: "Browse public summaries created by the Fewwords community.",
+  twitterTitle: "Explore - Fewwords",
+  twitterDescription: "Browse public summaries created by the Fewwords community.",
+});
 
 interface ExploreSummary {
   summaryId: string

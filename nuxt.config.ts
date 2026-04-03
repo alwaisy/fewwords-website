@@ -8,6 +8,22 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
 
+  site: {
+    url: process.env.NUXT_SITE_URL || "https://fewwords.app",
+    name: "Fewwords",
+    description:
+      "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
+    defaultLocale: "en",
+  },
+
+  robots: {
+    disallow: ["/app", "/admin", "/settings", "/library", "/auth"],
+  },
+
+  sitemap: {
+    // Auto-discovers pages/ directory
+  },
+
   runtimeConfig: {
     // Private: server-side only (use NUXT_ prefix to override at runtime)
     private: {
@@ -43,7 +59,7 @@ export default defineNuxtConfig({
     emitRouteChunkError: "automatic-immediate",
   },
 
-   modules: [
+  modules: [
     "@nuxt/eslint",
     "@nuxt/fonts",
     "@nuxt/hints",
@@ -60,6 +76,7 @@ export default defineNuxtConfig({
     "nuxt-processor",
     "nuxt-ssr-api-logger",
     "nuxt-umami",
+    "@nuxtjs/seo",
   ],
 
   processor: {
@@ -69,7 +86,7 @@ export default defineNuxtConfig({
     },
   },
 
-   toastify: {
+  toastify: {
     autoClose: 4000,
     position: "top-center",
     theme: "colored",

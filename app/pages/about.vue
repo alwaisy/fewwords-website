@@ -1,11 +1,16 @@
 <script setup lang="ts">
-useHead({
-  title: 'The Story Behind Fewwords',
+useSeoMeta({
+  title: "The Story Behind Fewwords",
   titleTemplate: null,
-  meta: [
-    { name: 'description', content: 'Why I built Fewwords. A personal problem, a failed attempt, and a second chance.' }
-  ]
-})
+  description:
+    "Why I built Fewwords. A personal problem, a failed attempt, and a second chance.",
+  ogTitle: "The Story Behind Fewwords",
+  ogDescription:
+    "Why I built Fewwords. A personal problem, a failed attempt, and a second chance.",
+  twitterTitle: "The Story Behind Fewwords",
+  twitterDescription:
+    "Why I built Fewwords. A personal problem, a failed attempt, and a second chance.",
+});
 </script>
 
 <template>

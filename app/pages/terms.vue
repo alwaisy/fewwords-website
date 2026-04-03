@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
-useHead({
+useSeoMeta({
   title: "Terms of Service - Fewwords",
-  meta: [
-    {
-      name: "description",
-      content: "Terms of Service for Fewwords, an AI-powered content summarization tool.",
-    },
-  ],
+  description: "Terms of Service for Fewwords, an AI-powered content summarization tool.",
+  ogTitle: "Terms of Service - Fewwords",
+  ogDescription: "Terms of Service for Fewwords, an AI-powered content summarization tool.",
+  twitterTitle: "Terms of Service - Fewwords",
+  twitterDescription: "Terms of Service for Fewwords, an AI-powered content summarization tool.",
 });
 
 const rawMarkdown = `# Terms of Service

@@ -1,31 +1,49 @@
 <script setup lang="ts">
-useHead({
-  title: "Fewwords: Close Your Tabs, Keep the Insight",
+useSeoMeta({
+  title: "Fewwords: Instant Insight from Any URL",
   titleTemplate: "%s - Fewwords",
+  description:
+    "Get the key points from any article, video, or Reddit thread in seconds. Simple, structured, and actionable summaries.",
+  ogType: "website",
+  ogSiteName: "Fewwords",
+  ogTitle: "Fewwords: Instant Insight from Any URL",
+  ogDescription:
+    "Paste a URL. Get the main points in seconds. Articles, YouTube, Reddit. No signup needed.",
+  ogImage: "/og-image.png",
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  twitterCard: "summary_large_image",
+  twitterTitle: "Fewwords: Instant Insight from Any URL",
+  twitterDescription:
+    "Paste a URL. Get the main points in seconds. Articles, YouTube, Reddit. No signup needed.",
+  twitterImage: "/og-image.png",
+  twitterImageWidth: 1200,
+  twitterImageHeight: 630,
+});
+
+useHead({
+  htmlAttrs: { lang: "en" },
   link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
   meta: [
-    {
-      name: "description",
-      content:
-        "You have couple of unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
-    },
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "Fewwords" },
-    {
-      property: "og:title",
-      content: "Fewwords: Close Your Tabs, Keep the Insight",
-    },
-    {
-      property: "og:description",
-      content:
-        "You have couple of unread tabs. We both know it. Get the insight from any article or video in 60 seconds. Skip the fluff, close the tabs.",
-    },
-  ],
-  htmlAttrs: {
-    lang: "en",
-  },
+    { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5" },
+    { name: "theme-color", content: "#fafaf9" }
+  ]
 });
+
+useSchemaOrg([
+  defineWebSite({
+    name: "Fewwords",
+    url: "https://fewwords.app",
+    alternateName: "Fewwords",
+  }),
+  defineOrganization({
+    name: "Fewwords",
+    url: "https://fewwords.app",
+    logo: "/og-image.png",
+    description: "Instant content summarization for articles, videos, and Reddit threads. Get the main points in seconds.",
+  }),
+  defineWebPage(),
+]);
 </script>
 
 <template>

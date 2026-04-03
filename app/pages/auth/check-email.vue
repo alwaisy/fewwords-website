@@ -1,8 +1,9 @@
 <script setup lang="ts">
-useHead({
-  title: 'Check Your Email - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Check Your Email - Fewwords",
+  titleTemplate: null,
+  robots: { index: false, follow: false },
+});
 
 definePageMeta({
   layout: 'auth'

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-useHead({
-  title: 'Register - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Register - Fewwords",
+  titleTemplate: null,
+  robots: { index: false, follow: false },
+});
 
 definePageMeta({
   layout: 'auth'

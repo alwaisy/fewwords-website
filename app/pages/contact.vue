@@ -1,10 +1,12 @@
 <script setup lang="ts">
-useHead({
-  title: 'Contact - Fewwords',
-  meta: [
-    { name: 'description', content: 'Get in touch with the creator of Fewwords.' }
-  ]
-})
+useSeoMeta({
+  title: "Contact - Fewwords",
+  description: "Get in touch with the creator of Fewwords.",
+  ogTitle: "Contact - Fewwords",
+  ogDescription: "Get in touch with the creator of Fewwords.",
+  twitterTitle: "Contact - Fewwords",
+  twitterDescription: "Get in touch with the creator of Fewwords.",
+});
 </script>
 
 <template>

@@ -5,6 +5,10 @@ definePageMeta({
   layout: false,
 });
 
+useSeoMeta({
+  robots: { index: false, follow: false },
+});
+
 const route = useRoute();
 const slug = route.params.slug as string[];
 

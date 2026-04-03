@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { toast } from "vue3-toastify";
 
+useSeoMeta({
+  title: "Background Job Demo - Fewwords",
+  description: "Test the BullMQ + Worker + Redis background job system.",
+  ogTitle: "Background Job Demo - Fewwords",
+  ogDescription: "Test the BullMQ + Worker + Redis background job system.",
+  robots: { index: false, follow: false },
+});
+
 // Form state
 const email = ref("testbs@m.fewwords.app");
 const userName = ref("Test User");
@@ -57,10 +65,6 @@ const enqueueJob = async () => {
 // Page meta
 definePageMeta({
   layout: "default",
-});
-
-useHead({
-  title: "Background Job Demo - Fewwords",
 });
 </script>
 

@@ -4,6 +4,19 @@ import pluginCheckFile from "eslint-plugin-check-file";
 
 export default withNuxt(
   {
+    ignores: [
+      "dev-docs/**",
+      "public/**",
+      "database/**",
+      "skills/**",
+      "**/.**",
+      "AGENTS.md",
+      "CLAUDE.md",
+      "GEMINI.md",
+      "README.md",
+    ],
+  },
+  {
     rules: {
       "vue/html-self-closing": "off",
       "vue/no-multiple-template-root": "off",

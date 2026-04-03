@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
-useHead({
+useSeoMeta({
   title: "Refund Policy - Fewwords",
-  meta: [
-    {
-      name: "description",
-      content: "Refund Policy for Fewwords.",
-    },
-  ],
+  description: "Refund Policy for Fewwords.",
+  ogTitle: "Refund Policy - Fewwords",
+  ogDescription: "Refund Policy for Fewwords.",
+  twitterTitle: "Refund Policy - Fewwords",
+  twitterDescription: "Refund Policy for Fewwords.",
 });
 
 const rawMarkdown = `# Refund Policy

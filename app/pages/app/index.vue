@@ -1,8 +1,16 @@
 <script setup lang="ts">
-useHead({
-  title: 'Clear Your Tabs - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Clear Your Tabs - Fewwords",
+  titleTemplate: null,
+  description:
+    "Paste a URL to get the key insights in seconds. Works with articles, YouTube videos, and Reddit threads.",
+  ogTitle: "Clear Your Tabs - Fewwords",
+  ogDescription:
+    "Paste a URL to get the key insights in seconds. Works with articles, YouTube videos, and Reddit threads.",
+  twitterTitle: "Clear Your Tabs - Fewwords",
+  twitterDescription:
+    "Paste a URL to get the key insights in seconds. Works with articles, YouTube videos, and Reddit threads.",
+});
 
 const { canProceed, refresh: refreshQuota } = useQuota()
 

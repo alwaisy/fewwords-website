@@ -1,8 +1,9 @@
 <script setup lang="ts">
-useHead({
-  title: 'Verify Code - Fewwords',
-  titleTemplate: null
-})
+useSeoMeta({
+  title: "Verify Code - Fewwords",
+  titleTemplate: null,
+  robots: { index: false, follow: false },
+});
 
 definePageMeta({
   layout: 'auth'
