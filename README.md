@@ -165,7 +165,7 @@ Long-running summaries (YouTube) use BullMQ workers:
 - `fewwords-web` - Nuxt web server (port 3000)
 - `fewwords-worker` - BullMQ worker processes
 
-Managed via PM2 with `ecosystem.config.js`.
+Managed via PM2 with `deploy/ecosystem.config.js`.
 
 ## Deployment
 
@@ -187,7 +187,7 @@ bun run build
 bun run db:push
 
 # Start with PM2
-pm2 start ecosystem.config.js
+pm2 start deploy/ecosystem.config.js
 pm2 save
 ```
 

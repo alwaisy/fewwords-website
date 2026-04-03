@@ -66,7 +66,7 @@ Read and integrate from existing files:
 - **package.json** - extract ALL scripts, dependencies, dev dependencies
 - **tsconfig.json** - TypeScript configuration, path aliases
 - **.env.example** - required environment variables
-- **docker-compose.yml**, **Dockerfile** - containerization setup
+- **deploy/** - deployment configs (Dockerfile, compose.yaml, ecosystem.config.cjs)
 - **CI/CD configs** - GitHub Actions, GitLab CI, etc.
 - **Config files** - ESLint, Prettier, Jest, Vitest, etc.
 

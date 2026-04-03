@@ -14,7 +14,7 @@ import {
 import SummaryDrawer from "./summary-drawer.vue";
 
 import { valueUpdater } from "@/components/ui/table/utils";
-import type { Summary } from "~~/db/schema";
+import type { Summary } from "~~/database/orm/schema";
 
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[];

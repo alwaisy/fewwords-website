@@ -99,7 +99,7 @@ Fewwords follows a modular service-oriented architecture within a Nuxt 4 framewo
 • Package Manager: Use Bun only. Never use npm, yarn, or pnpm.
 • YouTube Shorts: Immediately rejected with a specific user message.
 • SSE Race Condition: Stage updates to Redis must happen after DB writes to prevent client-side desync.
-• Type Aliases: Always use `~~/db/schema` when importing database types to avoid circular dependencies.
+• Type Aliases: Always use `~~/database/orm/schema` when importing database types to avoid circular dependencies.
 • Singleton Pattern: Always use `useDb(event)` in API routes. Never import the DB client directly.
 • ID Formats: Public IDs use `few-XYZ` (nanoid 3 chars), while internal IDs are UUIDs.
 • Idempotency: `POST /api/summarize` checks if a record is already processing or completed to prevent duplicate work.

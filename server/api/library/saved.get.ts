@@ -1,6 +1,6 @@
 import { eq, desc, count, and, ne } from "drizzle-orm";
 
-import { summaries, savedSummaries } from "~~/db/schema";
+import { summaries, savedSummaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);

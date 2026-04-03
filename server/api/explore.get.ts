@@ -1,6 +1,6 @@
 import { eq, desc, count, and, isNotNull, isNull } from "drizzle-orm";
 
-import { summaries } from "~~/db/schema";
+import { summaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);

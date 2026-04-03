@@ -1,5 +1,5 @@
 
-import type { Article, Summary, YouTube } from "~~/db/schema";
+import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 
 export type FlattenedLlmUsage = {
   summaryId: string;

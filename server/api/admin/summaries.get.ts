@@ -1,7 +1,7 @@
 import { desc, eq  } from "drizzle-orm";
 
-import type { UserRole } from "~~/db/schema";
-import { articles, summaries, youtube } from "~~/db/schema";
+import type { UserRole } from "~~/database/orm/schema";
+import { articles, summaries, youtube } from "~~/database/orm/schema";
 
 /**
  * Admin-only endpoint to get all summaries with pagination and filtering

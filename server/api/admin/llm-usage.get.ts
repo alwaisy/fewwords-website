@@ -1,7 +1,7 @@
 
 import { desc, eq } from "drizzle-orm";
 
-import { articles, summaries, youtube, type UserRole } from "~~/db/schema";
+import { articles, summaries, youtube, type UserRole } from "~~/database/orm/schema";
 import { flattenLlmUsage } from "~~/server/lib/admin";
 
 /**

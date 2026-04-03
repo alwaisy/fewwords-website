@@ -113,7 +113,7 @@ Fewwords follows a modular service-oriented architecture within a Nuxt 4 framewo
 
 • **CI/CD:** GitHub Actions on push to `master`. Builds Docker image, pushes to `ghcr.io/alwaisy/fewwords-website:latest`.
 • **Production:** Docker Compose on VPS runs two containers: `fewwords-web` (port 3000) and `fewwords-worker`.
-• **Process Manager:** PM2 with `ecosystem.config.cjs` (alternative to Docker). Logs to `./logs/`.
+• **Process Manager:** PM2 with `deploy/ecosystem.config.cjs` (alternative to Docker). Logs to `./logs/`.
 • **Reverse Proxy:** Caddy handles SSL automatically. Config: `fewwords.app www.fewwords.app { reverse_proxy localhost:3000 }`.
 • **Migrations:** Run via `docker compose run --rm web bun run db:push` during deploy.
 
@@ -123,7 +123,7 @@ Fewwords follows a modular service-oriented architecture within a Nuxt 4 framewo
 • **Package Manager:** Use **Bun only**. Never use npm/yarn/pnpm.
 • **YouTube Shorts:** Immediately rejected with a specific user message.
 • **SSE Race Condition:** Stage updates to Redis must happen **after** DB writes to prevent client-side desync.
-• **Type Aliases:** Always use `~~/db/schema` when importing database types to avoid circular dependencies.
+• **Type Aliases:** Always use `~~/database/orm/schema` when importing database types to avoid circular dependencies.
 • **Singleton Pattern:** Always use `useDb(event)` in API routes. Never import the DB client directly.
 • **ID Formats:** Public IDs use `few-XYZ` format (nanoid 3 chars). Internal IDs are UUIDs.
 • **Idempotency:** `POST /api/summarize` checks if a record is already processing or completed to prevent duplicate work.

@@ -30,7 +30,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-           context: .
+           context: ./deploy
            push: true
            tags: ghcr.io/alwaisy/fewwords-website:latest
            build-args: |
@@ -78,7 +78,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
-          source: ".env,compose.yaml"
+          source: ".env,deploy/compose.yaml"
           target: "~/www/fewwords"
 
       - name: Deploy on VPS

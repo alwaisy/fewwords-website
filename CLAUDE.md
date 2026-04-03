@@ -227,7 +227,7 @@ Required in `.env`:
 
 - `~~/` resolves to project root
 - `@/` and `~/` resolve to `app/` (Nuxt default)
-- Use `~~/db/schema` to import database types
+- Use `~~/database/orm/schema` to import database types
 
 ## Development Notes
 

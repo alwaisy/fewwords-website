@@ -3,7 +3,7 @@ import { getRouterParam } from "h3";
 
 import { getRedis } from "../../../lib/redis";
 
-import { summaries } from "~~/db/schema";
+import { summaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const summaryId = getRouterParam(event, "summaryId");

@@ -2,7 +2,7 @@ import youtubeSummaryQueue from "../../queues/youtube-summary";
 import { checkQuota } from "../../services/quota";
 import { fetchYouTubeMetadata } from "../../services/youtube/metadata";
 
-import { summaries } from "~~/db/schema";
+import { summaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const db = await useDb(event);

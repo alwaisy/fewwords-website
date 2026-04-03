@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 
-import { waitlist } from "~~/db/schema";
+import { waitlist } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);

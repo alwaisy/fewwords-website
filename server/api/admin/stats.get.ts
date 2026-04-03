@@ -1,7 +1,7 @@
 import { count, eq, sql, desc } from "drizzle-orm";
 
-import type { UserRole } from "~~/db/schema";
-import { articles, summaries, users, youtube } from "~~/db/schema";
+import type { UserRole } from "~~/database/orm/schema";
+import { articles, summaries, users, youtube } from "~~/database/orm/schema";
 
 /**
  * Admin-only endpoint to get dashboard statistics

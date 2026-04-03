@@ -4,7 +4,7 @@ import { computed } from "vue";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Article, Summary, YouTube } from "~~/db/schema";
+import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 import { parseErrorLog } from "~~/server/lib/errors";
 
 const props = defineProps<{

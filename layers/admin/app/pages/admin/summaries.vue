@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import type { Summary } from "~~/db/schema";
+import type { Summary } from "~~/database/orm/schema";
 
 definePageMeta({
   layout: "admin",

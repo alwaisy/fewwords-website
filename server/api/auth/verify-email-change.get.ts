@@ -1,6 +1,6 @@
 import { eq, and, gt } from "drizzle-orm";
 
-import { users } from "~~/db/schema";
+import { users } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const token = getQuery(event).token as string;

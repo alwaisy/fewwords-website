@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 
-import { summaries } from '~~/db/schema'
+import { summaries } from '~~/database/orm/schema'
 
 export default defineEventHandler(async (event) => {
   const db = await useDb(event)

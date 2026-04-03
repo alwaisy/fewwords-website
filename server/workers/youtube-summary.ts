@@ -12,7 +12,7 @@ import { summarize } from "../services/youtube";
 import { notificationEmail } from "../templates/emails";
 
 import { defineWorker } from "#processor";
-import { summaries, youtube } from "~~/db/schema";
+import { summaries, youtube } from "~~/database/orm/schema";
 import { db } from "~~/server/db/index";
 
 // Send completion email using Resend

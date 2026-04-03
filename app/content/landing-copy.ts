@@ -2,16 +2,16 @@
 
 const landingCopy = {
   hero_section: {
-    headline: "The quick & painless way to read the internet",
-    subheadline: "Paste a URL. Get the main points. Skip the rest.",
-    cta: "Paste a URL",
-    note: "Articles, YouTube, Reddit. No signup needed.",
+    headline: "Instant insights from any article or video",
+    subheadline: "Paste a URL. Get the main points. Skip the filler.",
+    cta: "Summarize a URL",
+    note: "Articles, YouTube, Reddit. Simple & actionable.",
   },
 
   problem_agitation: [
-    "23 open tabs. 8 articles saved for later. A YouTube video from Tuesday you keep meaning to watch.",
-    "You want to stay informed. But reading everything takes time you don't have.",
-    "The content isn't getting shorter. Your day isn't getting longer.",
+    "Most content is 90% filler. You want the insights, but you don't have the time to sit through a 20-minute video or 3,000-word essay.",
+    "Generic AI tools require manual copy-pasting and complex prompts just to get a decent summary.",
+    "You need a simpler way to stay informed without the noise.",
   ],
 
   metrics_strip: [

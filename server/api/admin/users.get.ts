@@ -1,8 +1,8 @@
 
 import { count, desc, eq, sql } from "drizzle-orm";
 
-import type { UserRole } from "~~/db/schema";
-import { summaries, users } from "~~/db/schema";
+import type { UserRole } from "~~/database/orm/schema";
+import { summaries, users } from "~~/database/orm/schema";
 
 /**
  * Admin-only endpoint to get all users with pagination and filtering.

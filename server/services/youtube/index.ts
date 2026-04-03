@@ -9,7 +9,7 @@ import { summarizeDirectVideo } from "./short-summarizer";
 import { summarizeVideo } from "./summarizer";
 import { fetchTranscript } from "./transcript";
 
-import { summaries, youtube } from "~~/db/schema";
+import { summaries, youtube } from "~~/database/orm/schema";
 import { getRedis } from "~~/server/lib/redis";
 
 export interface YouTubeResult {

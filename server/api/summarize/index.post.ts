@@ -6,7 +6,7 @@ import { countWords, incrementWordCount } from '../../services/quota'
 import { summarize as summarizeReddit } from '../../services/reddit'
 import { summarize as summarizeYouTube } from '../../services/youtube'
 
-import { summaries, articles, youtube } from '~~/db/schema'
+import { summaries, articles, youtube } from '~~/database/orm/schema'
 
 // Helper to set stage in Redis for SSE (only for YouTube)
 async function setCompletedStage(summaryId: string | undefined) {

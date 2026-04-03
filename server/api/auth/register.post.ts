@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import { getSender } from "../../config/emails";
 import { otpEmail } from "../../templates/emails";
 
-import { users } from "~~/db/schema";
+import { users } from "~~/database/orm/schema";
 
 // Generate 6-digit OTP code
 function generateOTP(): string {

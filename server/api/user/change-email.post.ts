@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { getSender } from "../../config/emails";
 import { authEmail } from "../../templates/emails";
 
-import { users } from "~~/db/schema";
+import { users } from "~~/database/orm/schema";
 
 interface ChangeEmailRequest {
   newEmail: string;

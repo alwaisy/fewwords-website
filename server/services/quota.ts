@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { H3Event } from "h3";
 
-import { users, PLAN_WORD_LIMITS } from "~~/db/schema";
+import { users, PLAN_WORD_LIMITS } from "~~/database/orm/schema";
 
 // Anonymous threshold: gate at 900 (before 1000 hard limit)
 const ANON_GATE_THRESHOLD = 900;

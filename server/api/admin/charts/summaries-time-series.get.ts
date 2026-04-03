@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 
-import type { UserRole } from "~~/db/schema";
-import { summaries } from "~~/db/schema";
+import type { UserRole } from "~~/database/orm/schema";
+import { summaries } from "~~/database/orm/schema";
 
 /**
  * Admin-only endpoint to get summaries time series data for charts

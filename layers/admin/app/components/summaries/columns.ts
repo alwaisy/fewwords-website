@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Summary } from "~~/db/schema";
+import type { Summary } from "~~/database/orm/schema";
 
 export const createColumns = (
   onTitleClick?: (summary: Summary) => void,
