@@ -46,6 +46,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Install minimal database tools locally to support 'bun run db:push'
+# Done before copying package.json so it doesn't trigger a full 1GB dependency install
+RUN bun add drizzle-kit drizzle-orm postgres
+
 # Copy build output and essential files
 COPY --from=build /app/.output .output
 COPY --from=build /app/database database
@@ -57,9 +61,8 @@ COPY --from=build /app/bun.lock .
 RUN mkdir -p .output/server/public && \
     cp -r .output/public/* .output/server/public/ 2>/dev/null || true
 
-# Copy production node_modules from the install stage instead of rebuilding
-# This makes VPS pulls 10x faster because the node_modules layer is cached
-COPY --from=install /app/node_modules node_modules
+# Install production dependencies directly for the server
+RUN cd .output/server && bun install --production
 
 EXPOSE 3000
 
