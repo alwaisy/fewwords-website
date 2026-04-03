@@ -14,8 +14,8 @@ RUN bun install --frozen-lockfile
 
 # Stage 3: Build the application
 FROM base AS build
-COPY --from=install /app/node_modules node_modules
 COPY . .
+COPY --from=install /app/node_modules node_modules
 
 # Set environment variables for build
 ARG NUXT_SITE_URL
@@ -48,7 +48,7 @@ ENV PORT=3000
 
 # Copy build output and essential files
 COPY --from=build /app/.output .output
-COPY --from=build /app/db db
+COPY --from=build /app/database database
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/package.json .
 COPY --from=build /app/bun.lock .
