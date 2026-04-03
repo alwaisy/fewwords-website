@@ -1,0 +1,9 @@
+app/components/lp-fw/
+app/pages/lp-fw.vue
+app/layouts/lp-fw.vue
+app/components/new-lp/
+app/pages/new-lp.vue
+app/layouts/new-lp.vue
+app/components/seline/
+app/pages/seline.vue
+app/layouts/seline.vue
