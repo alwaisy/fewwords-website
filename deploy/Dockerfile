@@ -48,7 +48,7 @@ ENV PORT=3000
 
 # Install minimal database tools locally to support 'bun run db:push'
 # Done before copying package.json so it doesn't trigger a full 1GB dependency install
-RUN bun add drizzle-kit drizzle-orm postgres
+RUN bun add drizzle-kit drizzle-orm postgres nanoid
 
 # Copy build output and essential files
 COPY --from=build /app/.output .output
