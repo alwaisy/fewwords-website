@@ -24,6 +24,12 @@ const isOpen = computed({
   set: (value) => emit("update:open", value),
 });
 
+// Count words from summary text
+const summaryWordCount = computed(() => {
+  if (!props.summary.summary) return 0;
+  return props.summary.summary.trim().split(/\s+/).filter(Boolean).length;
+});
+
 // Extract domain from source
 const domain = computed(() => {
   try {
@@ -114,18 +120,12 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
           </div>
         </div>
 
-        <!-- Video/Article specific metadata -->
-        <div v-if="summary.youtube?.duration || summary.article?.wordCount" class="space-y-3">
+        <!-- YouTube specific metadata -->
+        <div v-if="summary.essence === 'youtube'" class="space-y-3">
           <h3 class="text-sm font-medium">Content Details</h3>
           <div class="text-sm text-muted-foreground space-y-1">
             <div v-if="summary.youtube?.duration">
               Duration: {{ Number(summary.youtube.duration).toFixed(1) }} minutes
-            </div>
-            <div v-if="summary.article?.wordCount">
-              Word Count: {{ summary.article.wordCount.toLocaleString() }}
-            </div>
-            <div v-if="summary.article?.readingTimeMinutes">
-              Reading Time: {{ summary.article.readingTimeMinutes }} minutes
             </div>
             <div v-if="summary.youtube?.category">
               Category: {{ summary.youtube.category }}
@@ -133,9 +133,24 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
           </div>
         </div>
 
+        <!-- Article specific metadata -->
+        <div v-if="summary.essence === 'article'" class="space-y-3">
+          <h3 class="text-sm font-medium">Content Details</h3>
+          <div class="text-sm text-muted-foreground space-y-1">
+            <div v-if="summary.article?.readingTimeMinutes">
+              Reading Time: {{ summary.article.readingTimeMinutes }} minutes
+            </div>
+          </div>
+        </div>
+
         <!-- Summary -->
         <div v-if="summary.summary" class="space-y-3">
-          <h3 class="text-sm font-medium">Summary</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">Summary</h3>
+            <span class="text-xs text-muted-foreground">
+              {{ summaryWordCount.toLocaleString() }} words
+            </span>
+          </div>
           <div class="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
             {{ summary.summary }}
           </div>

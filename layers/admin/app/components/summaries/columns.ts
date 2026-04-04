@@ -261,16 +261,5 @@ export const createColumns = (
         );
       },
     },
-
-    // Word count column - hidden by default
-    {
-      accessorKey: "wordCount",
-      header: "Words",
-      cell: ({ row }) => {
-        const wordCount = row.getValue("wordCount") as number | null;
-        if (!wordCount) return h("span", { class: "text-muted-foreground" }, "-");
-        return h("div", { class: "text-sm tabular-nums text-center" }, wordCount.toLocaleString());
-      },
-    },
   ];
 };
