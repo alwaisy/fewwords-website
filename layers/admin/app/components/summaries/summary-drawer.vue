@@ -4,6 +4,7 @@ import { computed } from "vue";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { countWords } from "~/lib/utils";
 import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 import { parseErrorLog } from "~~/server/lib/errors";
 
@@ -25,10 +26,7 @@ const isOpen = computed({
 });
 
 // Count words from summary text
-const summaryWordCount = computed(() => {
-  if (!props.summary.summary) return 0;
-  return props.summary.summary.trim().split(/\s+/).filter(Boolean).length;
-});
+const summaryWordCount = computed(() => countWords(props.summary.summary));
 
 // Extract domain from source
 const domain = computed(() => {

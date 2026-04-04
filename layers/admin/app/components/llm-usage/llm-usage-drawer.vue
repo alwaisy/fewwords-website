@@ -3,6 +3,7 @@ import { computed } from "vue";
 
 import { formatNumber, formatTime } from "../../lib/formatters";
 
+import { countWords } from "~/lib/utils";
 import type { FlattenedLlmUsage } from "~~/server/lib/admin";
 
 const props = defineProps<{
@@ -21,6 +22,8 @@ const isOpen = computed({
 
 const isYoutube = computed(() => props.llmUsage.essence === 'youtube');
 const isArticle = computed(() => props.llmUsage.essence === 'article');
+
+const summaryWordCount = computed(() => countWords(props.llmUsage.summary));
 </script>
 
 <template>
@@ -39,11 +42,17 @@ const isArticle = computed(() => props.llmUsage.essence === 'article');
           <!-- Holistic Stats -->
           <div class="space-y-3">
             <h3 class="text-sm font-medium">Holistic Stats</h3>
-            <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span class="text-muted-foreground">Total Tokens</span>
                 <div class="mt-1 font-mono text-base font-semibold">
                   {{ formatNumber(llmUsage.holisticTotalTokens) }}
+                </div>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Summary Words</span>
+                <div class="mt-1 font-mono text-base font-semibold">
+                  {{ summaryWordCount.toLocaleString() }}
                 </div>
               </div>
               <div v-if="isYoutube || isArticle">

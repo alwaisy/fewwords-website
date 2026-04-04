@@ -1,8 +1,14 @@
 
 import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 
+function countWords(text: string | null): number | null {
+  if (!text) return null;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export type FlattenedLlmUsage = {
   summaryId: string;
+  summary: string | null;
   essence: "article" | "youtube" | "reddit";
   status: string;
   createdAt: Date;
@@ -47,6 +53,7 @@ export function flattenLlmUsage(
   // Common fields from the Summary table
   const base: FlattenedLlmUsage = {
     summaryId: summary.summaryId,
+    summary: summary.summary,
     essence: summary.essence,
     status: summary.status,
     createdAt: summary.createdAt,
@@ -67,7 +74,7 @@ export function flattenLlmUsage(
     transcriptPromptTokens: null,
     transcriptCompletionTokens: null,
     transcriptTotalTokens: null,
-    wordCount: null,
+    wordCount: countWords(summary.summary),
     totalTimeMs: null,
   };
 
@@ -86,7 +93,6 @@ export function flattenLlmUsage(
     base.transcriptPromptTokens = youtube.transcriptPromptTokens;
     base.transcriptCompletionTokens = youtube.transcriptCompletionTokens;
     base.transcriptTotalTokens = youtube.transcriptTotalTokens;
-    base.wordCount = summary.wordCount;
     base.totalTimeMs = youtube.totalTimeMs;
     return base;
   }
@@ -100,7 +106,6 @@ export function flattenLlmUsage(
     base.classifierPromptTokens = article.classifierPromptTokens;
     base.classifierCompletionTokens = article.classifierCompletionTokens;
     base.classifierTotalTokens = article.classifierTotalTokens;
-    base.wordCount = summary.wordCount;
     base.totalTimeMs = article.totalTimeMs;
     return base;
   }
