@@ -25,6 +25,8 @@ export type FlattenedLlmUsage = {
   transcriptPromptTokens: number | null;
   transcriptCompletionTokens: number | null;
   transcriptTotalTokens: number | null;
+  // Output word count
+  wordCount: number | null;
   // Total cycle time
   totalTimeMs: number | null;
 };
@@ -65,6 +67,7 @@ export function flattenLlmUsage(
     transcriptPromptTokens: null,
     transcriptCompletionTokens: null,
     transcriptTotalTokens: null,
+    wordCount: null,
     totalTimeMs: null,
   };
 
@@ -83,6 +86,7 @@ export function flattenLlmUsage(
     base.transcriptPromptTokens = youtube.transcriptPromptTokens;
     base.transcriptCompletionTokens = youtube.transcriptCompletionTokens;
     base.transcriptTotalTokens = youtube.transcriptTotalTokens;
+    base.wordCount = summary.wordCount;
     base.totalTimeMs = youtube.totalTimeMs;
     return base;
   }
@@ -96,6 +100,7 @@ export function flattenLlmUsage(
     base.classifierPromptTokens = article.classifierPromptTokens;
     base.classifierCompletionTokens = article.classifierCompletionTokens;
     base.classifierTotalTokens = article.classifierTotalTokens;
+    base.wordCount = summary.wordCount;
     base.totalTimeMs = article.totalTimeMs;
     return base;
   }

@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/vue-table";
-import { ArrowUpDown, ExternalLink, FileJson } from "lucide-vue-next";
-import { h } from "vue";
+import { ArrowUpDown, ExternalLink, FileJson, Share2 } from "lucide-vue-next";
 
 import { NuxtLink } from "#components";
 import { Badge } from "@/components/ui/badge";
@@ -140,7 +139,25 @@ export const createColumns = (
                 () => h(FileJson, { class: "h-4 w-4" }),
               ),
           ),
-        ]);
+          // Link to Social page with summary ID
+          h(
+            Button,
+            {
+              variant: "ghost",
+              size: "sm",
+              asChild: true,
+              class: "h-8 w-8 p-0",
+            },
+            () =>
+              h(
+                NuxtLink,
+                {
+                  to: `/admin/social?summaryId=${summary.summaryId}`,
+                },
+                () => h(Share2, { class: "h-4 w-4" }),
+              ),
+            ),
+          ]);
       },
     },
 
@@ -242,6 +259,17 @@ export const createColumns = (
           { class: "text-sm text-muted-foreground" },
           date.toLocaleString(),
         );
+      },
+    },
+
+    // Word count column - hidden by default
+    {
+      accessorKey: "wordCount",
+      header: "Words",
+      cell: ({ row }) => {
+        const wordCount = row.getValue("wordCount") as number | null;
+        if (!wordCount) return h("span", { class: "text-muted-foreground" }, "-");
+        return h("div", { class: "text-sm tabular-nums text-center" }, wordCount.toLocaleString());
       },
     },
   ];

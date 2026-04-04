@@ -47,6 +47,15 @@ export const createLlmUsageColumns = (
     cell: ({ row }) => formatNumber(row.original.holisticTotalTokens),
   },
   {
+    accessorKey: "wordCount",
+    header: "Words",
+    cell: ({ row }) => {
+      const wordCount = row.original.wordCount;
+      if (!wordCount) return h("span", { class: "text-muted-foreground" }, "-");
+      return h("div", { class: "tabular-nums" }, wordCount.toLocaleString());
+    },
+  },
+  {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
