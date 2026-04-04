@@ -49,6 +49,10 @@ export default defineEventHandler(async (event) => {
       username: users.username,
       role: users.role,
       emailVerified: users.emailVerified,
+      plan: users.plan,
+      wordsUsed: users.wordsUsed,
+      wordsLimit: users.wordsLimit,
+      periodResetAt: users.periodResetAt,
       createdAt: users.createdAt,
       summaryCount: sql<number>`COALESCE(${summaryCounts.summaryCount}, 0)`,
     })

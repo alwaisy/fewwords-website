@@ -12,6 +12,10 @@ export type AdminUser = {
   username: string | null;
   role: "user" | "admin";
   emailVerified: boolean;
+  plan: "free" | "pro";
+  wordsUsed: number;
+  wordsLimit: number;
+  periodResetAt: Date | null;
   createdAt: Date;
   summaryCount: number;
 };
@@ -84,6 +88,31 @@ export const createUserColumns = (
     },
   },
   {
+    accessorKey: "plan",
+    header: "Plan",
+    cell: ({ row }) => {
+      const plan = row.original.plan;
+      return h(
+        Badge,
+        { variant: plan === "pro" ? "default" : "secondary" },
+        () => plan.charAt(0).toUpperCase() + plan.slice(1),
+      );
+    },
+  },
+  {
+    accessorKey: "wordsUsed",
+    header: "Quota",
+    cell: ({ row }) => {
+      const used = row.original.wordsUsed;
+      const limit = row.original.wordsLimit;
+      return h(
+        "div",
+        { class: "text-sm tabular-nums" },
+        `${(used / 1000).toFixed(1)}k / ${(limit / 1000).toFixed(0)}k`,
+      );
+    },
+  },
+  {
     accessorKey: "summaryCount",
     header: ({ column }) => {
       return h(
@@ -98,7 +127,7 @@ export const createUserColumns = (
     },
     cell: ({ row }) => {
       const count = row.original.summaryCount;
-      return h("div", { class: "text-sm tabular-nums" }, count.toString());
+      return h("div", { class: "text-sm tabular-nums text-center" }, count.toString());
     },
   },
   {

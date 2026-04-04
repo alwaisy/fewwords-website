@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 import type { AdminUser } from "./columns";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const props = defineProps<{
   user: AdminUser;
@@ -22,6 +25,35 @@ const isOpen = computed({
 const avatarUrl = computed(() => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(props.user.name)}&background=6366f1&color=fff&size=80`;
 });
+
+const isEditingQuota = ref(false);
+const editWordsUsed = ref(0);
+const editWordsLimit = ref(0);
+
+const startEditQuota = () => {
+  editWordsUsed.value = props.user.wordsUsed;
+  editWordsLimit.value = props.user.wordsLimit;
+  isEditingQuota.value = true;
+};
+
+const saveQuota = async () => {
+  try {
+    await $fetch(`/api/admin/users/${props.user.id}`, {
+      method: "PATCH",
+      body: {
+        wordsUsed: editWordsUsed.value,
+        wordsLimit: editWordsLimit.value,
+      },
+    });
+    isEditingQuota.value = false;
+  } catch (error) {
+    console.error("Failed to update quota:", error);
+  }
+};
+
+const cancelEditQuota = () => {
+  isEditingQuota.value = false;
+};
 </script>
 
 <template>
@@ -63,6 +95,14 @@ const avatarUrl = computed(() => {
                 </div>
               </div>
               <div>
+                <span class="text-muted-foreground">Plan</span>
+                <div class="mt-1">
+                  <Badge :variant="user.plan === 'pro' ? 'default' : 'secondary'">
+                    {{ user.plan.charAt(0).toUpperCase() + user.plan.slice(1) }}
+                  </Badge>
+                </div>
+              </div>
+              <div>
                 <span class="text-muted-foreground">Email Verified</span>
                 <div class="mt-1">
                   <Badge :variant="user.emailVerified ? 'outline' : 'destructive'">
@@ -74,9 +114,57 @@ const avatarUrl = computed(() => {
                 <span class="text-muted-foreground">Summaries</span>
                 <div class="mt-1 font-mono">{{ user.summaryCount }}</div>
               </div>
-              <div>
-                <span class="text-muted-foreground">User ID</span>
-                <div class="mt-1 font-mono text-xs truncate">{{ user.id }}</div>
+            </div>
+          </div>
+
+          <!-- Quota -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium">Quota</h3>
+              <Button
+                v-if="!isEditingQuota"
+                variant="ghost"
+                size="sm"
+                @click="startEditQuota"
+              >
+                Edit
+              </Button>
+            </div>
+            <div v-if="isEditingQuota" class="space-y-3">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <Label class="text-xs text-muted-foreground">Words Used</Label>
+                  <Input
+                    v-model.number="editWordsUsed"
+                    type="number"
+                    class="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label class="text-xs text-muted-foreground">Words Limit</Label>
+                  <Input
+                    v-model.number="editWordsLimit"
+                    type="number"
+                    class="mt-1"
+                  />
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <Button size="sm" @click="saveQuota">Save</Button>
+                <Button size="sm" variant="outline" @click="cancelEditQuota">Cancel</Button>
+              </div>
+            </div>
+            <div v-else class="text-sm">
+              <div class="flex items-center gap-2">
+                <span class="text-muted-foreground">Used:</span>
+                <span class="font-mono">{{ (user.wordsUsed / 1000).toFixed(1) }}k</span>
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-muted-foreground">Limit:</span>
+                <span class="font-mono">{{ (user.wordsLimit / 1000).toFixed(0) }}k</span>
+              </div>
+              <div v-if="user.periodResetAt" class="text-xs text-muted-foreground mt-1">
+                Resets: {{ new Date(user.periodResetAt).toLocaleDateString() }}
               </div>
             </div>
           </div>
