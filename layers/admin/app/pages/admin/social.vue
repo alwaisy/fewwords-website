@@ -11,6 +11,143 @@ useHead({
   title: 'Social Media Sharing | Admin',
 });
 
+// IndexedDB for persistence
+const DB_NAME = 'fewwords-social';
+const STORE_NAME = 'bullets-history';
+const COMMENT_STORE_NAME = 'comment-history';
+const DB_VERSION = 4;
+
+let dbInitialized = false;
+
+const initDB = async () => {
+  if (dbInitialized) return;
+  dbInitialized = true;
+  
+  // Just open DB - don't delete it
+  await openDB();
+};
+
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'summaryId' });
+      }
+      if (!db.objectStoreNames.contains(COMMENT_STORE_NAME)) {
+        db.createObjectStore(COMMENT_STORE_NAME, { keyPath: 'summaryId' });
+      }
+    };
+  });
+};
+
+const loadFromDB = async (summaryId: string): Promise<Array<{ model: string; content: string; timestamp: number }>> => {
+  console.log('📥 loadFromDB called', { summaryId });
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(summaryId);
+      request.onerror = () => {
+        console.error('📥 Bullets load error:', request.error);
+        reject(request.error);
+      };
+      request.onsuccess = () => {
+        console.log('📥 Bullets load result:', request.result);
+        const result = request.result?.history;
+        if (result) {
+          resolve(JSON.parse(JSON.stringify(result)));
+        } else {
+          resolve([]);
+        }
+      };
+    });
+  } catch (e) {
+    console.error('Error loading from DB:', e);
+    return [];
+  }
+};
+
+const saveToDB = async (summaryId: string, history: Array<{ model: string; content: string; timestamp: number }>) => {
+  console.log('💾 saveToDB called', { summaryId, historyLength: history.length });
+  try {
+    const db = await openDB();
+    const plainHistory = JSON.parse(JSON.stringify(history));
+    console.log('💾 Saving to bullets store', { summaryId });
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put({ summaryId, history: plainHistory });
+      request.onerror = () => {
+        console.error('💾 Bullets save error:', request.error);
+        reject(request.error);
+      };
+      request.onsuccess = () => {
+        console.log('💾 Bullets saved successfully!');
+        resolve(request.result);
+      };
+    });
+  } catch (e) {
+    console.error('Error saving to DB:', e);
+  }
+};
+
+const saveCommentHistoryToDB = async (summaryId: string, history: Array<{ model: string; content: string; timestamp: number }>) => {
+  console.log('💬 saveCommentHistoryToDB called', { summaryId, historyLength: history.length });
+  try {
+    const db = await openDB();
+    const plainHistory = JSON.parse(JSON.stringify(history));
+    console.log('💬 Saving to comment store', { summaryId });
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(COMMENT_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(COMMENT_STORE_NAME);
+      const request = store.put({ summaryId, history: plainHistory });
+      request.onerror = () => {
+        console.error('💬 Comment save error:', request.error);
+        reject(request.error);
+      };
+      request.onsuccess = () => {
+        console.log('💬 Comment saved successfully!');
+        resolve(request.result);
+      };
+    });
+  } catch (e) {
+    console.error('Error saving comment to DB:', e);
+  }
+};
+
+const loadCommentHistoryFromDB = async (summaryId: string): Promise<Array<{ model: string; content: string; timestamp: number }>> => {
+  console.log('📥 loadCommentHistoryFromDB called', { summaryId });
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(COMMENT_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(COMMENT_STORE_NAME);
+      const request = store.get(summaryId);
+      request.onerror = () => {
+        console.error('📥 Comment load error:', request.error);
+        reject(request.error);
+      };
+      request.onsuccess = () => {
+        console.log('📥 Comment load result:', request.result);
+        const result = request.result?.history;
+        if (result) {
+          resolve(JSON.parse(JSON.stringify(result)));
+        } else {
+          resolve([]);
+        }
+      };
+    });
+  } catch (e) {
+    console.error('Error loading comment from DB:', e);
+    return [];
+  }
+};
+
 const summaryId = ref('');
 const summary = ref<Record<string, unknown> | null>(null);
 const loading = ref(false);
@@ -18,10 +155,29 @@ const error = ref<string | null>(null);
 
 // Auto-fetch summary if summaryId is provided in query params
 const route = useRoute();
-onMounted(() => {
+onMounted(async () => {
+  // Initialize DB first
+  await initDB();
+  console.log('🚀 onMounted called');
+  
   const querySummaryId = route.query.summaryId as string;
   if (querySummaryId) {
     summaryId.value = querySummaryId;
+    console.log('🚀 Loading data for:', querySummaryId);
+    // Load bullets history from IndexedDB
+    const savedHistory = await loadFromDB(querySummaryId);
+    console.log('🚀 Bullets loaded:', savedHistory.length);
+    if (savedHistory.length > 0) {
+      bulletsHistory.value = savedHistory;
+    }
+    // Load comment history from IndexedDB
+    const savedCommentHistory = await loadCommentHistoryFromDB(querySummaryId);
+    console.log('🚀 Comments loaded:', savedCommentHistory.length);
+    if (savedCommentHistory.length > 0) {
+      commentHistory.value = savedCommentHistory;
+      console.log('🚀 commentHistory.value set to:', commentHistory.value);
+    }
+    console.log('🚀 About to fetch summary');
     fetchSummary();
   }
 });
@@ -29,12 +185,87 @@ onMounted(() => {
 const posterUrl = ref('');
 
 // Bullets generation state
-const bullets = ref<string[]>([]);
+const bullets = ref<string>('');
 const bulletsLoading = ref(false);
+const bulletsHistory = ref<Array<{ model: string; content: string; timestamp: number }>>([]);
+
+const saveBulletsToHistory = async () => {
+  console.log('📝 saveBulletsToHistory called', { 
+    bullets: bullets.value?.substring(0, 50), 
+    model: selectedModel.value 
+  });
+  if (bullets.value && selectedModel.value) {
+    bulletsHistory.value.unshift({
+      model: availableModels.find(m => m.value === selectedModel.value)?.label || selectedModel.value,
+      content: bullets.value,
+      timestamp: Date.now(),
+    });
+    // Keep only last 5
+    if (bulletsHistory.value.length > 5) {
+      bulletsHistory.value = bulletsHistory.value.slice(0, 5);
+    }
+    // Save to IndexedDB
+    if (summaryId.value) {
+      console.log('📝 Calling saveToDB...');
+      await saveToDB(summaryId.value, bulletsHistory.value);
+    }
+  } else {
+    console.log('📝 Not saving - no bullets or no model');
+  }
+};
+
+const deleteFromHistory = async (timestamp: number) => {
+  bulletsHistory.value = bulletsHistory.value.filter(item => item.timestamp !== timestamp);
+  if (summaryId.value) {
+    await saveToDB(summaryId.value, bulletsHistory.value);
+  }
+};
+
+const deleteCommentFromHistory = async (timestamp: number) => {
+  commentHistory.value = commentHistory.value.filter(item => item.timestamp !== timestamp);
+  if (summaryId.value) {
+    await saveCommentHistoryToDB(summaryId.value, commentHistory.value);
+  }
+};
+
+const copyToClipboard = (content: string) => {
+  navigator.clipboard.writeText(content);
+};
+
+// Model selection
+const availableModels = [
+  { value: 'google/gemma-4-26b-a4b-it', label: 'Gemma 4' },
+  { value: 'meta-llama/llama-4-maverick', label: 'Llama 4 Maverick' },
+  { value: 'arcee-ai/trinity-large-thinking', label: 'Trinity Large' },
+];
+
+const selectedModel = ref('google/gemma-4-26b-a4b-it');
 
 // Comment generation state
 const comment = ref<string>('');
 const commentLoading = ref(false);
+const commentHistory = ref<Array<{ model: string; content: string; timestamp: number }>>([]);
+
+const saveCommentToHistory = async () => {
+  console.log('💬 saveCommentToHistory called', { 
+    comment: comment.value?.substring(0, 50), 
+    model: selectedModel.value 
+  });
+  if (comment.value && selectedModel.value) {
+    commentHistory.value.unshift({
+      model: availableModels.find(m => m.value === selectedModel.value)?.label || selectedModel.value,
+      content: comment.value,
+      timestamp: Date.now(),
+    });
+    if (commentHistory.value.length > 5) {
+      commentHistory.value = commentHistory.value.slice(0, 5);
+    }
+    if (summaryId.value) {
+      console.log('💬 Calling saveCommentHistoryToDB...');
+      await saveCommentHistoryToDB(summaryId.value, commentHistory.value);
+    }
+  }
+};
 
 const fetchSummary = async () => {
   if (!summaryId.value) return;
@@ -65,9 +296,11 @@ const generateBullets = async () => {
       method: 'POST',
       body: {
         summary: summary.value.summary,
+        model: selectedModel.value,
       },
     });
-    bullets.value = response.bullets;
+    bullets.value = response.content;
+    saveBulletsToHistory();
   } catch (error) {
     console.error('Error generating bullets:', error);
   } finally {
@@ -85,9 +318,11 @@ const generateComment = async () => {
       body: {
         summary: summary.value.summary,
         summaryUrl: posterUrl.value,
+        model: selectedModel.value,
       },
     });
     comment.value = response.comment;
+    saveCommentToHistory();
   } catch (error) {
     console.error('Error generating comment:', error);
   } finally {
@@ -104,6 +339,25 @@ const generateComment = async () => {
         <p class="text-sm text-muted-foreground">
           Generate content for sharing summaries on social media.
         </p>
+      </div>
+
+      <!-- Model Selector -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-muted-foreground">Model:</label>
+        <Select v-model="selectedModel">
+          <SelectTrigger class="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem
+              v-for="model in availableModels"
+              :key="model.value"
+              :value="model.value"
+            >
+              {{ model.label }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
 
@@ -175,19 +429,51 @@ const generateComment = async () => {
           <Icon name="lucide:loader-2" class="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
 
-        <div v-else-if="bullets.length > 0" class="space-y-2">
-          <div
-            v-for="(bullet, index) in bullets"
-            :key="index"
-            class="flex items-start gap-2"
-          >
-            <span class="text-primary mt-1">•</span>
-            <p class="text-sm">{{ bullet }}</p>
-          </div>
+        <div v-else-if="bullets" class="bg-background border rounded-md p-4">
+          <pre class="text-sm whitespace-pre-wrap font-sans">{{ bullets }}</pre>
         </div>
 
         <div v-else class="text-sm text-muted-foreground">
           No bullets generated yet. Click "Generate Bullets" to create bullet points for this summary.
+        </div>
+
+        <!-- Bullets History / Comparison -->
+        <div v-if="bulletsHistory.length > 0" class="mt-6">
+          <h4 class="text-sm font-semibold mb-3">Previous Generations</h4>
+          <div class="flex gap-3 overflow-x-auto pb-2">
+            <div
+              v-for="item in bulletsHistory"
+              :key="item.timestamp"
+              class="border rounded-md p-3 cursor-pointer hover:bg-muted/50 transition-colors shrink-0 w-[300px]"
+              @click="bullets = item.content"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-muted-foreground">{{ item.model }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-muted-foreground">
+                    {{ new Date(item.timestamp).toLocaleTimeString() }}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-6 w-6 p-0"
+                    @click.stop="copyToClipboard(item.content)"
+                  >
+                    <Icon name="lucide:copy" class="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    @click.stop="deleteFromHistory(item.timestamp)"
+                  >
+                    <Icon name="lucide:trash-2" class="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+              <pre class="text-xs whitespace-pre-wrap font-sans line-clamp-4">{{ item.content }}</pre>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -216,6 +502,45 @@ const generateComment = async () => {
 
         <div v-else class="text-sm text-muted-foreground">
           No comment generated yet. Click "Generate Comment" to create a first comment for this summary.
+        </div>
+
+        <!-- Comment History / Comparison -->
+        <div v-if="commentHistory.length > 0" class="mt-6">
+          <h4 class="text-sm font-semibold mb-3">Previous Generations</h4>
+          <div class="flex gap-3 overflow-x-auto pb-2">
+            <div
+              v-for="item in commentHistory"
+              :key="item.timestamp"
+              class="border rounded-md p-3 cursor-pointer hover:bg-muted/50 transition-colors shrink-0 w-[300px]"
+              @click="comment = item.content"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-muted-foreground">{{ item.model }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-muted-foreground">
+                    {{ new Date(item.timestamp).toLocaleTimeString() }}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-6 w-6 p-0"
+                    @click.stop="copyToClipboard(item.content)"
+                  >
+                    <Icon name="lucide:copy" class="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    @click.stop="deleteCommentFromHistory(item.timestamp)"
+                  >
+                    <Icon name="lucide:trash-2" class="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+              <pre class="text-xs whitespace-pre-wrap font-sans line-clamp-4">{{ item.content }}</pre>
+            </div>
+          </div>
         </div>
       </div>
     </div>

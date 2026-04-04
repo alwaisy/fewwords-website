@@ -1,8 +1,9 @@
+import { WRITING_GUIDELINES } from "~~/server/prompts/system";
 import { callOpenRouter } from "~~/server/services/shared/llm/openrouter";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { summary, summaryUrl } = body;
+  const { summary, summaryUrl, model } = body;
 
   if (!summary || !summaryUrl) {
     throw createError({
@@ -11,35 +12,34 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const prompt = `
-You're generating a first comment for a social media post summarizing an article or video. The comment should engage the audience and encourage discussion.
+  const selectedModel = model || 'google/gemma-4-26b-a4b-it';
 
-**Formatting:**
-- Keep the comment concise and engaging.
-- Include a link to the summary for more details.
-- Ask a relevant question to encourage discussion.
+  const prompt = `You are the community manager for a popular, highly engaging tech/fintech newsletter. Your job is to write the very first comment under a social media post to drive engagement and drop a link.
 
----
+CRITICAL RULES:
+1. MATCH THE VIBE: Write in a witty, conversational, human tone. Zero corporate jargon or robotic phrasing.
+2. NO PREFIXES OR FLUFF: ONLY output the comment text. Do not start with "Here is the comment:" or "Comment:".
+3. ABSOLUTELY NO MARKDOWN: Do not use asterisks (*), bolding, or italics anywhere. 
+4. THE QUESTION: The question at the end must be casual and something a real person would actually reply to (e.g., avoid stiff questions like "What are your thoughts on this development?").
 
-**First Comment:**
-[Engaging comment about the summary]
+REQUIRED FORMAT:
 
-Read the full summary here: ${summaryUrl}
+[1 short, conversational observation or slightly spicy take on the news]
 
-[Relevant question to encourage discussion?]
+Read the full breakdown here: ${summaryUrl}
 
-**Tone:** Informative and engaging. Encourage the audience to read the summary and participate in the discussion.
+[1 casual, highly engaging question to the audience]
 
-Summary to comment on:
+Text to comment on:
 """
 ${summary}
-"""
-`;
+"""`;
 
   try {
     const result = await callOpenRouter({
-      model: "openrouter/free",
+      model: selectedModel,
       messages: [
+        { role: "system", content: WRITING_GUIDELINES },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
