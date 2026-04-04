@@ -6,6 +6,7 @@ export type YouTubeSummaryTaskData = {
   summaryId: string; // Public ID (few-XYZ)
   url: string;
   notifyEmail: string; // Passed from session at enqueue time
+  userId: string; // ID of the user requesting the job to track quota
 };
 
 export type YouTubeSummaryTaskResult = {

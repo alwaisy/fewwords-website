@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import type { LucideIcon } from "lucide-vue-next";
-import { ChevronRight } from "lucide-vue-next";
-
 type NavLink = {
   title: string;
   url: string;
   badge?: string;
-  icon?: LucideIcon;
+  icon?: string;
   items?: never;
 };
 
 type NavCollapsible = {
   title: string;
   badge?: string;
-  icon?: LucideIcon;
+  icon?: string;
   items: NavLink[];
   url?: never;
 };
@@ -62,7 +59,7 @@ const hasActiveChild = (item: NavItem): boolean => {
             :href="item.url"
             @click.prevent="navigateTo(item.url)"
           >
-            <component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
+                <Icon v-if="item.icon" :name="item.icon" class="h-4 w-4" />
             <span>{{ item.title }}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -77,9 +74,10 @@ const hasActiveChild = (item: NavItem): boolean => {
           <SidebarMenuItem>
             <CollapsibleTrigger as-child>
               <SidebarMenuButton :tooltip="item.title">
-                <component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
+            <Icon v-if="item.icon" :name="item.icon" class="h-4 w-4" />
                 <span>{{ item.title }}</span>
-                <ChevronRight
+                <Icon
+name="lucide:chevron-right"
                   class="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90"
                 />
               </SidebarMenuButton>

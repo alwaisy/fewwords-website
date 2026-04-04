@@ -131,6 +131,13 @@ function copyLink() {
   umTrackEvent('summary-share', { summaryId: summary.value?.summaryId });
 }
 
+function navigateToSocial() {
+  if (!summary.value) return;
+  const summaryId = summary.value.summaryId;
+  umTrackEvent('summary-social', { summaryId });
+  window.open(`/admin/social?summaryId=${summaryId}`, '_blank');
+}
+
 function openSource() {
   if (summary.value?.source) {
     window.open(summary.value.source, "_blank", "noopener,noreferrer");
@@ -236,7 +243,7 @@ watchStatusChanges();
           <!-- Background Job UI - User can close tab -->
           <div v-if="summary.isBackgroundJob" class="max-w-md mx-auto space-y-3 mt-8">
             <p class="text-sm text-muted-foreground">
-              This is a longer video. You can close this tab — we'll email you when it's ready.
+              This video takes a bit longer. Feel free to close this tab. I will email you when it is ready.
             </p>
             <Button variant="outline" size="sm" class="gap-2" @click="copyLink">
               <Icon name="lucide:copy" size="1rem" />
@@ -284,13 +291,14 @@ watchStatusChanges();
             Total time: {{ totalTime }}
           </div>
 
-          <AppSummaryHeader
+           <AppSummaryHeader
             :key="`header-${summary.summaryId}`"
             :title="displayTitle"
             :source-url="summary.source"
             :reader-mode="isReaderMode"
             :is-saved="isSaved"
             @share="copyLink"
+            @social="navigateToSocial"
             @open-source="openSource"
             @save="saveSummary"
             @unsave="unsaveSummary"

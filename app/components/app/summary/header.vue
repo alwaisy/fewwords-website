@@ -45,6 +45,7 @@ defineProps<Props>();
         <Icon name="lucide:share-2" class="w-3 h-3 mr-1.5" />
         Share
       </Button>
+
       <Button
         v-if="!isSaved"
         variant="ghost"

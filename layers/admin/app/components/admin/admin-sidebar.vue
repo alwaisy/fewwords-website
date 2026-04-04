@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import type { LucideIcon } from "lucide-vue-next";
-import { Command, FileText, FileJson, LayoutDashboard, Users } from "lucide-vue-next";
-
 // Get user from useAuth (consistent with rest of app)
 const { user } = useAuth();
 
@@ -14,14 +11,14 @@ type User = {
 
 type Team = {
   name: string;
-  logo: LucideIcon;
+  logo: string;
   plan: string;
 };
 
 type NavLink = {
   title: string;
   url: string;
-  icon: LucideIcon;
+  icon: string;
 };
 
 type NavGroup = {
@@ -49,27 +46,36 @@ const userData = computed<User>(() => {
 // Sidebar data - only includes implemented pages
 const sidebarData: SidebarData = {
   user: userData.value,
-  teams: [{ name: "Fewwords Admin", logo: Command, plan: "Pro" }],
+  teams: [{ name: "Fewwords Admin", logo: "lucide:command", plan: "Pro" }],
   navGroups: [
     {
       title: "",
       items: [
-        { title: "Stats", url: "/admin", icon: LayoutDashboard },
-        { title: "Summaries", url: "/admin/summaries", icon: FileText },
-        { title: "LLM Usage", url: "/admin/llm-usage", icon: FileJson },
-        { title: "Users", url: "/admin/users", icon: Users },
+        { title: "Stats", url: "/admin", icon: "lucide:layout-dashboard" },
+        {
+          title: "Summaries",
+          url: "/admin/summaries",
+          icon: "lucide:file-text",
+        },
+        { title: "Social", url: "/admin/social", icon: "lucide:share-2" },
+        {
+          title: "LLM Usage",
+          url: "/admin/llm-usage",
+          icon: "lucide:file-json",
+        },
+        { title: "Users", url: "/admin/users", icon: "lucide:users" },
       ],
     },
   ],
 };
 
-const activeTeam = ref(sidebarData.teams[0]!);
+// const activeTeam = ref(sidebarData.teams[0]!);
 </script>
 
 <template>
   <Sidebar collapsible="icon">
     <SidebarHeader class="border-b border-sidebar-foreground h-16">
-      <AdminTeamSwitcher v-model="activeTeam" :teams="sidebarData.teams" />
+      <!-- <AdminTeamSwitcher v-model="activeTeam" :teams="sidebarData.teams" /> -->
     </SidebarHeader>
     <SidebarContent>
       <AdminNavGroup

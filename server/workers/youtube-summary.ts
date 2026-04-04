@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { getSender } from "../config/emails";
 import { addError } from "../lib/errors";
@@ -8,11 +8,14 @@ import type {
   YouTubeSummaryTaskData,
   YouTubeSummaryTaskResult,
 } from "../queues/youtube-summary";
+import { countWords } from "../services/quota";
 import { summarize } from "../services/youtube";
 import { notificationEmail } from "../templates/emails";
+import { getBaseUrl } from "../utils/url";
 
+import { useRuntimeConfig } from "#imports";
 import { defineWorker } from "#processor";
-import { summaries, youtube } from "~~/database/orm/schema";
+import { summaries, youtube, users } from "~~/database/orm/schema";
 import { db } from "~~/server/db/index";
 
 // Send completion email using Resend
@@ -76,7 +79,7 @@ export default defineWorker<
 >({
   name: "youtube-summary",
   async processor(job) {
-    const { summaryId, url, notifyEmail } = job.data;
+    const { summaryId, url, notifyEmail, userId } = job.data;
 
     console.log(`[YouTubeWorker] Starting job for ${summaryId}`);
 
@@ -92,15 +95,34 @@ export default defineWorker<
 
       job.updateProgress(90);
 
-      // Fetch the original createdAt for total time calculation
+      // Fetch the original createdAt and internal ID for total time calculation
       const summaryRecord = await db
-        .select({ createdAt: summaries.createdAt })
+        .select({ id: summaries.id, createdAt: summaries.createdAt })
         .from(summaries)
         .where(eq(summaries.summaryId, summaryId))
         .limit(1);
 
       const originalCreatedAt = summaryRecord[0]?.createdAt;
+      const internalId = summaryRecord[0]?.id;
       const completedAt = new Date();
+
+      // Count words and update quota
+      const outputWordCount = result.summary ? countWords(result.summary) : 0;
+      if (outputWordCount > 0) {
+        // Update summary word count
+        await db
+          .update(summaries)
+          .set({ wordCount: outputWordCount })
+          .where(eq(summaries.summaryId, summaryId));
+
+        // Update user's global quota
+        if (userId) {
+          await db
+            .update(users)
+            .set({ wordsUsed: sql`${users.wordsUsed} + ${outputWordCount}` })
+            .where(eq(users.id, userId));
+        }
+      }
 
       // Belt and suspenders: ensure status is "completed"
       // (saveResult() should do this, but let's be sure)
@@ -110,12 +132,12 @@ export default defineWorker<
         .where(eq(summaries.summaryId, summaryId));
 
       // Store total cycle time to youtube table (matches normal API flow)
-      if (originalCreatedAt) {
+      if (originalCreatedAt && internalId) {
         const totalTimeMs = completedAt.getTime() - originalCreatedAt.getTime();
         await db
           .update(youtube)
           .set({ totalTimeMs })
-          .where(eq(youtube.summaryId, summaryId));
+          .where(eq(youtube.summaryId, internalId));
       }
 
       // Set Redis stage for SSE

@@ -130,6 +130,7 @@ export default defineEventHandler(async (event) => {
           summaryId,
           url,
           notifyEmail: userEmail,
+          userId,
         });
 
         console.log(

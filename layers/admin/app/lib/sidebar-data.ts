@@ -28,6 +28,11 @@ export const sidebarData: SidebarData = {
           icon: "lucide:file-text",
         },
         {
+          title: "Social",
+          url: "/admin/social",
+          icon: "lucide:share-2",
+        },
+        {
           title: "Users",
           url: "/admin/users",
           icon: "lucide:users",
