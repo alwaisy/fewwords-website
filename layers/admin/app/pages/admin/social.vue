@@ -183,6 +183,9 @@ onMounted(async () => {
 });
 
 const posterUrl = ref('');
+const posterTitle = ref('');
+const _posterMeta = ref('');
+const _posterLogoUrl = ref('');
 
 // Bullets generation state
 const bullets = ref<string>('');
@@ -226,6 +229,36 @@ const deleteCommentFromHistory = async (timestamp: number) => {
   if (summaryId.value) {
     await saveCommentHistoryToDB(summaryId.value, commentHistory.value);
   }
+};
+
+const openSharePoster = () => {
+  if (!summary.value) return;
+  
+  // Extract domain from source URL
+  let category = 'fewwords.app';
+  const sourceUrl = String(summary.value.source || '');
+  try {
+    const url = new URL(sourceUrl);
+    category = url.hostname.replace('www.', '') || 'fewwords.app';
+  } catch {
+    const parts = sourceUrl.replace(/^https?:\/\//, '').split('/');
+    category = parts[0] || 'fewwords.app';
+  }
+  
+  // Map essence to label
+  const essenceMap: Record<string, string> = {
+    article: 'Article',
+    youtube: 'Video',
+    reddit: 'Thread',
+  };
+  const label = essenceMap[String(summary.value.essence)] || 'Article';
+  
+  const params = new URLSearchParams();
+  params.set('title', posterTitle.value || String(summary.value.title || ''));
+  params.set('label', label);
+  params.set('category', category);
+  params.set('url', posterUrl.value || `fewwords.app/app/${summaryId.value}`);
+  window.open(`/share/poster?${params.toString()}`, '_blank');
 };
 
 const copyToClipboard = (content: string) => {
@@ -358,6 +391,10 @@ const generateComment = async () => {
             </SelectItem>
           </SelectContent>
         </Select>
+        <Button v-if="summary" variant="default" @click="openSharePoster">
+          <Icon name="lucide:external-link" class="h-4 w-4 mr-2" />
+          Open Share Poster
+        </Button>
       </div>
     </div>
 
