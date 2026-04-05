@@ -7,12 +7,15 @@ interface Props {
   hideText?: boolean;
   /** Target URL for the link */
   to?: string;
+  /** Custom text to display */
+  text?: string;
 }
 
 withDefaults(defineProps<Props>(), {
   size: 32,
   hideText: false,
   to: "/",
+  text: "Fewwords",
 });
 </script>
 
@@ -22,7 +25,7 @@ withDefaults(defineProps<Props>(), {
     class="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
   >
     <!-- Icon Mark -->
-    <div 
+    <div
       class="shrink-0 overflow-hidden rounded-[20%] shadow"
       :style="{ width: `${size}px`, height: `${size}px` }"
     >
@@ -32,14 +35,14 @@ withDefaults(defineProps<Props>(), {
         :height="size"
         class="w-full h-full object-cover"
         alt="Fewwords"
-      >
+      />
     </div>
     <!-- Brand Text -->
     <span
       v-if="!hideText"
       class="text-xl font-bold tracking-tight text-foreground select-none"
     >
-      Fewwords
+      {{ text }}
     </span>
   </NuxtLink>
 </template>

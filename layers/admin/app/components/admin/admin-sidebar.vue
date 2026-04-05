@@ -74,8 +74,8 @@ const sidebarData: SidebarData = {
 
 <template>
   <Sidebar collapsible="icon">
-    <SidebarHeader class="border-b border-sidebar-foreground h-16">
-      <!-- <AdminTeamSwitcher v-model="activeTeam" :teams="sidebarData.teams" /> -->
+    <SidebarHeader class="border-b border-sidebar-foreground h-16 flex items-center px-4">
+      <Logo text="Admin" to="/admin" />
     </SidebarHeader>
     <SidebarContent>
       <AdminNavGroup
