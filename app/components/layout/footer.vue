@@ -5,7 +5,7 @@
         class="flex flex-col md:flex-row justify-between items-center md:items-end gap-4"
       >
         <div class="flex flex-col items-center md:items-start gap-2">
-          <span class="text-lg font-semibold text-foreground">Fewwords</span>
+          <Logo size="24" />
           <p class="text-sm text-muted-foreground">
             Content summarization, simplified.
           </p>

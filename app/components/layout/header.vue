@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
-import { Button } from '~/components/ui/button'
+import { Button } from "~/components/ui/button";
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
   DrawerOverlay,
   DrawerPortal,
-} from '~/components/ui/drawer'
+} from "~/components/ui/drawer";
 
-const { isLoggedIn, logout } = useAuth()
-const isMobileMenuOpen = ref(false)
-const route = useRoute()
+const { isLoggedIn, logout } = useAuth();
+const isMobileMenuOpen = ref(false);
+const route = useRoute();
 
 // Check if link is active
 function isActive(path: string): boolean {
-  if (path === '/') {
-    return route.path === '/'
+  if (path === "/") {
+    return route.path === "/";
   }
-  return route.path.startsWith(path)
+  return route.path.startsWith(path);
 }
 </script>
 
@@ -28,18 +28,20 @@ function isActive(path: string): boolean {
     class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
   >
     <div class="container flex h-16 max-w-4xl mx-auto items-center px-4">
-      <NuxtLink to="/" class="flex items-center space-x-2">
-        <span class="text-xl font-bold text-foreground">Fewwords</span>
-      </NuxtLink>
-
+      <Logo />
       <!-- Desktop nav (hidden on mobile) -->
       <!-- Not logged in -->
-      <nav v-if="!isLoggedIn" class="ml-auto hidden md:flex items-center space-x-6">
+      <nav
+        v-if="!isLoggedIn"
+        class="ml-auto hidden md:flex items-center space-x-6"
+      >
         <NuxtLink
           to="/"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           Home
@@ -48,7 +50,9 @@ function isActive(path: string): boolean {
           to="/about"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/about')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           About
@@ -57,7 +61,9 @@ function isActive(path: string): boolean {
           to="/explore"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/explore')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           Explore
@@ -74,7 +80,9 @@ function isActive(path: string): boolean {
           to="/"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           Home
@@ -83,7 +91,9 @@ function isActive(path: string): boolean {
           to="/about"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/about')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           About
@@ -92,7 +102,9 @@ function isActive(path: string): boolean {
           to="/explore"
           :class="[
             'text-sm font-medium transition-colors',
-            isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+            isActive('/explore')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-primary',
           ]"
         >
           Explore
@@ -123,9 +135,7 @@ function isActive(path: string): boolean {
               <NuxtLink to="/settings">Settings</NuxtLink>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem @click="logout">
-              Log out
-            </DropdownMenuItem>
+            <DropdownMenuItem @click="logout"> Log out </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -146,10 +156,7 @@ function isActive(path: string): boolean {
   <Drawer v-model:open="isMobileMenuOpen">
     <DrawerPortal>
       <DrawerOverlay />
-      <DrawerContent
-        class="bg-background border-l border-border"
-        side="right"
-      >
+      <DrawerContent class="bg-background border-l border-border" side="right">
         <div class="mx-auto w-full max-w-sm">
           <DrawerHeader>
             <DrawerTitle>Menu</DrawerTitle>
@@ -162,7 +169,9 @@ function isActive(path: string): boolean {
                   to="/"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -174,7 +183,9 @@ function isActive(path: string): boolean {
                   to="/about"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/about')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -186,7 +197,9 @@ function isActive(path: string): boolean {
                   to="/explore"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/explore')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -212,7 +225,9 @@ function isActive(path: string): boolean {
                   to="/"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -224,7 +239,9 @@ function isActive(path: string): boolean {
                   to="/about"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/about') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/about')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -236,7 +253,9 @@ function isActive(path: string): boolean {
                   to="/explore"
                   :class="[
                     'text-lg font-medium transition-colors py-2',
-                    isActive('/explore') ? 'text-foreground' : 'text-muted-foreground hover:text-primary'
+                    isActive('/explore')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -267,7 +286,12 @@ function isActive(path: string): boolean {
               <Button
                 variant="ghost"
                 class="w-full justify-start"
-                @click="() => { logout(); isMobileMenuOpen = false; }"
+                @click="
+                  () => {
+                    logout();
+                    isMobileMenuOpen = false;
+                  }
+                "
               >
                 Log out
               </Button>
