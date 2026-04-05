@@ -74,8 +74,8 @@ const sidebarData: SidebarData = {
 
 <template>
   <Sidebar collapsible="icon">
-    <SidebarHeader class="border-b border-sidebar-foreground h-16 flex items-center px-4">
-      <Logo text="Admin" to="/admin" />
+    <SidebarHeader class="border-b border-sidebar-foreground h-16 flex px-4">
+      <Logo text="Admin" to="/admin" class="mt-2" />
     </SidebarHeader>
     <SidebarContent>
       <AdminNavGroup
