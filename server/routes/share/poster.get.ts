@@ -1,20 +1,24 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { defineEventHandler, getQuery, createError, setResponseHeader } from 'h3'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
-  const filePath = resolve(
-    process.cwd(),
-    "server/routes/share/templates/social-media-card.html"
-  );
-
   try {
-    let html = readFileSync(filePath, "utf-8");
+    // useStorage('assets:server') is the production-safe way to read bundled assets
+    const html = await useStorage('assets:server').getItem('share/social-media-card.html');
+
+    if (!html) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Poster template not found. Ensure it exists in server/assets/share/',
+      });
+    }
+
+    let processedHtml = html.toString();
 
     // Construct the metadata text from label and category if provided
     const label = (query.label as string) || "Article";
-    const category = (query.category as string) || "adventures.nodeland.dev";
+    const category = (query.category as string) || "fewwords.app";
     const metaText = query.meta ? (query.meta as string) : `${category} · ${label}`;
 
     // Mapping of hardcoded strings in HTML to query parameters
@@ -32,22 +36,20 @@ export default defineEventHandler((event) => {
 
       // Logo
       "http://localhost:3000/favicon-2048x2048.png": 
-        (query.logo as string) || "http://localhost:3000/favicon-2048x2048.png",
+        (query.logo as string) || "https://fewwords.app/favicon-2048x2048.png",
     };
 
     // Apply replacements
     Object.entries(replacements).forEach(([oldValue, newValue]) => {
-      html = html.split(oldValue).join(newValue);
+      processedHtml = processedHtml.split(oldValue).join(newValue);
     });
 
     setResponseHeader(event, "Content-Type", "text/html");
-    return html;
-  } catch (error) {
+    return processedHtml;
+  } catch (error: any) {
     throw createError({
-      statusCode: 404,
-      statusMessage: `Template not found: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
+      statusCode: error.statusCode || 500,
+      statusMessage: `Internal Server Error: ${error.message}`,
     });
   }
 });
