@@ -46,10 +46,11 @@ export default defineEventHandler(async (event) => {
 
     setResponseHeader(event, "Content-Type", "text/html");
     return processedHtml;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { statusCode?: number; message?: string };
     throw createError({
-      statusCode: error.statusCode || 500,
-      statusMessage: `Internal Server Error: ${error.message}`,
+      statusCode: err.statusCode || 500,
+      statusMessage: `Internal Server Error: ${err.message || "Unknown error"}`,
     });
   }
 });
