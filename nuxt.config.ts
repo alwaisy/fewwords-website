@@ -99,8 +99,6 @@ export default defineNuxtConfig({
     enabled: process.env.NODE_ENV === "production",
     autoTrack: true,
     useDirective: true,
-    id: process.env.NUXT_UMAMI_ID,
-    host: process.env.NUXT_UMAMI_HOST,
   },
 
   colorMode: {
