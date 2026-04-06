@@ -116,6 +116,7 @@ async function handleResend() {
         </Button>
 
         <Button
+          v-umami="'verify-resend-code'"
           type="button"
           variant="ghost"
           size="sm"
@@ -129,6 +130,7 @@ async function handleResend() {
       </form>
 
       <Button
+        v-umami="'verify-go-back'"
         variant="link"
         size="sm"
         class="mt-4"
@@ -178,6 +180,7 @@ async function handleResend() {
 
       <div class="space-y-3">
         <Button
+          v-umami="'verify-try-again'"
           variant="outline"
           size="lg"
           class="w-full"
@@ -186,6 +189,7 @@ async function handleResend() {
           Try again
         </Button>
         <Button
+          v-umami="'verify-resend-code-error'"
           variant="ghost"
           size="sm"
           class="w-full"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useUmamiIdentity } from '~/composables/use-umami-identity'
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
 useSeoMeta({
@@ -28,6 +29,7 @@ interface Pagination {
 
 // Pagination
 const page = ref(1)
+const { identity } = useUmamiIdentity()
 const limit = 16
 
 // Data
@@ -119,6 +121,10 @@ const showPagination = computed(() => {
         <!-- Pagination -->
         <div v-if="showPagination && !loading" class="flex items-center justify-center gap-4 mt-8">
           <Button
+            v-umami="{
+              name: 'explore-prev-page',
+              ...identity.value
+            }"
             variant="outline"
             size="sm"
             :disabled="pagination.page === 1"
@@ -133,7 +139,10 @@ const showPagination = computed(() => {
           </span>
 
           <Button
-            v-umami="'explore-load-more'"
+            v-umami="{
+              name: 'explore-load-more',
+              ...identity.value
+            }"
             variant="outline"
             size="sm"
             :disabled="pagination.page === pagination.totalPages"

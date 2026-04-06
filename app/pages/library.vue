@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useUmamiIdentity } from '~/composables/use-umami-identity'
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
 useSeoMeta({
@@ -13,7 +14,10 @@ useSeoMeta({
 
 definePageMeta({
   middleware: 'auth'
-})
+});
+
+// Add the identity composable
+const { identity } = useUmamiIdentity()
 
 interface LibrarySummary {
   summaryId: string
@@ -121,6 +125,7 @@ function goToSummary(summaryId: string) {
         <!-- Tabs -->
         <div class="flex gap-4 border-b border-border mb-6">
           <button
+            v-umami="'library-tab-mine'"
             :class="[
               'pb-3 px-1 text-sm font-medium transition-colors',
               activeTab === 'my-summaries'
@@ -132,6 +137,7 @@ function goToSummary(summaryId: string) {
             My Summaries
           </button>
           <button
+            v-umami="'library-tab-saved'"
             :class="[
               'pb-3 px-1 text-sm font-medium transition-colors',
               activeTab === 'saved'
@@ -161,12 +167,18 @@ function goToSummary(summaryId: string) {
 
         <!-- Summary list -->
         <div v-else class="space-y-3">
-          <div
-            v-for="summary in currentData"
-            :key="summary.summaryId"
-            class="border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
-            @click="goToSummary(summary.summaryId)"
-          >
+           <div
+             v-for="summary in currentData"
+             :key="summary.summaryId"
+             v-umami="{
+               name: 'library-summary-click',
+               essence: summary.essence,
+               tab: activeTab,
+               ...identity.value
+             }"
+             class="border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
+             @click="goToSummary(summary.summaryId)"
+           >
             <!-- Title -->
             <h3 class="font-medium text-foreground truncate mb-2">
               {{ summary.title || 'Untitled' }}
@@ -194,6 +206,7 @@ function goToSummary(summaryId: string) {
         <!-- Pagination -->
         <div v-if="showPagination && !loading" class="flex items-center justify-center gap-4 mt-8">
           <Button
+            v-umami="'library-prev-page'"
             variant="outline"
             size="sm"
             :disabled="currentPagination.page === 1"
@@ -208,6 +221,7 @@ function goToSummary(summaryId: string) {
           </span>
 
           <Button
+            v-umami="'library-next-page'"
             variant="outline"
             size="sm"
             :disabled="currentPagination.page === currentPagination.totalPages"

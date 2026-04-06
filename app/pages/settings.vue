@@ -186,7 +186,7 @@ async function handleDeleteAccount() {
           <p class="text-sm text-muted-foreground mb-4">
             Sign out of your account on this device
           </p>
-          <Button variant="outline" @click="handleLogout">
+          <Button v-umami="'settings-logout'" variant="outline" @click="handleLogout">
             Sign out
           </Button>
         </div>

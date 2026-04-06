@@ -1,7 +1,10 @@
-// Disable umami tracking for admin routes
-export default defineNuxtRouteMiddleware(() => {
-  // Disable umami tracking for all admin routes
+// Disable Umami analytics for admin routes
+export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.client) {
-    window.localStorage.setItem('umami.disabled', '1');
+    if (to.path.startsWith("/admin")) {
+      window.localStorage.setItem("umami.disabled", "1");
+    } else {
+      window.localStorage.removeItem("umami.disabled");
+    }
   }
 });

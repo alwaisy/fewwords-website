@@ -8,6 +8,10 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
 
+  ogImage: {
+    enabled: false
+  },
+
   site: {
     url: process.env.NUXT_SITE_URL || "https://fewwords.app",
     name: "Fewwords",
@@ -96,9 +100,10 @@ export default defineNuxtConfig({
   },
 
   umami: {
-    enabled: process.env.NODE_ENV === "production",
+    enabled: true,
     autoTrack: true,
     useDirective: true,
+    ignoreLocalhost: false
   },
 
   colorMode: {

@@ -79,6 +79,7 @@ function goBack() {
 
     <div class="space-y-4">
       <Button
+        v-umami="'auth-resend-code'"
         variant="outline"
         size="lg"
         class="w-full"
@@ -91,6 +92,7 @@ function goBack() {
 
       <Button
         v-if="from === 'login'"
+        v-umami="'auth-go-back'"
         variant="link"
         size="sm"
         @click="goBack"

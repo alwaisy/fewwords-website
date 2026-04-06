@@ -8,6 +8,7 @@ const route = useRoute();
 const router = useRouter();
 const summaryId = route.params.summaryId as string;
 const { user } = useAuth();
+const { identity } = useUmamiIdentity();
 
 // Check for reader mode via query param
 const isReaderMode = computed(
@@ -128,13 +129,21 @@ useSeoMeta({
 function copyLink() {
   navigator.clipboard.writeText(window.location.href);
   useToastify("Link copied!");
-  umTrackEvent('summary-share', { summaryId: summary.value?.summaryId });
+  if (summary.value?.summaryId) {
+  umTrackEvent('summary-share', { 
+    summaryId: summary.value.summaryId,
+    ...identity.value
+  });
+  }
 }
 
 function navigateToSocial() {
   if (!summary.value) return;
   const summaryId = summary.value.summaryId;
-  umTrackEvent('summary-social', { summaryId });
+  umTrackEvent('summary-social', { 
+    summaryId,
+    ...identity.value
+  });
   window.open(`/admin/social?summaryId=${summaryId}`, '_blank');
 }
 
@@ -157,7 +166,10 @@ async function saveSummary() {
     });
     isSaved.value = true;
     useToastify("Saved to library!", { type: "success" });
-    umTrackEvent('summary-save', { summaryId });
+  umTrackEvent('summary-save', { 
+    summaryId,
+    ...identity.value
+  });
   } catch {
     useToastify("Failed to save", { type: "error" });
   }
@@ -173,14 +185,17 @@ async function unsaveSummary() {
     });
     isSaved.value = false;
     useToastify("Removed from library", { type: "info" });
-    umTrackEvent('summary-unsave', { summaryId });
+    umTrackEvent('summary-unsave', { 
+      summaryId,
+      ...identity.value
+    });
   } catch {
     useToastify("Failed to unsave", { type: "error" });
   }
 }
 
 function doAnother() {
-  umTrackEvent('summary-new');
+  umTrackEvent('summary-new', identity.value);
   router.push("/app");
 }
 
@@ -208,7 +223,7 @@ watchStatusChanges();
           <p class="text-muted-foreground mb-8 max-w-md mx-auto">
             The summary went into hiding. Maybe it exists in another dimension?
           </p>
-          <Button variant="outline" @click="doAnother">Try another URL</Button>
+          <Button v-umami="'summary-new'" variant="outline" @click="doAnother">Try another URL</Button>
         </div>
 
         <!-- Processing State (pending or processing) -->
@@ -245,7 +260,7 @@ watchStatusChanges();
             <p class="text-sm text-muted-foreground">
               This video takes a bit longer. Feel free to close this tab. I will email you when it is ready.
             </p>
-            <Button variant="outline" size="sm" class="gap-2" @click="copyLink">
+            <Button v-umami="'summary-copy-link'" variant="outline" size="sm" class="gap-2" @click="copyLink">
               <Icon name="lucide:copy" size="1rem" />
               Copy link
             </Button>
@@ -274,7 +289,7 @@ watchStatusChanges();
             {{ friendlyErrorMessage }}
           </p>
           <div class="flex gap-3 justify-center">
-            <Button variant="outline" @click="doAnother"
+            <Button v-umami="'summary-retry'" variant="outline" @click="doAnother">
               >Try another URL</Button
             >
           </div>
