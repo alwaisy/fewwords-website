@@ -7,11 +7,12 @@ useSeoMeta({
 
 definePageMeta({
   layout: 'auth'
-})
+});
 
 const email = ref('')
 const router = useRouter()
 const { login, isLoading } = useAuth()
+const { identity } = useUmamiIdentity()
 
 // Check if already logged in as admin, redirect to admin
 onMounted(async () => {
@@ -20,8 +21,7 @@ onMounted(async () => {
     if (response?.authenticated && response.user?.role === 'admin') {
       await router.push('/admin')
     }
-  }
-  catch {
+  } catch {
     // Not authenticated, continue to login
   }
 })
@@ -32,10 +32,11 @@ async function handleLogin() {
   const result = await login(email.value)
 
   if (result.success) {
+    umTrackEvent('auth-login-start', { ...identity.value })
     useToastify(result.message || 'Code sent!', { type: 'success' })
     router.push({ path: '/auth/verify', query: { email: email.value } })
-  }
-  else {
+  } else {
+    umTrackEvent('auth-login-failed', { ...identity.value })
     useToastify(result.message || 'Failed to send code', { type: 'error' })
   }
 }

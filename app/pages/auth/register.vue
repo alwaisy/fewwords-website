@@ -7,7 +7,7 @@ useSeoMeta({
 
 definePageMeta({
   layout: 'auth'
-})
+});
 
 const name = ref('')
 const username = ref('')
@@ -15,6 +15,7 @@ const email = ref('')
 
 const router = useRouter()
 const { register, isLoading } = useAuth()
+const { identity } = useUmamiIdentity()
 
 async function handleRegister() {
   if (!name.value || !username.value || !email.value) return
@@ -22,10 +23,11 @@ async function handleRegister() {
   const result = await register(email.value, name.value, username.value)
 
   if (result.success) {
+    umTrackEvent('auth-register-start', { ...identity.value })
     useToastify(result.message || 'Account created! Check your email.', { type: 'success' })
     router.push({ path: '/auth/verify', query: { email: email.value } })
-  }
-  else {
+  } else {
+    umTrackEvent('auth-register-failed', { ...identity.value })
     useToastify(result.message || 'Failed to create account', { type: 'error' })
   }
 }
