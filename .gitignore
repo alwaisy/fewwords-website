@@ -31,6 +31,8 @@ test-production/
 
 # Kilo CLI
 .kilo/
+.kilocode/
+skills-lock.json
 
 # Landing page experiments (don't ship)
 app/components/lp-fw/
