@@ -84,6 +84,8 @@ function scrollTo(index: number) {
                   muted
                   loop
                   playsinline
+                  preload="auto"
+                  :fetchpriority="demo.src === demos?.[0]?.src ? 'high' : undefined"
                 />
                 <div class="p-3 md:p-4 bg-card/80 backdrop-blur-sm">
                   <p class="text-sm md:text-base font-medium text-foreground">

@@ -1,4 +1,10 @@
 <script setup lang="ts">
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/contact` }],
+});
+
 useSeoMeta({
   title: "Contact - Fewwords",
   description: "Get in touch with the creator of Fewwords.",

@@ -21,11 +21,14 @@ export default defineNuxtConfig({
   },
 
   robots: {
-    disallow: ["/app", "/admin", "/settings", "/library", "/auth"],
+    disallow: ["/admin", "/settings", "/auth"],
   },
 
   sitemap: {
     // Auto-discovers pages/ directory
+    sources: [
+      "/api/sitemap-urls",
+    ],
   },
 
   runtimeConfig: {

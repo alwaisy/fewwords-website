@@ -19,7 +19,7 @@ defineProps<Props>();
 <template>
   <div class="space-y-6">
     <!-- Title -->
-    <h1 class="text-2xl md:text-3xl font-bold text-foreground">
+    <h1 class="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
       {{ title }}
     </h1>
 

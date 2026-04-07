@@ -1,11 +1,8 @@
-const BASE_URL = "https://fewwords.app";
-const OG_IMAGE = `${BASE_URL}/og-image.png`;
-
-export const seoMeta = {
+export const getSeoMeta = (siteUrl: string) => ({
   title: "Fewwords: The quick & painless way to read the internet",
   titleTemplate: "%s - Fewwords",
   description:
-    "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. Start with 2,500 words free.",
+    "Paste any URL to get the key insights in under a minute. Fewwords uses intelligent AI to summarize articles, YouTube videos, and Reddit threads into concise, actionable briefs.",
 
   robots:
     "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
@@ -13,12 +10,12 @@ export const seoMeta = {
   themeColor: "#fafaf9",
 
   ogType: "website" as const,
-  ogUrl: `${BASE_URL}/`,
+  ogUrl: `${siteUrl}/`,
   ogSiteName: "Fewwords",
   ogTitle: "Fewwords: The quick & painless way to read the internet",
   ogDescription:
     "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
-  ogImage: OG_IMAGE,
+  ogImage: `${siteUrl}/og-image.png`,
   ogImageType: "image/png" as const,
   ogImageWidth: 1200,
   ogImageHeight: 630,
@@ -30,16 +27,16 @@ export const seoMeta = {
   twitterTitle: "Fewwords: The quick & painless way to read the internet",
   twitterDescription:
     "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
-  twitterImage: OG_IMAGE,
+  twitterImage: `${siteUrl}/og-image.png`,
   twitterImageType: "image/png" as const,
   twitterImageWidth: 1200,
   twitterImageHeight: 630,
-};
+});
 
-export const metaHead = {
+export const getMetaHead = (siteUrl: string) => ({
   htmlAttrs: { lang: "en" },
   link: [
-    { rel: "canonical", href: `${BASE_URL}/` },
+    { rel: "canonical", href: `${siteUrl}/` },
     { rel: "icon", href: "/favicon.ico" },
     {
       rel: "icon",
@@ -56,4 +53,4 @@ export const metaHead = {
   meta: [
     { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5" }
   ]
-};
+});

@@ -9,8 +9,15 @@ const isReaderMode = computed(() => {
 
 <template>
   <div class="min-h-screen flex flex-col">
+    <a
+      href="#main-content"
+      class="skip-link"
+    >
+      Skip to main content
+    </a>
     <LayoutHeader v-if="!isReaderMode" />
     <main
+      id="main-content"
       class="flex-1 mx-auto w-full"
       :class="isReaderMode ? 'max-w-3xl' : 'max-w-4xl'"
     >

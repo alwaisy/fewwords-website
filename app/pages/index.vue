@@ -1,4 +1,10 @@
 <script setup lang="ts">
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/` }],
+});
+
 useSeoMeta({
   title: "Fewwords: Get Key Points in 60 Seconds",
   titleTemplate: null,
@@ -24,6 +30,7 @@ useSeoMeta({
     <HomeUspSection />
     <HomeFeaturesSection />
     <HomeBookmarkletSection />
+    <HomeFaqSection />
     <HomeFinalCta />
   </main>
 </template>

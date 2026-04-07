@@ -41,7 +41,7 @@ function isActive(path: string): boolean {
           <NuxtLink
             v-umami="{
               name: 'nav-home',
-              ...identity.value
+              ...identity
             }"
             to="/"
             :class="[
@@ -56,7 +56,7 @@ function isActive(path: string): boolean {
          <NuxtLink
            v-umami="{
              name: 'nav-about',
-             ...identity.value
+             ...identity
            }"
            to="/about"
            :class="[
@@ -71,7 +71,7 @@ function isActive(path: string): boolean {
          <NuxtLink
            v-umami="{
              name: 'nav-explore',
-             ...identity.value
+             ...identity
            }"
            to="/explore"
            :class="[
@@ -110,7 +110,7 @@ function isActive(path: string): boolean {
            <NuxtLink
              v-umami="{
                name: 'nav-login',
-               ...identity.value
+               ...identity
              }"
              to="/auth/login"
            >
@@ -124,7 +124,7 @@ function isActive(path: string): boolean {
          <NuxtLink
            v-umami="{
              name: 'nav-home',
-             ...identity.value
+             ...identity
            }"
            to="/"
            :class="[
@@ -139,7 +139,7 @@ function isActive(path: string): boolean {
          <NuxtLink
            v-umami="{
              name: 'nav-about',
-             ...identity.value
+             ...identity
            }"
            to="/about"
            :class="[
@@ -154,7 +154,7 @@ function isActive(path: string): boolean {
          <NuxtLink
            v-umami="{
              name: 'nav-explore',
-             ...identity.value
+             ...identity
            }"
            to="/explore"
            :class="[
@@ -225,7 +225,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-home-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/"
                    :class="[
@@ -243,7 +243,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-about-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/about"
                    :class="[
@@ -261,7 +261,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-explore-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/explore"
                    :class="[
@@ -293,7 +293,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-home-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/"
                    :class="[
@@ -311,7 +311,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-about-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/about"
                    :class="[
@@ -329,7 +329,7 @@ function isActive(path: string): boolean {
                  <NuxtLink
                    v-umami="{
                      name: 'nav-explore-mobile',
-                     ...identity.value
+                     ...identity
                    }"
                    to="/explore"
                    :class="[

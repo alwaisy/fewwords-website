@@ -2,6 +2,12 @@
 import { useUmamiIdentity } from '~/composables/use-umami-identity'
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/explore` }],
+});
+
 useSeoMeta({
   title: "Explore - Fewwords",
   titleTemplate: null,
@@ -123,7 +129,7 @@ const showPagination = computed(() => {
           <Button
             v-umami="{
               name: 'explore-prev-page',
-              ...identity.value
+              ...identity
             }"
             variant="outline"
             size="sm"
@@ -141,7 +147,7 @@ const showPagination = computed(() => {
           <Button
             v-umami="{
               name: 'explore-load-more',
-              ...identity.value
+              ...identity
             }"
             variant="outline"
             size="sm"

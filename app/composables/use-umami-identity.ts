@@ -3,10 +3,16 @@ import { watch, computed } from 'vue';
 import { umIdentify } from '#imports';
 import { useAuth } from '@/composables/use-auth';
 
+export type UmamiIdentity = {
+  userId?: string;
+  email?: string;
+  sessionId?: string;
+};
+
 export function useUmamiIdentity() {
   const { user } = useAuth();
 
-  const identity = computed(() => {
+  const identity = computed<UmamiIdentity>(() => {
     if (user.value?.id) {
       return { userId: user.value.id, email: user.value.email };
     }

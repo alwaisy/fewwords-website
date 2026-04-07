@@ -1,4 +1,10 @@
 <script setup lang="ts">
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/about` }],
+});
+
 useSeoMeta({
   title: "The Story Behind Fewwords",
   titleTemplate: null,

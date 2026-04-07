@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/terms` }],
+});
+
 useSeoMeta({
   title: "Terms of Service - Fewwords",
   description: "Terms of Service for Fewwords, an AI-powered content summarization tool.",

@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { jsonLd } from "~/lib/seo/json-ld";
-import { seoMeta, metaHead } from "~/lib/seo/metadata";
+import { getJsonLd } from "~/lib/seo/json-ld";
+import { getSeoMeta, getMetaHead } from "~/lib/seo/metadata";
 
-useSeoMeta(seoMeta);
+const siteConfig = useSiteConfig();
+const siteUrl = siteConfig.url || "https://fewwords.app";
+
+useSeoMeta(getSeoMeta(siteUrl));
 useHead({
-  ...metaHead,
-  script: jsonLd.map((schema) => ({
+  ...getMetaHead(siteUrl),
+  link: [
+    ...(getMetaHead(siteUrl).link || []),
+    { rel: "alternate", type: "text/plain", href: `${siteUrl}/llms.txt`, title: "LLM-readable content" }
+  ],
+  script: getJsonLd(siteUrl).map((schema) => ({
     type: "application/ld+json",
     innerHTML: JSON.stringify(schema),
   })),

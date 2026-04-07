@@ -6,9 +6,14 @@ import { createOgImage } from "~/lib/seo/og-image";
 
 const route = useRoute();
 const router = useRouter();
+const siteUrl = useSiteConfig().url;
 const summaryId = route.params.summaryId as string;
 const { user } = useAuth();
 const { identity } = useUmamiIdentity();
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/app/${summaryId}` }],
+});
 
 // Check for reader mode via query param
 const isReaderMode = computed(
@@ -86,8 +91,8 @@ const metaDescription = computed(() => {
   }
 
   return platformName 
-    ? `${summary.value.title}. ${typeLabel} from ${platformName}, summarised by Fewwords`
-    : `${summary.value.title}. ${typeLabel}, summarised by Fewwords`;
+    ? `Read this concise ${typeLabel} summary from ${platformName}. ${summary.value.title}. Summarised by Fewwords in 60 seconds.`
+    : `Read this concise ${typeLabel} summary. ${summary.value.title}. Summarised by Fewwords in 60 seconds.`;
 });
 
 const ogImageUrl = computed(() => {
@@ -312,6 +317,7 @@ watchStatusChanges();
             :source-url="summary.source"
             :reader-mode="isReaderMode"
             :is-saved="isSaved"
+            :last-updated="summary?.completedAt ?? undefined"
             @share="copyLink"
             @social="navigateToSocial"
             @open-source="openSource"
@@ -325,6 +331,7 @@ watchStatusChanges();
           <AppSummaryFooter
             :key="`footer-${summary.summaryId}`"
             :reader-mode="isReaderMode"
+            :last-updated="summary?.completedAt ?? undefined"
             @do-another="doAnother"
           />
         </template>

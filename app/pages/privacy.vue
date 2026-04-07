@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/privacy` }],
+});
+
 useSeoMeta({
   title: "Privacy Policy - Fewwords",
   description: "Privacy Policy for Fewwords. What we collect, why, and how we protect it.",

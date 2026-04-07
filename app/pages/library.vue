@@ -2,6 +2,12 @@
 import { useUmamiIdentity } from '~/composables/use-umami-identity'
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/library` }],
+});
+
 useSeoMeta({
   title: "Library - Fewwords",
   titleTemplate: null,
@@ -174,7 +180,7 @@ function goToSummary(summaryId: string) {
                name: 'library-summary-click',
                essence: summary.essence,
                tab: activeTab,
-               ...identity.value
+               ...identity
              }"
              class="border border-border rounded-lg p-4 hover:bg-muted/50 transition cursor-pointer"
              @click="goToSummary(summary.summaryId)"

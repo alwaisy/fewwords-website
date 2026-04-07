@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { sanitizeMarkdown } from "~/lib/markdown";
 
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/refund` }],
+});
+
 useSeoMeta({
   title: "Refund Policy - Fewwords",
   description: "Refund Policy for Fewwords.",

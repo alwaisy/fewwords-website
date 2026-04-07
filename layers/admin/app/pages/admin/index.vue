@@ -12,8 +12,9 @@ definePageMeta({
   middleware: "admin",
 });
 
-useHead({
+useSeoMeta({
   title: "Admin Dashboard",
+  robots: "noindex, nofollow",
 });
 
 const userData = useAuth().user;

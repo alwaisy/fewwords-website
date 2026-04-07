@@ -1,4 +1,10 @@
 <script setup lang="ts">
+const siteUrl = useSiteConfig().url;
+
+useHead({
+  link: [{ rel: "canonical", href: `${siteUrl}/app` }],
+});
+
 useSeoMeta({
   title: "Clear Your Tabs - Fewwords",
   titleTemplate: null,
