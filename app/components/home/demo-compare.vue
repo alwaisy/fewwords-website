@@ -5,7 +5,7 @@ import CarouselContent from "~/components/ui/carousel/carousel-content.vue";
 import CarouselItem from "~/components/ui/carousel/carousel-item.vue";
 import Carousel from "~/components/ui/carousel/carousel.vue";
 import type { UnwrapRefCarouselApi } from "~/components/ui/carousel/interface";
-
+import landingCopy from "~/content/landing-copy";
 
 const demos = [
   {
@@ -53,10 +53,10 @@ function scrollTo(index: number) {
       <h2
         class="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-3 md:mb-4"
       >
-        See it in action
+        {{ landingCopy.demo_section.headline }}
       </h2>
       <p class="text-sm md:text-base text-muted-foreground mb-6 md:mb-10">
-        Two ways to summarize. One click.
+        {{ landingCopy.demo_section.subheadline }}
       </p>
 
       <div class="relative">
@@ -85,7 +85,9 @@ function scrollTo(index: number) {
                   loop
                   playsinline
                   preload="auto"
-                  :fetchpriority="demo.src === demos?.[0]?.src ? 'high' : undefined"
+                  :fetchpriority="
+                    demo.src === demos?.[0]?.src ? 'high' : undefined
+                  "
                 />
                 <div class="p-3 md:p-4 bg-card/80 backdrop-blur-sm">
                   <p class="text-sm md:text-base font-medium text-foreground">

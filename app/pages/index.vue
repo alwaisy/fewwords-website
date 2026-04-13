@@ -6,16 +6,16 @@ useHead({
 });
 
 useSeoMeta({
-  title: "Fewwords: Get Key Points in 60 Seconds",
+  title: "Fewwords: Summarize Anything in 60 Seconds",
   titleTemplate: null,
   description:
-    "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
-  ogTitle: "Fewwords: Get Key Points in 60 Seconds",
+    "Articles, YouTube, Reddit. Paste a URL, get the key points. Actually useful summaries. No signup needed.",
+  ogTitle: "Fewwords: Summarize Anything in 60 Seconds",
   ogDescription:
-    "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
-  twitterTitle: "Fewwords: Get Key Points in 60 Seconds",
+    "Articles, YouTube, Reddit. Paste a URL, get the key points. Actually useful summaries. No signup needed.",
+  twitterTitle: "Fewwords: Summarize Anything in 60 Seconds",
   twitterDescription:
-    "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. No signup needed.",
+    "Articles, YouTube, Reddit. Paste a URL, get the key points. Actually useful summaries. No signup needed.",
 });
 </script>
 
