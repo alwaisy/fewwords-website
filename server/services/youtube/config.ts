@@ -40,7 +40,7 @@ export const CLASSIFICATION_CONFIG = {
 
 // Stage 4: Summarization (Grok for fast, quality summaries)
 export const SUMMARIZATION_CONFIG = {
-  model: "x-ai/grok-4.1-fast" as LLMModel,
+  model: "google/gemma-4-26b-a4b-it" as LLMModel,
   temperature: 0.7,
   maxTokens: 4000,
   reasoning: undefined,

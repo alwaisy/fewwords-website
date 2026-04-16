@@ -1,7 +1,7 @@
 import type { LLMModel } from "../shared/types";
 
 export const ARTICLE_CONFIG = {
-  model: "inception/mercury-2" as LLMModel,
+  model: "google/gemini-3.1-flash-lite-preview" as LLMModel,
   temperature: 0.7,
   maxTokens: 1000,
 } as const;
