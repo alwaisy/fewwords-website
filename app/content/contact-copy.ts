@@ -18,8 +18,8 @@ const contactCopy = {
       },
       {
         label: "Twitter / X",
-        value: "@your_handle",
-        link: "https://x.com/your_handle"
+        value: "@alvaisy",
+        link: "https://x.com/alvaisy"
       }
     ],
     note: "I usually reply within 24-48 hours. Unless I'm deep in a coding session.",
