@@ -1,21 +1,31 @@
 import { eq } from 'drizzle-orm'
 
 import { getRedis } from '../../lib/redis'
-import { summarize as summarizeArticle, type ArticleMetadata } from '../../services/article'
-import { countWords, incrementWordCount } from '../../services/quota'
-import { summarize as summarizeReddit } from '../../services/reddit'
-import { summarize as summarizeYouTube } from '../../services/youtube'
+import { summarize as summarizeArticle, type ArticleResult } from '../../services/article'
+import { deductCredits } from '../../services/quota'
+import { summarize as summarizeReddit, type RedditResult } from '../../services/reddit'
+import { summarize as summarizeYouTube, type YouTubeResult } from '../../services/youtube'
 
 import { summaries, articles, youtube } from '~~/database/orm/schema'
+
+// Define a union type for all summary results
+type UnifiedSummaryResult = ArticleResult | YouTubeResult | RedditResult;
+
+// Type guards to safely identify the result type
+function isArticleResult(result: UnifiedSummaryResult): result is ArticleResult {
+  return result.type === 'article';
+}
+
+function isYouTubeResult(result: UnifiedSummaryResult): result is YouTubeResult {
+  return result.type === 'youtube';
+}
 
 // Helper to set stage in Redis for SSE (only for YouTube)
 async function setCompletedStage(summaryId: string | undefined) {
   if (!summaryId) return;
   try {
-    console.log(`[SSE Stage] Setting 'completed' stage for ${summaryId}...`);
     const redis = getRedis();
     await redis.set(`summary:${summaryId}:stage`, 'completed', 'EX', 3600);
-    console.log(`[SSE Stage] ✓ Set 'completed' stage for ${summaryId}`);
   } catch (error) {
     console.error(`[SSE Stage] Failed to set completed stage:`, error);
   }
@@ -44,15 +54,8 @@ async function storeTotalTime(
 
 function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
   const urlObj = new URL(url)
-
-  if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
-    return 'youtube'
-  }
-
-  if (urlObj.hostname.includes('reddit.com')) {
-    return 'reddit'
-  }
-
+  if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) return 'youtube'
+  if (urlObj.hostname.includes('reddit.com')) return 'reddit'
   return 'article'
 }
 
@@ -71,55 +74,33 @@ export default defineEventHandler(async (event) => {
     url = body.url
 
     if (!url) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'URL is required',
-      })
+      throw createError({ statusCode: 400, statusMessage: 'URL is required' })
     }
 
     const essence = detectContentType(url)
 
-    // ═══════════════════════════════════════════════════════════
-    // IDEMPOTENCY CHECK: If record already processed/processing, don't restart
-    // This is a defense-in-depth measure to prevent duplicate processing
-    // ═══════════════════════════════════════════════════════════
+    // 1. Idempotency Check
     if (updateSummaryId) {
       const existing = await db
-        .select({ status: summaries.status, isBackgroundJob: summaries.isBackgroundJob })
+        .select({ status: summaries.status })
         .from(summaries)
         .where(eq(summaries.summaryId, updateSummaryId))
         .limit(1);
 
       if (existing.length > 0 && existing[0]) {
         const { status } = existing[0];
-
-        // Already done or in progress - return current state
         if (status === "processing" || status === "completed") {
-          console.log(`[API] Idempotency check: ${updateSummaryId} is ${status}, skipping`);
-          return {
-            summaryId: updateSummaryId,
-            status,
-            message: status === "completed" ? "Already completed" : "Already processing",
-          };
+          return { summaryId: updateSummaryId, status, message: status === "completed" ? "Already completed" : "Already processing" };
         }
-
-        // Failed - could allow retry, but for now return failure
         if (status === "failed") {
-          return {
-            summaryId: updateSummaryId,
-            status: "failed",
-            message: "Previous attempt failed. Contact support to retry.",
-          };
+          throw createError({ statusCode: 403, statusMessage: "Previous attempt failed. Contact support to retry." });
         }
       }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // PRE-CREATE SUMMARY RECORD: Required for YouTube metadata saving
-    // ═══════════════════════════════════════════════════════════
+    // 2. Pre-create summary record if not exists
     let summaryInternalId: string | undefined
     if (!updateSummaryId) {
-      // Create pending summary record first so modules have a summaryId to work with
       const insertResult = await db.insert(summaries).values({
         source: url,
         essence,
@@ -128,37 +109,38 @@ export default defineEventHandler(async (event) => {
       }).returning({ id: summaries.id, summaryId: summaries.summaryId })
 
       const insertedRecord = insertResult[0]
-      updateSummaryId = insertedRecord?.summaryId // Use this for all processing
+      updateSummaryId = insertedRecord?.summaryId
       summaryInternalId = insertedRecord?.id
     }
 
-    let result
+    // 3. Summarize based on essence
+    let result: UnifiedSummaryResult;
 
     switch (essence) {
       case 'article':
-        result = await summarizeArticle(url)
-        break
+        result = await summarizeArticle(url);
+        break;
       case 'youtube':
-        result = await summarizeYouTube(url, db, updateSummaryId)
-        break
+        result = await summarizeYouTube(url, db, updateSummaryId);
+        break;
       case 'reddit':
-        result = await summarizeReddit(url)
-        break
+        result = await summarizeReddit(url);
+        break;
     }
 
     const responseTimeMs = Date.now() - startTime
+    const reasoning = 'reasoning' in result ? result.reasoning : undefined
 
-    // Extract reasoning (articles have it, YouTube has it from classifier)
-    const reasoning = 'reasoning' in result ? (result as { reasoning?: string }).reasoning : undefined
-
+    // 4. Update and Process Result
     if (updateSummaryId) {
-      // Fetch the original createdAt for total time calculation
       const existingSummary = await db.select({ id: summaries.id, createdAt: summaries.createdAt })
         .from(summaries)
         .where(eq(summaries.summaryId, updateSummaryId))
         .limit(1)
       
       const originalCreatedAt = existingSummary[0]?.createdAt
+      const reasoningEffort = 'reasoning_effort' in result ? result.reasoning_effort : undefined;
+      const reasoningTokens = 'reasoning_tokens' in result ? result.reasoning_tokens : undefined;
 
       const updated = await db.update(summaries)
         .set({
@@ -167,8 +149,8 @@ export default defineEventHandler(async (event) => {
           model: result.model,
           promptId: result.promptId,
           reasoning,
-          reasoningEffort: (result as { reasoning_effort?: string }).reasoning_effort,
-          reasoningTokens: (result as { reasoning_tokens?: number }).reasoning_tokens,
+          reasoningEffort,
+          reasoningTokens,
           promptTokens: result.usage?.promptTokens,
           completionTokens: result.usage?.completionTokens,
           totalTokens: result.usage?.totalTokens,
@@ -183,144 +165,42 @@ export default defineEventHandler(async (event) => {
       summaryInternalId = updated[0]?.id
       const completedAt = new Date()
 
-      // Count output words and store on summary + increment user quota
-      const outputWordCount = result.summary ? countWords(result.summary) : 0
-      if (outputWordCount > 0) {
-        await db.update(summaries)
-          .set({ wordCount: outputWordCount })
-          .where(eq(summaries.summaryId, updateSummaryId))
-
-        await incrementWordCount(event, userId, outputWordCount)
+      // Deduct Credits
+      let durationMinutes: number | undefined;
+      if (isYouTubeResult(result) && db && summaryInternalId) {
+        const ytData = await db.select({ duration: youtube.duration }).from(youtube).where(eq(youtube.summaryId, summaryInternalId)).limit(1);
+        const durationStr = ytData[0]?.duration || "0";
+        durationMinutes = parseFloat(durationStr);
       }
+      await deductCredits(event, userId, essence, durationMinutes);
 
-      // Store article metadata if essence is article
-      if (essence === 'article' && summaryInternalId && 'metadata' in result) {
-        const metadata = (result as { metadata: ArticleMetadata }).metadata
+      // Store Metadata for Articles
+      if (isArticleResult(result) && summaryInternalId) {
         await db.insert(articles).values({
           summaryId: summaryInternalId,
-          metaTitle: metadata.metaTitle,
-          metaDescription: metadata.metaDescription,
-          domain: metadata.domain,
-          author: metadata.author,
-          publishedAt: metadata.publishedAt,
-          wordCount: metadata.wordCount,
-          readingTimeMinutes: metadata.readingTimeMinutes,
-          classifierModel: metadata.classifierModel,
-          classifierPromptTokens: metadata.classifierPromptTokens,
-          classifierCompletionTokens: metadata.classifierCompletionTokens,
-          classifierTotalTokens: metadata.classifierTotalTokens,
-          classifierTimeMs: metadata.classifierTimeMs,
-        }).onConflictDoNothing() // Avoid duplicate inserts
-
-        // Store total cycle time
-        if (originalCreatedAt) {
-          await storeTotalTime(db, summaryInternalId, essence, originalCreatedAt, completedAt)
-        }
+          ...result.metadata
+        }).onConflictDoNothing();
       }
 
-      // Store total cycle time for YouTube (article record already created in service)
-      if (essence === 'youtube' && summaryInternalId && originalCreatedAt) {
-        await storeTotalTime(db, summaryInternalId, essence, originalCreatedAt, completedAt)
+      if (originalCreatedAt && summaryInternalId) {
+        await storeTotalTime(db, summaryInternalId, essence, originalCreatedAt, completedAt);
       }
 
-      // Log what was written to DB
-      console.log(`[DB Update] Summary ${updateSummaryId} updated: title="${result.title?.substring(0, 50)}...", summary=${result.summary ? '(exists)' : '(null)'}`);
-
-      // Set completed stage AFTER DB write for SSE (fixes race condition)
       await setCompletedStage(updateSummaryId)
 
-      return {
-        summaryId: updateSummaryId,
-        title: result.title,
-        summary: result.summary,
-      }
+      return { summaryId: updateSummaryId, title: result.title, summary: result.summary }
     }
 
-    const insertResult = await db.insert(summaries).values({
-      source: url,
-      essence,
-      title: result.title,
-      summary: result.summary,
-      model: result.model,
-      promptId: result.promptId,
-      reasoning,
-      reasoningEffort: (result as { reasoning_effort?: string }).reasoning_effort,
-      reasoningTokens: (result as { reasoning_tokens?: number }).reasoning_tokens,
-      promptTokens: result.usage?.promptTokens,
-      completionTokens: result.usage?.completionTokens,
-      totalTokens: result.usage?.totalTokens,
-      responseTimeMs,
-      status: 'completed',
-      userId,
-    }).returning({ id: summaries.id, summaryId: summaries.summaryId })
-
-    const insertedRecord = insertResult[0]
-    const summaryId = insertedRecord?.summaryId
-    summaryInternalId = insertedRecord?.id
-
-    // Count output words and store on summary + increment user quota
-    const outputWordCount = result.summary ? countWords(result.summary) : 0
-    if (outputWordCount > 0 && summaryId) {
-      await db.update(summaries)
-        .set({ wordCount: outputWordCount })
-        .where(eq(summaries.summaryId, summaryId))
-
-      await incrementWordCount(event, userId, outputWordCount)
-    }
-
-    // Store article metadata if essence is article
-    if (essence === 'article' && summaryInternalId && 'metadata' in result) {
-      const metadata = (result as { metadata: ArticleMetadata }).metadata
-      await db.insert(articles).values({
-        summaryId: summaryInternalId,
-        metaTitle: metadata.metaTitle,
-        metaDescription: metadata.metaDescription,
-        domain: metadata.domain,
-        author: metadata.author,
-        publishedAt: metadata.publishedAt,
-        wordCount: metadata.wordCount,
-        readingTimeMinutes: metadata.readingTimeMinutes,
-        classifierModel: metadata.classifierModel,
-        classifierPromptTokens: metadata.classifierPromptTokens,
-        classifierCompletionTokens: metadata.classifierCompletionTokens,
-        classifierTotalTokens: metadata.classifierTotalTokens,
-        classifierTimeMs: metadata.classifierTimeMs,
-      })
-    }
-
-    // Log what was written to DB
-    console.log(`[DB Insert] Summary ${summaryId} inserted: title="${result.title?.substring(0, 50)}...", summary=${result.summary ? '(exists)' : '(null)'}`);
-
-    // Set completed stage AFTER DB write for SSE (fixes race condition)
-    await setCompletedStage(summaryId)
-
-    return {
-      summaryId,
-      title: result.title,
-      summary: result.summary,
-    }
+    // This block handles cases where updateSummaryId was somehow lost but result was generated
+    return { summaryId: updateSummaryId, title: result.title, summary: result.summary };
   }
   catch (error: unknown) {
     console.error('Summarize API error:', error)
-
     if (updateSummaryId) {
-      const errorMessage = error && typeof error === 'object' && 'message' in error
-        ? String(error.message)
-        : 'Failed to process URL'
-
-      await db.update(summaries)
-        .set({
-          status: 'failed',
-          errorMessage,
-        })
-        .where(eq(summaries.summaryId, updateSummaryId))
-
-      throw createError({
-        statusCode: 500,
-        statusMessage: errorMessage,
-      })
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process URL'
+      await db.update(summaries).set({ status: 'failed', errorMessage }).where(eq(summaries.summaryId, updateSummaryId))
+      throw createError({ statusCode: 500, statusMessage: errorMessage })
     }
-
     throw error
   }
 })

@@ -12,9 +12,9 @@ export type AdminUser = {
   username: string | null;
   role: "user" | "admin";
   emailVerified: boolean;
-  plan: "free" | "pro";
-  wordsUsed: number;
-  wordsLimit: number;
+  plan: "skim" | "read" | "digest" | "deep";
+  creditsUsed: number;
+  creditsLimit: number;
   periodResetAt: Date | null;
   createdAt: Date;
   summaryCount: number;
@@ -92,23 +92,24 @@ export const createUserColumns = (
     header: "Plan",
     cell: ({ row }) => {
       const plan = row.original.plan;
+      const variant = plan === "skim" ? "secondary" : "default";
       return h(
         Badge,
-        { variant: plan === "pro" ? "default" : "secondary" },
+        { variant },
         () => plan.charAt(0).toUpperCase() + plan.slice(1),
       );
     },
   },
   {
-    accessorKey: "wordsUsed",
-    header: "Quota",
+    accessorKey: "creditsUsed",
+    header: "Usage",
     cell: ({ row }) => {
-      const used = row.original.wordsUsed;
-      const limit = row.original.wordsLimit;
+      const used = row.original.creditsUsed;
+      const limit = row.original.creditsLimit;
       return h(
         "div",
         { class: "text-sm tabular-nums" },
-        `${(used / 1000).toFixed(1)}k / ${(limit / 1000).toFixed(0)}k`,
+        `${used} / ${limit}`,
       );
     },
   },

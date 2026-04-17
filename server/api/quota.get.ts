@@ -9,8 +9,9 @@ export default defineEventHandler(async (event) => {
   const quota = await checkQuota(event, userId);
 
   return {
-    wordsUsed: quota.wordsUsed,
-    wordsLimit: quota.wordsLimit,
+    creditsUsed: quota.creditsUsed,
+    creditsLimit: quota.creditsLimit,
+    plan: quota.plan,
     isLoggedIn: quota.isLoggedIn,
     allowed: quota.allowed,
   };

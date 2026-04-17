@@ -55,8 +55,9 @@ export default defineEventHandler(async (event) => {
         role: user.role,
         createdAt: user.createdAt.toISOString(),
         plan: user.plan,
-        wordsUsed: user.wordsUsed,
-        wordsLimit: user.wordsLimit,
+        creditsUsed: user.creditsUsed,
+        creditsLimit: user.creditsLimit,
+        periodResetAt: user.periodResetAt ? user.periodResetAt.toISOString() : null,
       },
     };
 
@@ -73,8 +74,9 @@ export default defineEventHandler(async (event) => {
         role: user.role,
         createdAt: user.createdAt.toISOString(),
         plan: user.plan,
-        wordsUsed: user.wordsUsed,
-        wordsLimit: user.wordsLimit,
+        creditsUsed: user.creditsUsed,
+        creditsLimit: user.creditsLimit,
+        periodResetAt: user.periodResetAt ? user.periodResetAt.toISOString() : null,
       },
     };
   } catch {

@@ -33,8 +33,8 @@ export const getJsonLd = (siteUrl: string) => [
     url: siteUrl,
     applicationCategory: "UtilitiesApplication",
     operatingSystem: "Web",
-      description:
-        "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. Start with 2,500 words free.",
+    description:
+      "Paste a URL. Get the main points in under a minute. Articles, YouTube, Reddit. Start with 8 summaries free.",
     featureList: [
       "Article summarization",
       "YouTube video summarization",
@@ -49,7 +49,7 @@ export const getJsonLd = (siteUrl: string) => [
       price: "0",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
-      description: "2,500 words free. No credit card.",
+      description: "8 summaries free. No credit card.",
     },
   },
   {
@@ -61,15 +61,15 @@ export const getJsonLd = (siteUrl: string) => [
         name: "Is it really free?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "You start with 2,500 free words. That's the total length of summaries you can generate, not the articles you paste, just the output Fewwords actually produces. No credit card needed to start.",
+          text: "You start with 8 free summaries. No credit card needed to start.",
         },
       },
       {
         "@type": "Question",
-        name: "How does the word count work?",
+        name: "How do credits work?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "I only count the summary I generate, not the article or video you paste. A typical article summary runs 80-150 words. So 2,500 free words gets you roughly 15-30 summaries to start.",
+          text: "Every summary 'debits' your balance. An article is 1 credit. YouTube videos cost more because processing up to 3 hours of video involves significant AI resource usage. You get 8 credits for free to start.",
         },
       },
       {

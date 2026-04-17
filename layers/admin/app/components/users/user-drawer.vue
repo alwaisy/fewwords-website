@@ -26,33 +26,34 @@ const avatarUrl = computed(() => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(props.user.name)}&background=6366f1&color=fff&size=80`;
 });
 
-const isEditingQuota = ref(false);
-const editWordsUsed = ref(0);
-const editWordsLimit = ref(0);
+const isEditingUsage = ref(false);
+const editCreditsUsed = ref(0);
+const editCreditsLimit = ref(0);
 
-const startEditQuota = () => {
-  editWordsUsed.value = props.user.wordsUsed;
-  editWordsLimit.value = props.user.wordsLimit;
-  isEditingQuota.value = true;
+const startEditUsage = () => {
+  editCreditsUsed.value = props.user.creditsUsed;
+  editCreditsLimit.value = props.user.creditsLimit;
+  isEditingUsage.value = true;
 };
 
-const saveQuota = async () => {
+const saveUsage = async () => {
   try {
     await $fetch(`/api/admin/users/${props.user.id}`, {
       method: "PATCH",
       body: {
-        wordsUsed: editWordsUsed.value,
-        wordsLimit: editWordsLimit.value,
+        creditsUsed: editCreditsUsed.value,
+        creditsLimit: editCreditsLimit.value,
       },
     });
-    isEditingQuota.value = false;
+    // In a real app, you'd trigger a refresh of the users list here
+    isEditingUsage.value = false;
   } catch (error) {
-    console.error("Failed to update quota:", error);
+    console.error("Failed to update usage:", error);
   }
 };
 
-const cancelEditQuota = () => {
-  isEditingQuota.value = false;
+const cancelEditUsage = () => {
+  isEditingUsage.value = false;
 };
 </script>
 
@@ -84,10 +85,10 @@ const cancelEditQuota = () => {
 
           <!-- Account Info -->
           <div class="space-y-3">
-            <h3 class="text-sm font-medium">Account</h3>
+            <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Account</h3>
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span class="text-muted-foreground">Role</span>
+                <span class="text-muted-foreground text-xs">Role</span>
                 <div class="mt-1">
                   <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">
                     {{ user.role.charAt(0).toUpperCase() + user.role.slice(1) }}
@@ -95,15 +96,15 @@ const cancelEditQuota = () => {
                 </div>
               </div>
               <div>
-                <span class="text-muted-foreground">Plan</span>
+                <span class="text-muted-foreground text-xs">Plan</span>
                 <div class="mt-1">
-                  <Badge :variant="user.plan === 'pro' ? 'default' : 'secondary'">
+                  <Badge :variant="user.plan === 'skim' ? 'secondary' : 'default'">
                     {{ user.plan.charAt(0).toUpperCase() + user.plan.slice(1) }}
                   </Badge>
                 </div>
               </div>
               <div>
-                <span class="text-muted-foreground">Email Verified</span>
+                <span class="text-muted-foreground text-xs">Email Verified</span>
                 <div class="mt-1">
                   <Badge :variant="user.emailVerified ? 'outline' : 'destructive'">
                     {{ user.emailVerified ? "Verified" : "Not Verified" }}
@@ -111,67 +112,65 @@ const cancelEditQuota = () => {
                 </div>
               </div>
               <div>
-                <span class="text-muted-foreground">Summaries</span>
-                <div class="mt-1 font-mono">{{ user.summaryCount }}</div>
+                <span class="text-muted-foreground text-xs">Summaries</span>
+                <div class="mt-1 font-mono font-bold">{{ user.summaryCount }}</div>
               </div>
             </div>
           </div>
 
-          <!-- Quota -->
+          <!-- Usage -->
           <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-medium">Quota</h3>
+            <div class="flex items-center justify-between border-b pb-2">
+              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Usage & Quota</h3>
               <Button
-                v-if="!isEditingQuota"
+                v-if="!isEditingUsage"
                 variant="ghost"
                 size="sm"
-                @click="startEditQuota"
+                @click="startEditUsage"
               >
                 Edit
               </Button>
             </div>
-            <div v-if="isEditingQuota" class="space-y-3">
+            <div v-if="isEditingUsage" class="space-y-4 pt-2">
               <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <Label class="text-xs text-muted-foreground">Words Used</Label>
+                <div class="space-y-1.5">
+                  <Label class="text-xs">Credits Used</Label>
                   <Input
-                    v-model.number="editWordsUsed"
+                    v-model.number="editCreditsUsed"
                     type="number"
-                    class="mt-1"
                   />
                 </div>
-                <div>
-                  <Label class="text-xs text-muted-foreground">Words Limit</Label>
+                <div class="space-y-1.5">
+                  <Label class="text-xs">Credits Limit</Label>
                   <Input
-                    v-model.number="editWordsLimit"
+                    v-model.number="editCreditsLimit"
                     type="number"
-                    class="mt-1"
                   />
                 </div>
               </div>
               <div class="flex gap-2">
-                <Button size="sm" @click="saveQuota">Save</Button>
-                <Button size="sm" variant="outline" @click="cancelEditQuota">Cancel</Button>
+                <Button size="sm" @click="saveUsage">Save Changes</Button>
+                <Button size="sm" variant="outline" @click="cancelEditUsage">Cancel</Button>
               </div>
             </div>
-            <div v-else class="text-sm">
-              <div class="flex items-center gap-2">
-                <span class="text-muted-foreground">Used:</span>
-                <span class="font-mono">{{ (user.wordsUsed / 1000).toFixed(1) }}k</span>
+            <div v-else class="grid grid-cols-2 gap-4 pt-2">
+              <div class="flex flex-col p-3 rounded-xl bg-muted/50 border">
+                <span class="text-2xl font-bold font-mono">{{ user.creditsUsed }}</span>
+                <span class="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Credits Used</span>
               </div>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-muted-foreground">Limit:</span>
-                <span class="font-mono">{{ (user.wordsLimit / 1000).toFixed(0) }}k</span>
+              <div class="flex flex-col p-3 rounded-xl bg-muted/50 border">
+                <span class="text-2xl font-bold font-mono">{{ user.creditsLimit }}</span>
+                <span class="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total Limit</span>
               </div>
-              <div v-if="user.periodResetAt" class="text-xs text-muted-foreground mt-1">
-                Resets: {{ new Date(user.periodResetAt).toLocaleDateString() }}
+              <div v-if="user.periodResetAt" class="col-span-2 text-xs text-muted-foreground bg-primary/5 p-2 rounded-lg border border-primary/10">
+                Next Reset: {{ new Date(user.periodResetAt).toLocaleDateString() }}
               </div>
             </div>
           </div>
 
           <!-- Timestamps -->
           <div class="space-y-3">
-            <h3 class="text-sm font-medium">Timeline</h3>
+            <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Timeline</h3>
             <div class="text-sm text-muted-foreground space-y-1">
               <div>Joined: {{ new Date(user.createdAt).toLocaleString() }}</div>
             </div>
@@ -181,7 +180,7 @@ const cancelEditQuota = () => {
 
       <DrawerFooter class="shrink-0 px-4 pb-6">
         <DrawerClose as-child>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline" class="w-full">Close Profile</Button>
         </DrawerClose>
       </DrawerFooter>
     </DrawerContent>

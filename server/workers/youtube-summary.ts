@@ -1,4 +1,5 @@
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import type { H3Event, H3Context } from "h3";
 
 import { getSender } from "../config/emails";
 import { addError } from "../lib/errors";
@@ -8,14 +9,14 @@ import type {
   YouTubeSummaryTaskData,
   YouTubeSummaryTaskResult,
 } from "../queues/youtube-summary";
-import { countWords } from "../services/quota";
+import { deductCredits } from "../services/quota";
 import { summarize } from "../services/youtube";
 import { notificationEmail } from "../templates/emails";
 import { getBaseUrl } from "../utils/url";
 
 import { useRuntimeConfig } from "#imports";
 import { defineWorker } from "#processor";
-import { summaries, youtube, users } from "~~/database/orm/schema";
+import { summaries, youtube } from "~~/database/orm/schema";
 import { db } from "~~/server/db/index";
 
 // Send completion email using Resend
@@ -26,7 +27,7 @@ async function sendCompletionEmail(
   summaryId: string,
 ): Promise<string | null> {
   const config = useRuntimeConfig();
-  const resendApiKey = config.private.resendApiKey;
+  const resendApiKey = String(config.private.resendApiKey);
   const baseUrl = getBaseUrl();
 
   if (!resendApiKey) {
@@ -80,17 +81,20 @@ export default defineWorker<
   name: "youtube-summary",
   async processor(job) {
     const { summaryId, url, notifyEmail, userId } = job.data;
+    
+    // Create a properly typed minimal H3Event mock
+    const event = {
+      context: {
+        user: userId ? { id: userId } : null
+      } as unknown as H3Context
+    } as unknown as H3Event;
 
     console.log(`[YouTubeWorker] Starting job for ${summaryId}`);
 
     try {
       job.updateProgress(10);
 
-      // summarize() handles ALL stages:
-      // - setStage(metadata/transcript/classifying/summarizing/completed) via Redis
-      // - saveMetadata() to youtube table
-      // - saveResult() to summaries table
-      // - status -> "completed"
+      // summarize() handles ALL stages
       const result = await summarize(url, db, summaryId);
 
       job.updateProgress(90);
@@ -106,32 +110,26 @@ export default defineWorker<
       const internalId = summaryRecord[0]?.id;
       const completedAt = new Date();
 
-      // Count words and update quota
-      const outputWordCount = result.summary ? countWords(result.summary) : 0;
-      if (outputWordCount > 0) {
-        // Update summary word count
-        await db
-          .update(summaries)
-          .set({ wordCount: outputWordCount })
-          .where(eq(summaries.summaryId, summaryId));
-
-        // Update user's global quota
-        if (userId) {
-          await db
-            .update(users)
-            .set({ wordsUsed: sql`${users.wordsUsed} + ${outputWordCount}` })
-            .where(eq(users.id, userId));
-        }
+      // Deduct credits on success
+      if (userId && internalId) {
+        const ytRecord = await db
+          .select({ duration: youtube.duration })
+          .from(youtube)
+          .where(eq(youtube.summaryId, internalId))
+          .limit(1);
+        
+        const durationStr = ytRecord[0]?.duration || "0";
+        const durationMinutes = parseFloat(durationStr);
+        await deductCredits(event, userId, "youtube", durationMinutes);
       }
 
       // Belt and suspenders: ensure status is "completed"
-      // (saveResult() should do this, but let's be sure)
       await db
         .update(summaries)
         .set({ status: "completed", completedAt })
         .where(eq(summaries.summaryId, summaryId));
 
-      // Store total cycle time to youtube table (matches normal API flow)
+      // Store total cycle time
       if (originalCreatedAt && internalId) {
         const totalTimeMs = completedAt.getTime() - originalCreatedAt.getTime();
         await db
@@ -151,7 +149,7 @@ export default defineWorker<
         emailError = await sendCompletionEmail(notifyEmail, result.title, summaryId);
       }
 
-      // Save email error to DB as structured error log
+      // Save email error to DB
       if (emailError) {
         const currentRecord = await db
           .select({ errorMessage: summaries.errorMessage })
@@ -178,12 +176,11 @@ export default defineWorker<
         success: true,
         summaryId,
         title: result.title,
-        emailError, // Will be null if email sent successfully
+        emailError,
       };
     } catch (error) {
       console.error(`[YouTubeWorker] Job failed for ${summaryId}:`, error);
 
-      // ALWAYS set failed status - this is critical
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
@@ -199,14 +196,13 @@ export default defineWorker<
         })
         .where(eq(summaries.summaryId, summaryId));
 
-      // Set Redis stage to "failed" so SSE closes the connection
       const redis = getRedis();
       await redis.set(`summary:${summaryId}:stage`, "failed", "EX", 3600);
 
-      throw error; // Re-throw for BullMQ retry logic
+      throw error;
     }
   },
   options: {
-    concurrency: 3, // Process up to 3 long videos concurrently
+    concurrency: 3,
   },
 });

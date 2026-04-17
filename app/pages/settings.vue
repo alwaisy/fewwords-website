@@ -130,21 +130,6 @@ async function handleDeleteAccount() {
           Account
         </h1>
 
-        <!-- Email Verification Status -->
-        <div v-if="isVerifyingEmail" class="bg-card border border-border rounded-lg p-6 mb-6">
-          <div class="flex items-center gap-3">
-            <Icon v-if="emailVerifyStatus === 'loading'" name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted-foreground" />
-            <Icon v-else-if="emailVerifyStatus === 'success'" name="lucide:check-circle" class="w-5 h-5 text-green-500" />
-            <Icon v-else name="lucide:x-circle" class="w-5 h-5 text-destructive" />
-            
-            <div>
-              <p v-if="emailVerifyStatus === 'loading'" class="text-sm text-foreground">Verifying your email...</p>
-              <p v-else-if="emailVerifyStatus === 'success'" class="text-sm text-foreground">Email verified successfully!</p>
-              <p v-else class="text-sm text-destructive">{{ emailVerifyError }}</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Profile Info -->
         <div v-if="user" class="bg-card border border-border rounded-lg p-6 mb-6">
           <h2 class="text-lg font-semibold text-foreground mb-4">
@@ -176,6 +161,21 @@ async function handleDeleteAccount() {
 
         <div v-else class="bg-card border border-border rounded-lg p-6 mb-6 text-center">
           Loading...
+        </div>
+
+        <!-- Email Verification Status -->
+        <div v-if="isVerifyingEmail" class="bg-card border border-border rounded-lg p-6 mb-6">
+          <div class="flex items-center gap-3">
+            <Icon v-if="emailVerifyStatus === 'loading'" name="lucide:loader-2" class="w-5 h-5 animate-spin text-muted-foreground" />
+            <Icon v-else-if="emailVerifyStatus === 'success'" name="lucide:check-circle" class="w-5 h-5 text-green-500" />
+            <Icon v-else name="lucide:x-circle" class="w-5 h-5 text-destructive" />
+            
+            <div>
+              <p v-if="emailVerifyStatus === 'loading'" class="text-sm text-foreground">Verifying your email...</p>
+              <p v-else-if="emailVerifyStatus === 'success'" class="text-sm text-foreground">Email verified successfully!</p>
+              <p v-else class="text-sm text-destructive">{{ emailVerifyError }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- Logout -->
@@ -213,7 +213,7 @@ async function handleDeleteAccount() {
             Delete account
           </h2>
           <p class="text-sm text-muted-foreground mb-4">
-            Permanently delete your account. Your summaries will remain in our system.
+            Permanently delete your account. Your summaries will remain in my system.
           </p>
           <Button
             variant="destructive"
@@ -229,7 +229,7 @@ async function handleDeleteAccount() {
             <DialogHeader>
               <DialogTitle>Change email address</DialogTitle>
               <DialogDescription>
-                Enter your new email address. We'll send a verification link.
+                Enter your new email address. I'll send a verification link.
               </DialogDescription>
             </DialogHeader>
 
@@ -273,7 +273,7 @@ async function handleDeleteAccount() {
             <DialogHeader>
               <DialogTitle>Delete account?</DialogTitle>
               <DialogDescription>
-                This action cannot be undone. Your account is permanently deleted, but your summaries will remain in our system.
+                This action cannot be undone. Your account is permanently deleted, but your summaries will remain in my system.
               </DialogDescription>
             </DialogHeader>
 
@@ -285,8 +285,8 @@ async function handleDeleteAccount() {
                 <ul class="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
                   <li>Your account is permanently deleted</li>
                   <li>You can't recover your account</li>
-                  <li>Your summaries stay in our system</li>
-                  <li>For help, contact support@fewwords.app</li>
+                  <li>Your summaries stay in my system</li>
+                  <li>For help, contact hello@fewwords.app</li>
                 </ul>
               </div>
 

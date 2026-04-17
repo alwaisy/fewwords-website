@@ -25,12 +25,12 @@ export default defineEventHandler(async (event) => {
 
   const updateFields: Record<string, unknown> = {};
 
-  if (typeof body.wordsUsed === "number") {
-    updateFields.wordsUsed = body.wordsUsed;
+  if (typeof body.creditsUsed === "number") {
+    updateFields.creditsUsed = body.creditsUsed;
   }
 
-  if (typeof body.wordsLimit === "number") {
-    updateFields.wordsLimit = body.wordsLimit;
+  if (typeof body.creditsLimit === "number") {
+    updateFields.creditsLimit = body.creditsLimit;
   }
 
   if (Object.keys(updateFields).length === 0) {

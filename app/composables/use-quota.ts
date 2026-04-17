@@ -1,34 +1,36 @@
 /**
- * Quota composable - tracks word usage for anonymous and logged-in users.
+ * Quota composable - tracks credit usage for anonymous and logged-in users.
  */
 
 interface QuotaState {
-  wordsUsed: number;
-  wordsLimit: number;
+  creditsUsed: number;
+  creditsLimit: number;
+  plan: string;
   isLoggedIn: boolean;
   allowed: boolean;
 }
 
-const ANON_GATE_THRESHOLD = 1800;
-
 export function useQuota() {
   const { isLoggedIn } = useAuth();
   const quota = ref<QuotaState>({
-    wordsUsed: 0,
-    wordsLimit: isLoggedIn.value ? 5000 : ANON_GATE_THRESHOLD,
+    creditsUsed: 0,
+    creditsLimit: 0,
+    plan: 'skim',
     isLoggedIn: isLoggedIn.value,
     allowed: true,
   });
   const isLoading = ref(false);
 
   // Fetch quota from server
-  const refresh = async () => {
+  const refresh = async (): Promise<QuotaState | null> => {
     try {
       isLoading.value = true;
       const data = await $fetch<QuotaState>("/api/quota");
       quota.value = data;
+      return data;
     } catch {
       // If fetch fails, keep current state
+      return null;
     } finally {
       isLoading.value = false;
     }
@@ -39,18 +41,17 @@ export function useQuota() {
 
   // Percentage used (0-100)
   const percentUsed = computed(() => {
-    if (quota.value.wordsLimit === 0) return 100;
+    if (quota.value.creditsLimit === 0) return 100;
     return Math.min(
       100,
-      Math.round((quota.value.wordsUsed / quota.value.wordsLimit) * 100),
+      Math.round((quota.value.creditsUsed / quota.value.creditsLimit) * 100),
     );
   });
 
   // Human-readable usage text
   const usageText = computed(() => {
-    const used = quota.value.wordsUsed.toLocaleString();
-    const limit = quota.value.wordsLimit.toLocaleString();
-    return `${used} / ${limit} words`;
+    const remaining = quota.value.creditsLimit - quota.value.creditsUsed;
+    return `${Math.max(0, remaining)} / ${quota.value.creditsLimit} credits left`;
   });
 
   // Gate message when quota hit
@@ -59,7 +60,7 @@ export function useQuota() {
     if (!quota.value.isLoggedIn) {
       return "Sign up free to keep summarizing.";
     }
-    return "You've reached your limit. Join the waitlist for more.";
+    return "Insufficient credits. Upgrade your plan to get more.";
   });
 
   // Fetch on mount and when login state changes

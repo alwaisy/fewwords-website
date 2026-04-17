@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const db = await useDb(event);
 
   // Delete user account
-  // Summaries are NOT deleted (they're our property)
+  // Summaries are NOT deleted (they're my property)
   // Just remove user record
   await db.delete(users).where(eq(users.id, userId));
 

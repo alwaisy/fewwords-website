@@ -18,13 +18,15 @@ export const userRoleEnum = ["user", "admin"] as const;
 export type UserRole = (typeof userRoleEnum)[number];
 
 // Plan types
-export const planEnum = ["free", "pro"] as const;
+export const planEnum = ["skim", "read", "digest", "deep"] as const;
 export type Plan = (typeof planEnum)[number];
 
-// Word limits per plan
-export const PLAN_WORD_LIMITS = {
-  free: 2500,
-  pro: 20000,
+// Credit allotments per plan (April 16, 2025 Plan)
+export const PLAN_CREDITS = {
+  skim: 8,
+  read: 30,
+  digest: 90,
+  deep: 225,
 } as const;
 
 // Users table for authentication
@@ -49,14 +51,25 @@ export const users = pgTable(
     emailChangeExpiresAt: timestamp("email_change_expires_at", {
       withTimezone: true,
     }),
-    // Subscription
-    plan: text("plan", { enum: planEnum }).notNull().default("free"),
-    wordsUsed: integer("words_used").notNull().default(0),
-    wordsLimit: integer("words_limit").notNull().default(PLAN_WORD_LIMITS.free),
+    // Subscription & Credits
+    plan: text("plan", { enum: planEnum }).notNull().default("skim"),
+    creditsUsed: integer("credits_used").notNull().default(0),
+    creditsLimit: integer("credits_limit")
+      .notNull()
+      .default(PLAN_CREDITS.skim),
     periodResetAt: timestamp("period_reset_at", { withTimezone: true }),
-    // Paddle billing (nullable until billing is set up)
+
+    // Legacy fields (kept for migration safety, will be deprecated)
+    wordsUsed: integer("words_used").notNull().default(0),
+    wordsLimit: integer("words_limit").notNull().default(2500),
+
+    // Paddle billing
     paddleCustomerId: text("paddle_customer_id"),
     paddleSubscriptionId: text("paddle_subscription_id"),
+    paddlePriceId: text("paddle_price_id"),
+    paddleStatus: text("paddle_status"), // active, trialing, past_due, deleted, paused
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

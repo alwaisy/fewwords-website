@@ -10,8 +10,16 @@
             Content summarization, simplified.
           </p>
         </div>
+        <div class="grid">
+
 
         <nav class="flex gap-6">
+            <NuxtLink
+              to="/about"
+              class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+                About
+            </NuxtLink>
           <NuxtLink
             to="/terms"
             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -37,12 +45,13 @@
             Contact
           </NuxtLink>
         </nav>
-        <p class="text-sm text-muted-foreground">
+         <p class="text-sm text-muted-foreground mt-3">
           &copy; {{ new Date().getFullYear() }} Fewwords. All rights reserved.
         </p>
+        </div>
       </div>
 
-      <!-- <div class="mt-8 pt-8 border-t border-border text-center">
+       <!-- <div class="mt-8 pt-8 border-t border-border text-center">
         <p class="text-sm text-muted-foreground">
           &copy; {{ new Date().getFullYear() }} Fewwords. All rights reserved.
         </p>

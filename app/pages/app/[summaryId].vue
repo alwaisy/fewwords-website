@@ -332,6 +332,7 @@ watchStatusChanges();
             :key="`footer-${summary.summaryId}`"
             :reader-mode="isReaderMode"
             :last-updated="summary?.completedAt ?? undefined"
+            :content="summary.summary"
             @do-another="doAnother"
           />
         </template>

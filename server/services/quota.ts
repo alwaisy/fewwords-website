@@ -1,30 +1,70 @@
 import { eq, sql } from "drizzle-orm";
 import type { H3Event } from "h3";
 
-import { users, PLAN_WORD_LIMITS } from "~~/database/orm/schema";
+import { users, type Plan } from "~~/database/orm/schema";
 
-// Anonymous threshold: gate at 900 (before 1000 hard limit)
-const ANON_GATE_THRESHOLD = 900;
+// Anonymous threshold: gate at 5 articles (1 credit per article)
+const ANON_CREDIT_LIMIT = 5;
+
+/**
+ * Credit costs per plan and content type
+ * Rule: Skim (free) has NO YouTube access.
+ */
+export const PLAN_CREDIT_COSTS: Record<
+  Plan,
+  {
+    article: number;
+    yt_short: number;
+    yt_medium: number;
+    yt_long: number;
+  }
+> = {
+  skim: { article: 1, yt_short: Infinity, yt_medium: Infinity, yt_long: Infinity },
+  read: { article: 1, yt_short: 3, yt_medium: 7, yt_long: 15 },
+  digest: { article: 1, yt_short: 2, yt_medium: 6, yt_long: 14 },
+  deep: { article: 1, yt_short: 3, yt_medium: 5, yt_long: 13 },
+};
 
 export interface QuotaResult {
   allowed: boolean;
   reason?: string;
-  wordsUsed: number;
-  wordsLimit: number;
+  plan: Plan;
+  creditsUsed: number;
+  creditsLimit: number;
   isLoggedIn: boolean;
 }
 
 /**
+ * Calculate required credits based on content type and duration.
+ */
+export function getRequiredCredits(
+  plan: Plan,
+  essence: "article" | "youtube" | "reddit",
+  durationMinutes?: number,
+): number {
+  if (essence === "article" || essence === "reddit") {
+    return PLAN_CREDIT_COSTS[plan].article;
+  }
+
+  if (essence === "youtube") {
+    if (!durationMinutes) return PLAN_CREDIT_COSTS[plan].yt_short; // Default to short
+
+    if (durationMinutes <= 20) return PLAN_CREDIT_COSTS[plan].yt_short;
+    if (durationMinutes <= 60) return PLAN_CREDIT_COSTS[plan].yt_medium;
+    return PLAN_CREDIT_COSTS[plan].yt_long;
+  }
+
+  return 1; // Fallback
+}
+
+/**
  * Check if a user/anonymous session can create a new summary.
- *
- * Rules:
- * - Anonymous: gate at 1800 words (sign-up CTA)
- * - Registered: allow if wordsUsed < wordsLimit (hard check at start only)
- * - Pro: allow if wordsUsed < wordsLimit
  */
 export async function checkQuota(
   event: H3Event,
   userId: string | null,
+  essence: "article" | "youtube" | "reddit" = "article",
+  durationMinutes?: number,
 ): Promise<QuotaResult> {
   // Logged-in user: check DB
   if (userId) {
@@ -32,8 +72,10 @@ export async function checkQuota(
     const userRows = await db
       .select({
         plan: users.plan,
-        wordsUsed: users.wordsUsed,
-        wordsLimit: users.wordsLimit,
+        creditsUsed: users.creditsUsed,
+        creditsLimit: users.creditsLimit,
+        paddleStatus: users.paddleStatus,
+        periodResetAt: users.periodResetAt,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -44,97 +86,167 @@ export async function checkQuota(
       return {
         allowed: false,
         reason: "User not found",
-        wordsUsed: 0,
-        wordsLimit: 0,
+        plan: "skim",
+        creditsUsed: 0,
+        creditsLimit: 0,
         isLoggedIn: true,
       };
     }
 
-    // At or past limit → block
-    if (user.wordsUsed >= user.wordsLimit) {
+    // 0. Lazy Credit Reset (Check if current period ended)
+    let currentCreditsUsed = user.creditsUsed;
+    if (user.periodResetAt && new Date() > new Date(user.periodResetAt)) {
+      console.log(`[Quota] Period ended for ${userId}. Resetting credits...`);
+      
+      // Calculate next reset (usually +1 month from current reset)
+      const nextReset = new Date(user.periodResetAt);
+      nextReset.setMonth(nextReset.getMonth() + 1);
+      
+      await db.update(users)
+        .set({
+          creditsUsed: 0,
+          periodResetAt: nextReset,
+        })
+        .where(eq(users.id, userId));
+      
+      currentCreditsUsed = 0;
+    }
+
+    // 1. Check Paddle Status (Block if payment failed or subscription ended)
+    const blockedStatuses = ["past_due", "deleted", "paused"];
+    if (user.paddleStatus && blockedStatuses.includes(user.paddleStatus)) {
       return {
         allowed: false,
-        reason:
-          user.plan === "free"
-            ? "You've reached your free limit. Join the waitlist for more."
-            : "You've reached your plan limit.",
-        wordsUsed: user.wordsUsed,
-        wordsLimit: user.wordsLimit,
+        reason: "Your subscription is inactive. Please check your billing status.",
+        plan: user.plan,
+        creditsUsed: user.creditsUsed,
+        creditsLimit: user.creditsLimit,
+        isLoggedIn: true,
+      };
+    }
+
+    // 2. YouTube blocking for Skim
+    if (user.plan === "skim" && essence === "youtube") {
+      return {
+        allowed: false,
+        reason: "YouTube summaries require the Read plan.",
+        plan: user.plan,
+        creditsUsed: currentCreditsUsed,
+        creditsLimit: user.creditsLimit,
+        isLoggedIn: true,
+      };
+    }
+
+    // 2. Check credits
+    const required = getRequiredCredits(user.plan, essence, durationMinutes);
+    const remaining = user.creditsLimit - currentCreditsUsed;
+
+    if (remaining < required) {
+      return {
+        allowed: false,
+        reason: `You need ${required} credits for this, but only have ${remaining} remaining.`,
+        plan: user.plan,
+        creditsUsed: currentCreditsUsed,
+        creditsLimit: user.creditsLimit,
         isLoggedIn: true,
       };
     }
 
     return {
       allowed: true,
-      wordsUsed: user.wordsUsed,
-      wordsLimit: user.wordsLimit,
+      plan: user.plan,
+      creditsUsed: currentCreditsUsed,
+      creditsLimit: user.creditsLimit,
       isLoggedIn: true,
     };
   }
 
   // Anonymous user: check server session
-  const anonWords = await getAnonWordsUsed(event);
+  // Rule: Anonymous cannot use YouTube
+  if (essence === "youtube") {
+    return {
+      allowed: false,
+      reason: "Sign up free to summarize YouTube videos.",
+      plan: "skim",
+      creditsUsed: 0,
+      creditsLimit: 8,
+      isLoggedIn: false,
+    };
+  }
 
-  if (anonWords >= ANON_GATE_THRESHOLD) {
+  const anonCredits = await getAnonCreditsUsed(event);
+
+  if (anonCredits >= ANON_CREDIT_LIMIT) {
     return {
       allowed: false,
       reason: "Sign up free to keep summarizing.",
-      wordsUsed: anonWords,
-      wordsLimit: PLAN_WORD_LIMITS.free,
+      plan: "skim",
+      creditsUsed: anonCredits,
+      creditsLimit: 8,
       isLoggedIn: false,
     };
   }
 
   return {
     allowed: true,
-    wordsUsed: anonWords,
-    wordsLimit: ANON_GATE_THRESHOLD,
+    plan: "skim",
+    creditsUsed: anonCredits,
+    creditsLimit: ANON_CREDIT_LIMIT,
     isLoggedIn: false,
   };
 }
 
 /**
- * Increment word count after a summary completes.
- * For logged-in users: updates DB.
- * For anonymous: updates server session.
+ * Deduct credits after a summary completes.
  */
-export async function incrementWordCount(
+export async function deductCredits(
   event: H3Event,
   userId: string | null,
-  wordCount: number,
+  essence: "article" | "youtube" | "reddit",
+  durationMinutes?: number,
 ): Promise<void> {
   if (userId) {
     const db = await useDb(event);
-    // Use sql template for column arithmetic
-    await db
-      .update(users)
-      .set({
-        wordsUsed: sql`${users.wordsUsed} + ${wordCount}`,
-      })
-      .where(eq(users.id, userId));
-
-    // Update session with new count
     const userRows = await db
-      .select({ wordsUsed: users.wordsUsed })
+      .select({ plan: users.plan })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
 
-    const current = userRows[0];
+    const user = userRows[0];
+    if (!user) return;
+
+    const cost = getRequiredCredits(user.plan, essence, durationMinutes);
+
+    await db
+      .update(users)
+      .set({
+        creditsUsed: sql`${users.creditsUsed} + ${cost}`,
+      })
+      .where(eq(users.id, userId));
+
+    // Update session with new count
+    const updatedRows = await db
+      .select({ creditsUsed: users.creditsUsed })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const current = updatedRows[0];
     if (current) {
       const session = await getUserSession(event);
       await setUserSession(event, {
         ...session,
         user: {
           ...(session?.user as object),
-          wordsUsed: current.wordsUsed,
+          creditsUsed: current.creditsUsed,
         },
       } as typeof session extends undefined ? never : typeof session);
     }
   } else {
-    // Anonymous: update server session
-    const current = await getAnonWordsUsed(event);
-    await setAnonWordsUsed(event, current + wordCount);
+    // Anonymous: update server session (only articles allowed)
+    const current = await getAnonCreditsUsed(event);
+    await setAnonCreditsUsed(event, current + 1);
   }
 }
 
@@ -146,22 +258,22 @@ export function countWords(text: string): number {
   return text.trim().split(/\s+/).length;
 }
 
-// ─── Anonymous session helpers (server-side, not localStorage) ───
+// ─── Anonymous session helpers ───
 
-const ANON_WORDS_KEY = "anon_words_used";
+const ANON_CREDITS_KEY = "anon_credits_used";
 
-async function getAnonWordsUsed(event: H3Event): Promise<number> {
+async function getAnonCreditsUsed(event: H3Event): Promise<number> {
   const session = await getUserSession(event);
-  return ((session as unknown as Record<string, unknown>)[ANON_WORDS_KEY] as number) ?? 0;
+  return ((session as unknown as Record<string, unknown>)[ANON_CREDITS_KEY] as number) ?? 0;
 }
 
-async function setAnonWordsUsed(
+async function setAnonCreditsUsed(
   event: H3Event,
   count: number,
 ): Promise<void> {
   const session = await getUserSession(event);
   await setUserSession(event, {
     ...session,
-    [ANON_WORDS_KEY]: count,
+    [ANON_CREDITS_KEY]: count,
   } as typeof session extends undefined ? never : typeof session);
 }

@@ -20,18 +20,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // ═══════════════════════════════════════════════════════
-    // QUOTA CHECK: Before any processing
-    // ═══════════════════════════════════════════════════════
-    const quota = await checkQuota(event, userId);
-    if (!quota.allowed) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: quota.reason ?? "Usage limit reached.",
-      });
-    }
-
-    // Detect content type
+    // Detect content type early for quota checking
     function detectContentType(
       url: string,
     ): "article" | "youtube" | "reddit" {
@@ -53,44 +42,58 @@ export default defineEventHandler(async (event) => {
 
     const essence = detectContentType(url);
 
-    // ═══════════════════════════════════════════════════════════
-    // YOUTUBE: Fetch metadata FIRST to make routing decision
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════
+    // YOUTUBE PRE-CHECK: Fetch metadata for duration-based quota
+    // ═══════════════════════════════════════════════════════
+    let durationMinutes: number | undefined;
     if (essence === "youtube") {
       const config = useRuntimeConfig();
       const { video } = await fetchYouTubeMetadata(
         url,
         config.private.youtubeDataApiKey!,
       );
-      const duration = video.durationMinutes;
+      durationMinutes = video.durationMinutes;
 
-      // Error cases (match exact error messages from service layer)
+      // Basic YouTube validation
       if (video.isLive) {
         throw createError({
           statusCode: 422,
-          statusMessage:
-            "Live streams aren't supported yet. Wait for the stream to end and try again.",
+          statusMessage: "Live streams aren't supported yet.",
         });
       }
-      if (duration <= 5) {
+      if (durationMinutes <= 5) {
         throw createError({
           statusCode: 422,
-          statusMessage:
-            "Videos under 5 minutes are too brief to summarize meaningfully. Try a longer video.",
+          statusMessage: "Videos under 5 minutes are too brief to summarize meaningfully.",
         });
       }
-      if (duration > 180) {
+      if (durationMinutes > 180) {
         throw createError({
           statusCode: 422,
-          statusMessage:
-            "Videos over 3 hours exceed the maximum supported length. Try a shorter video.",
+          statusMessage: "Videos over 3 hours exceed maximum supported length.",
         });
       }
+    }
 
+    // ═══════════════════════════════════════════════════════
+    // QUOTA CHECK: Now includes essence and duration
+    // ═══════════════════════════════════════════════════════
+    const quota = await checkQuota(event, userId, essence, durationMinutes);
+    if (!quota.allowed) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: quota.reason ?? "Insufficient credits.",
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // FLOW HANDLING
+    // ═══════════════════════════════════════════════════════════
+    if (essence === "youtube" && durationMinutes) {
       // ═══════════════════════════════════════════════════════
       // FLOW 3: Background Job (21-180min)
       // ═══════════════════════════════════════════════════════
-      if (duration > 20) {
+      if (durationMinutes > 20) {
         if (!userId) {
           throw createError({
             statusCode: 401,
@@ -134,7 +137,7 @@ export default defineEventHandler(async (event) => {
         });
 
         console.log(
-          `[create-pending] Background job enqueued for ${summaryId} (${duration}min)`,
+          `[create-pending] Background job enqueued for ${summaryId} (${durationMinutes}min)`,
         );
 
         return { summaryId };

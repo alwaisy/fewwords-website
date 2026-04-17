@@ -14,6 +14,7 @@ import { useUmamiIdentity } from '~/composables/use-umami-identity'
 
 const { isLoggedIn, logout } = useAuth();
 const { identity } = useUmamiIdentity();
+const config = useRuntimeConfig();
 const isMobileMenuOpen = ref(false);
 const route = useRoute();
 
@@ -54,19 +55,20 @@ function isActive(path: string): boolean {
             Home
           </NuxtLink>
          <NuxtLink
+           v-if="config.public.paddleApproved"
            v-umami="{
-             name: 'nav-about',
+             name: 'nav-pricing',
              ...identity
            }"
-           to="/about"
+           to="/pricing"
            :class="[
              'text-sm font-medium transition-colors',
-             isActive('/about')
+             isActive('/pricing')
                ? 'text-foreground'
                : 'text-muted-foreground hover:text-primary',
            ]"
          >
-           About
+           Pricing
          </NuxtLink>
          <NuxtLink
            v-umami="{
@@ -83,28 +85,21 @@ function isActive(path: string): boolean {
          >
            Explore
          </NuxtLink>
-        <NuxtLink
-          to="/about"
-          :class="[
-            'text-sm font-medium transition-colors',
-            isActive('/about')
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-primary',
-          ]"
-        >
-          About
-        </NuxtLink>
-        <NuxtLink
-          to="/explore"
-          :class="[
-            'text-sm font-medium transition-colors',
-            isActive('/explore')
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-primary',
-          ]"
-        >
-          Explore
-        </NuxtLink>
+         <!-- <NuxtLink
+           v-umami="{
+             name: 'nav-about',
+             ...identity
+           }"
+           to="/about"
+           :class="[
+             'text-sm font-medium transition-colors',
+             isActive('/about')
+               ? 'text-foreground'
+               : 'text-muted-foreground hover:text-primary',
+           ]"
+         >
+           About
+         </NuxtLink> -->
         <ThemeToggle />
          <Button variant="default" size="sm" as-child>
            <NuxtLink
@@ -137,19 +132,20 @@ function isActive(path: string): boolean {
            Home
          </NuxtLink>
          <NuxtLink
+           v-if="config.public.paddleApproved"
            v-umami="{
-             name: 'nav-about',
+             name: 'nav-pricing',
              ...identity
            }"
-           to="/about"
+           to="/pricing"
            :class="[
              'text-sm font-medium transition-colors',
-             isActive('/about')
+             isActive('/pricing')
                ? 'text-foreground'
                : 'text-muted-foreground hover:text-primary',
            ]"
          >
-           About
+           Pricing
          </NuxtLink>
          <NuxtLink
            v-umami="{
@@ -166,6 +162,21 @@ function isActive(path: string): boolean {
          >
            Explore
          </NuxtLink>
+         <!-- <NuxtLink
+           v-umami="{
+             name: 'nav-about',
+             ...identity
+           }"
+           to="/about"
+           :class="[
+             'text-sm font-medium transition-colors',
+             isActive('/about')
+               ? 'text-foreground'
+               : 'text-muted-foreground hover:text-primary',
+           ]"
+         >
+           About
+         </NuxtLink> -->
         <ThemeToggle />
 
         <!-- Avatar dropdown -->
@@ -181,10 +192,15 @@ function isActive(path: string): boolean {
           <DropdownMenuContent align="end" class="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div class="px-2 py-1.5">
-              <AppUsageBar />
-            </div>
+            <NuxtLink to="/subscription" class="block w-full">
+              <div class="px-2 py-1.5 hover:bg-accent rounded-sm cursor-pointer transition-colors">
+                <AppUsageBar />
+              </div>
+            </NuxtLink>
             <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+              <NuxtLink to="/subscription">My Plan</NuxtLink>
+            </DropdownMenuItem>
             <DropdownMenuItem as-child>
               <NuxtLink to="/library">Library</NuxtLink>
             </DropdownMenuItem>
@@ -239,22 +255,22 @@ function isActive(path: string): boolean {
                    Home
                  </NuxtLink>
                </DrawerClose>
-               <DrawerClose as-child>
+               <DrawerClose v-if="config.public.paddleApproved" as-child>
                  <NuxtLink
                    v-umami="{
-                     name: 'nav-about-mobile',
+                     name: 'nav-pricing-mobile',
                      ...identity
                    }"
-                   to="/about"
+                   to="/pricing"
                    :class="[
                      'text-lg font-medium transition-colors py-2',
-                     isActive('/about')
+                     isActive('/pricing')
                        ? 'text-foreground'
                        : 'text-muted-foreground hover:text-primary',
                    ]"
                    @click="isMobileMenuOpen = false"
                  >
-                   About
+                   Pricing
                  </NuxtLink>
                </DrawerClose>
                <DrawerClose as-child>
@@ -273,6 +289,24 @@ function isActive(path: string): boolean {
                    @click="isMobileMenuOpen = false"
                  >
                    Explore
+                 </NuxtLink>
+               </DrawerClose>
+               <DrawerClose as-child>
+                 <NuxtLink
+                   v-umami="{
+                     name: 'nav-about-mobile',
+                     ...identity
+                   }"
+                   to="/about"
+                   :class="[
+                     'text-lg font-medium transition-colors py-2',
+                     isActive('/about')
+                       ? 'text-foreground'
+                       : 'text-muted-foreground hover:text-primary',
+                   ]"
+                   @click="isMobileMenuOpen = false"
+                 >
+                   About
                  </NuxtLink>
                </DrawerClose>
               <div class="flex items-center space-x-4 py-2">
@@ -307,22 +341,22 @@ function isActive(path: string): boolean {
                    Home
                  </NuxtLink>
                </DrawerClose>
-               <DrawerClose as-child>
+               <DrawerClose v-if="config.public.paddleApproved" as-child>
                  <NuxtLink
                    v-umami="{
-                     name: 'nav-about-mobile',
+                     name: 'nav-pricing-mobile',
                      ...identity
                    }"
-                   to="/about"
+                   to="/pricing"
                    :class="[
                      'text-lg font-medium transition-colors py-2',
-                     isActive('/about')
+                     isActive('/pricing')
                        ? 'text-foreground'
                        : 'text-muted-foreground hover:text-primary',
                    ]"
                    @click="isMobileMenuOpen = false"
                  >
-                   About
+                   Pricing
                  </NuxtLink>
                </DrawerClose>
                <DrawerClose as-child>
@@ -341,6 +375,24 @@ function isActive(path: string): boolean {
                    @click="isMobileMenuOpen = false"
                  >
                    Explore
+                 </NuxtLink>
+               </DrawerClose>
+               <DrawerClose as-child>
+                 <NuxtLink
+                   v-umami="{
+                     name: 'nav-about-mobile',
+                     ...identity
+                   }"
+                   to="/about"
+                   :class="[
+                     'text-lg font-medium transition-colors py-2',
+                     isActive('/about')
+                       ? 'text-foreground'
+                       : 'text-muted-foreground hover:text-primary',
+                   ]"
+                   @click="isMobileMenuOpen = false"
+                 >
+                   About
                  </NuxtLink>
                </DrawerClose>
               <div class="flex items-center space-x-4 py-2">

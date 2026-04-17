@@ -4,19 +4,20 @@
 const landingCopy = {
   // 1. HERO SECTION
   hero_section: {
-    headline: "Summarize anything in 60 seconds. Actually useful summaries.",
+    // headline: "Summarize anything in 60 seconds. Actually useful summaries.",
+    headline: "Summarize anything in 60 seconds.",
     subheadline:
       "Articles, YouTube, Reddit. Paste a URL, get the key points. No signup needed.",
     cta: "Try it free",
     cta_secondary: "See how it works",
-    note: "2,500 words free. No credit card required.",
+    note: "8 summaries free. No credit card required.",
   },
 
   // 2. PROBLEM SECTION - Why current solutions fail
   problem_section: {
     headline: "Your browser has 47 tabs. You will read none of them.",
     supporting_copy:
-      "We all do it. Save interesting articles, bookmark videos, tell ourselves we will get to them later. That later never comes.",
+      "I do it too. Save interesting articles, bookmark videos, tell myself I will get to them later. That later never comes.",
     steps: [
       {
         title: "Content is bloated.",
@@ -187,13 +188,13 @@ const landingCopy = {
       "If it helps you close even one tab today, it was worth building.",
     ],
     cta: "Try it free",
-    ps: "2,500 words free. No credit card needed.",
+    ps: "8 summaries free. No credit card needed.",
   },
 
   // 11. FINAL CTA
   final_cta: {
     headline: "Stop saving content for later. Summarize it now.",
-    subheadline: "Your first 2,500 words are free. No signup required.",
+    subheadline: "Your first 8 summaries are free. No signup required.",
     cta: "Summarize something",
     cta_secondary: "See pricing",
     note: "Takes 60 seconds. Works on articles, YouTube, and Reddit.",
@@ -206,12 +207,12 @@ const landingCopy = {
       {
         question: "Is it really free to start?",
         answer:
-          "Yes. You get 2,500 words of summaries free. That is roughly 15-30 articles or videos, depending on length. No credit card needed.",
+          "Yes. You get 8 summaries free. No credit card needed.",
       },
       {
-        question: "How does the word count work?",
+        question: "How do credits work?",
         answer:
-          "I only count the summary I generate, not the article or video you paste. A typical summary runs 80-150 words. So 2,500 free words gets you 15-30 summaries to start.",
+          "Every summary 'debits' your balance. An article is 1 credit. YouTube videos cost more because processing up to 3 hours of video involves significant AI resource usage. You get 8 credits for free to start.",
       },
       {
         question: "Does it work on YouTube?",

@@ -6,9 +6,10 @@ declare module '#auth-utils' {
     username?: string
     role?: 'user' | 'admin'
     createdAt?: string
-    plan?: 'free' | 'pro'
-    wordsUsed?: number
-    wordsLimit?: number
+    plan?: 'skim' | 'read' | 'digest' | 'deep'
+    creditsUsed?: number
+    creditsLimit?: number
+    periodResetAt?: string | null
   }
 
   interface UserSession {

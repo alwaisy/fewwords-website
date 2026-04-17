@@ -17,6 +17,8 @@ useSeoMeta({
   twitterDescription:
     "Articles, YouTube, Reddit. Paste a URL, get the key points. Actually useful summaries. No signup needed.",
 });
+
+const config = useRuntimeConfig();
 </script>
 
 <template>
@@ -29,6 +31,7 @@ useSeoMeta({
     <!-- <HomeSolutionSection /> -->
     <HomeUspSection />
     <HomeFeaturesSection />
+    <HomePricingSection v-if="config.public.paddleApproved" />
     <HomeBookmarkletSection />
     <HomeFaqSection />
     <HomeFinalCta />

@@ -1,33 +1,6 @@
 <script setup lang="ts">
 const { isLoggedIn } = useAuth()
-const { quota, gateMessage, refresh } = useQuota()
-const isJoining = ref(false)
-const joined = ref(false)
-
-async function joinWaitlist() {
-  if (isJoining.value) return
-  isJoining.value = true
-
-  try {
-    const email = isLoggedIn.value
-      ? (quota.value as { email?: string }).email
-      : undefined
-
-    const res = await $fetch<{ success: boolean; message: string; alreadyExists: boolean }>('/api/waitlist', {
-      method: 'POST',
-      body: email ? { email } : {},
-    })
-
-    if (res.success) {
-      joined.value = true
-      useToastify(res.message, { type: 'success' })
-    }
-  } catch {
-    useToastify('Failed to join waitlist. Try again.', { type: 'error' })
-  } finally {
-    isJoining.value = false
-  }
-}
+const { gateMessage, refresh } = useQuota()
 
 // Refresh quota when component mounts
 onMounted(() => {
@@ -36,51 +9,44 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="gateMessage && !joined" class="w-full max-w-2xl mx-auto">
-    <div class="rounded-xl border border-border bg-card p-8 text-center space-y-4">
-      <Icon name="lucide:lock" class="size-10 text-muted-foreground mx-auto" />
-      <h3 class="text-xl font-semibold text-foreground">
-        {{ isLoggedIn ? "You've used your free words" : "You've hit your free limit" }}
-      </h3>
-      <p class="text-muted-foreground">
-        {{ gateMessage }}
-      </p>
+  <div v-if="gateMessage" class="w-full max-w-2xl mx-auto my-8">
+    <div class="rounded-2xl border-2 border-primary/20 bg-card p-10 text-center space-y-6 shadow-sm">
+      <div class="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+        <Icon name="lucide:zap" class="size-8 text-primary" />
+      </div>
+      
+      <div class="space-y-2">
+        <h3 class="text-2xl font-bold text-foreground">
+          {{ isLoggedIn ? "Out of Credits" : "Limit Reached" }}
+        </h3>
+        <p class="text-muted-foreground text-lg max-w-md mx-auto">
+          {{ gateMessage }}
+        </p>
+      </div>
 
       <!-- Not logged in: show sign-up CTA -->
-      <div v-if="!isLoggedIn" class="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Button as-child size="lg">
+      <div v-if="!isLoggedIn" class="flex flex-col items-center justify-center gap-4">
+        <Button as-child size="lg" class="h-12 px-8 text-lg rounded-xl">
           <NuxtLink to="/auth/login">
-            Sign up free
+            Sign up for 8 free credits
           </NuxtLink>
         </Button>
-        <span class="text-sm text-muted-foreground">No credit card needed</span>
+        <span class="text-sm text-muted-foreground">No credit card required</span>
       </div>
 
-      <!-- Logged in: show waitlist CTA -->
-      <div v-else class="flex flex-col items-center justify-center gap-3">
+      <!-- Logged in: show upgrade CTA -->
+      <div v-else class="flex flex-col items-center justify-center gap-4">
         <Button
+          as-child
           size="lg"
-          :disabled="isJoining"
-          @click="joinWaitlist"
+          class="h-12 px-8 text-lg rounded-xl"
         >
-          <Icon v-if="isJoining" name="lucide:loader-2" class="size-4 mr-2 animate-spin" />
-          Join the waitlist
+          <NuxtLink to="/pricing">
+            Upgrade to Read
+          </NuxtLink>
         </Button>
-        <span class="text-sm text-muted-foreground">We'll notify you when paid plans launch</span>
+        <span class="text-sm text-muted-foreground">Instant access to 30+ credits</span>
       </div>
-    </div>
-  </div>
-
-  <!-- Already joined -->
-  <div v-else-if="joined" class="w-full max-w-2xl mx-auto">
-    <div class="rounded-xl border border-border bg-card p-8 text-center space-y-4">
-      <Icon name="lucide:check-circle" class="size-10 text-green-500 mx-auto" />
-      <h3 class="text-xl font-semibold text-foreground">
-        You're on the list
-      </h3>
-      <p class="text-muted-foreground">
-        We'll let you know when paid plans are ready.
-      </p>
     </div>
   </div>
 </template>

@@ -6,16 +6,19 @@ const siteConfig = useSiteConfig();
 const siteUrl = siteConfig.url || "https://fewwords.app";
 
 useSeoMeta(getSeoMeta(siteUrl));
+
 useHead({
   ...getMetaHead(siteUrl),
   link: [
     ...(getMetaHead(siteUrl).link || []),
     { rel: "alternate", type: "text/plain", href: `${siteUrl}/llms.txt`, title: "LLM-readable content" }
   ],
-  script: getJsonLd(siteUrl).map((schema) => ({
-    type: "application/ld+json",
-    innerHTML: JSON.stringify(schema),
-  })),
+  script: [
+    ...getJsonLd(siteUrl).map((schema) => ({
+      type: "application/ld+json",
+      innerHTML: JSON.stringify(schema),
+    })),
+  ],
 });
 </script>
 
