@@ -37,7 +37,7 @@ const isCurrentPlan = (planName: string) => {
 
 const plans = computed(() => pricingCopy.plans.map(plan => {
   const prices = config.public.prices as Record<string, string>;
-  const priceId = plan.priceIdKey ? prices[plan.priceIdKey] : null;
+  const priceId = (plan.priceIdKey ? prices[plan.priceIdKey] : null) ?? null;
   return {
     ...plan,
     price: getPrice(priceId, plan.fallbackPrice),
@@ -51,7 +51,7 @@ const showDeepPlan = ref(false);
 const deepPlan = computed(() => {
   const plan = pricingCopy.deep_plan;
   const prices = config.public.prices as Record<string, string>;
-  const priceId = prices[plan.priceIdKey];
+  const priceId = prices[plan.priceIdKey] ?? null;
   return {
     ...plan,
     price: getPrice(priceId, plan.fallbackPrice),
