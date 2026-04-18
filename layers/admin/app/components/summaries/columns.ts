@@ -106,16 +106,26 @@ export const createColumns = (
       header: "Visibility",
       cell: ({ row }) => {
         const isPublic = row.original.isPublic;
-        const isHidden = (row.original as any).isHidden;
+        const isHidden = row.original.isHidden;
+        const isBlocked = row.original.isBlocked;
         
-        return h("div", { class: "flex flex-col gap-1" }, [
-          isPublic 
-            ? h(Badge, { variant: "outline", class: "w-fit text-[10px] py-0 px-1 border-primary/30 text-primary" }, () => "Public")
-            : h(Badge, { variant: "secondary", class: "w-fit text-[10px] py-0 px-1" }, () => "Private"),
-          isHidden
-            ? h(Badge, { variant: "destructive", class: "w-fit text-[10px] py-0 px-1" }, () => "Hidden")
-            : null
-        ]);
+        // 1. Blocked takes absolute precedence
+        if (isBlocked) {
+          return h(Badge, { variant: "destructive", class: "w-fit text-[10px] py-0 px-1 !bg-red-600 !text-white border-transparent" }, () => "Blocked");
+        }
+        
+        // 2. Hidden + Public/Private
+        if (isHidden) {
+          return h("div", { class: "flex flex-col gap-1" }, [
+            h(Badge, { variant: "destructive", class: "w-fit text-[10px] py-0 px-1" }, () => "Hidden"),
+            h("span", { class: "text-[9px] text-muted-foreground ml-1" }, isPublic ? "(Public link)" : "(Private)")
+          ]);
+        }
+        
+        // 3. Normal status
+        return isPublic 
+          ? h(Badge, { variant: "outline", class: "w-fit text-[10px] py-0 px-1 border-primary/30 text-primary" }, () => "Public")
+          : h(Badge, { variant: "secondary", class: "w-fit text-[10px] py-0 px-1" }, () => "Private");
       },
     },
 

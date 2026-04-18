@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ExternalLink, Eye, EyeOff, Loader2 } from "lucide-vue-next";
-import { computed, ref } from "vue";
-import { toast } from "vue-sonner";
+import { Ban, ExternalLink, Eye, EyeOff, Loader2 } from "lucide-vue-next";
+import { computed, ref, watch } from "vue";
+
+import { formatTime } from "../../lib/formatters";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatTime } from "../../lib/formatters";
+import { Input } from "@/components/ui/input";
 import { countWords } from "~/lib/utils";
 import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 import { parseErrorLog } from "~~/server/lib/errors";
@@ -30,23 +31,64 @@ const isOpen = computed({
 
 // Moderation state
 const isUpdating = ref(false);
+const blockReason = ref(props.summary.blockReason || "");
+const showBlockInput = ref(false);
+
+// Reset state when summary changes
+watch(() => props.summary.id, () => {
+  blockReason.value = props.summary.blockReason || "";
+  showBlockInput.value = false;
+});
 
 const toggleHidden = async () => {
   if (isUpdating.value) return;
   
   isUpdating.value = true;
   try {
-    const newHiddenValue = !(props.summary as any).isHidden;
+    const newHiddenValue = !props.summary.isHidden;
     
     await $fetch(`/api/admin/summaries/${props.summary.id}`, {
       method: "PATCH",
       body: { isHidden: newHiddenValue },
     });
     
-    toast.success(newHiddenValue ? "Summary hidden from Explore" : "Summary visible in Explore");
+    useToastify(newHiddenValue ? "Summary hidden from Explore" : "Summary visible in Explore", { type: "success" });
     emit("updated");
-  } catch (error: any) {
-    toast.error(error.statusMessage || "Failed to update summary");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update summary";
+    useToastify(message, { type: "error" });
+  } finally {
+    isUpdating.value = false;
+  }
+};
+
+const toggleBlocked = async () => {
+  if (isUpdating.value) return;
+
+  // If we are currently unblocked and haven't shown the input yet, show it first
+  if (!props.summary.isBlocked && !showBlockInput.value) {
+    showBlockInput.value = true;
+    return;
+  }
+  
+  isUpdating.value = true;
+  try {
+    const newBlockedValue = !props.summary.isBlocked;
+    
+    await $fetch(`/api/admin/summaries/${props.summary.id}`, {
+      method: "PATCH",
+      body: { 
+        isBlocked: newBlockedValue,
+        blockReason: newBlockedValue ? blockReason.value : null 
+      },
+    });
+    
+    useToastify(newBlockedValue ? "Summary blocked" : "Summary unblocked", { type: "success" });
+    showBlockInput.value = false;
+    emit("updated");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update summary";
+    useToastify(message, { type: "error" });
   } finally {
     isUpdating.value = false;
   }
@@ -154,6 +196,37 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
               </div>
             </div>
             <div>
+              <span class="text-muted-foreground">Visibility</span>
+              <div class="mt-1">
+                <Badge
+                  v-if="summary.isBlocked"
+                  variant="destructive"
+                  class="!bg-red-600 !text-white border-transparent"
+                >
+                  Blocked
+                </Badge>
+                <Badge
+                  v-else-if="summary.isHidden"
+                  variant="destructive"
+                >
+                  Hidden
+                </Badge>
+                <Badge
+                  v-else-if="summary.isPublic"
+                  variant="outline"
+                  class="border-primary/30 text-primary"
+                >
+                  Public
+                </Badge>
+                <Badge
+                  v-else
+                  variant="secondary"
+                >
+                  Private
+                </Badge>
+              </div>
+            </div>
+            <div>
               <span class="text-muted-foreground">Source</span>
               <div class="mt-1 flex items-center gap-1">
                 <a
@@ -234,22 +307,81 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
         <!-- Moderation -->
         <div class="space-y-3">
           <h3 class="text-sm font-medium">Moderation</h3>
-          <div class="flex flex-wrap gap-2">
-            <Button
-              :variant="(summary as any).isHidden ? 'default' : 'outline'"
-              size="sm"
-              :disabled="isUpdating"
-              @click="toggleHidden"
-            >
-              <template v-if="isUpdating">
-                <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </template>
-              <template v-else>
-                <component :is="(summary as any).isHidden ? Eye : EyeOff" class="mr-2 h-4 w-4" />
-                {{ (summary as any).isHidden ? 'Show in Explore' : 'Hide from Explore' }}
-              </template>
-            </Button>
+          <div class="space-y-4">
+            <!-- Explore Visibility Toggle -->
+            <div class="flex items-center gap-2">
+              <Button
+                :variant="summary.isHidden ? 'default' : 'outline'"
+                size="sm"
+                :disabled="isUpdating || showBlockInput"
+                @click="toggleHidden"
+              >
+                <template v-if="isUpdating && !showBlockInput">
+                  <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </template>
+                <template v-else>
+                  <component :is="summary.isHidden ? Eye : EyeOff" class="mr-2 h-4 w-4" />
+                  {{ summary.isHidden ? 'Show in Explore' : 'Hide from Explore' }}
+                </template>
+              </Button>
+            </div>
+
+            <!-- Blocking UI -->
+            <div v-if="summary.isBlocked" class="space-y-2">
+               <div class="flex items-center justify-between">
+                 <label class="text-[10px] uppercase font-semibold text-destructive">Summary Blocked</label>
+                 <Button variant="ghost" size="xs" class="h-6 text-[10px]" :disabled="isUpdating" @click="toggleBlocked">
+                   Unblock Access
+                 </Button>
+               </div>
+               <p v-if="summary.blockReason" class="text-xs text-destructive bg-destructive/5 p-2 rounded border border-destructive/10 italic">
+                 "{{ summary.blockReason }}"
+               </p>
+            </div>
+
+            <div v-else class="space-y-3">
+              <!-- Initial Block Button -->
+              <Button
+                v-if="!showBlockInput"
+                variant="outline"
+                size="sm"
+                class="hover:bg-destructive hover:text-white"
+                @click="showBlockInput = true"
+              >
+                <Ban class="mr-2 h-4 w-4" />
+                Block Access...
+              </Button>
+
+              <!-- Block Reason Input (Revealed) -->
+              <div v-else class="space-y-3 p-3 bg-muted/50 rounded-lg border animate-in fade-in slide-in-from-top-1">
+                <div class="space-y-1.5">
+                  <label class="text-[10px] uppercase font-bold text-foreground">Specify Block Reason</label>
+                  <Input 
+                    v-model="blockReason" 
+                    placeholder="e.g. Hate speech, NSFW content..." 
+                    class="h-8 text-sm bg-background"
+                    autofocus
+                    @keyup.enter="toggleBlocked"
+                  />
+                  <p class="text-[10px] text-muted-foreground">This message will be shown to users who visit the link.</p>
+                </div>
+                <div class="flex gap-2">
+                  <Button variant="destructive" size="sm" :disabled="isUpdating" @click="toggleBlocked">
+                    <template v-if="isUpdating">
+                      <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+                      Blocking...
+                    </template>
+                    <template v-else>
+                      Confirm Block
+                    </template>
+                  </Button>
+                  <Button variant="ghost" size="sm" :disabled="isUpdating" @click="showBlockInput = false">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

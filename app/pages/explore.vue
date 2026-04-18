@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useUmamiIdentity } from '~/composables/use-umami-identity'
-import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 import { parseInlineMarkdown } from '~/lib/markdown'
+import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
 
 const siteUrl = useSiteConfig().url;
 

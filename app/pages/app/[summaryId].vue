@@ -2,8 +2,8 @@
 import { useErrorMessage } from "./composables/use-error-message";
 import { useSummaryProcessing } from "./composables/use-summary-processing";
 
-import { createOgImage } from "~/lib/seo/og-image";
 import { stripMarkdown } from "~/lib/markdown";
+import { createOgImage } from "~/lib/seo/og-image";
 
 const route = useRoute();
 const router = useRouter();
@@ -226,10 +226,10 @@ watchStatusChanges();
             <Icon name="lucide:ghost" size="3rem" class="text-primary" />
           </div>
           <h1 class="text-2xl font-bold text-foreground mb-3">
-            Well, this is awkward
+            {{ error.statusCode === 451 ? 'Summary Blocked' : 'Well, this is awkward' }}
           </h1>
           <p class="text-muted-foreground mb-8 max-w-md mx-auto">
-            The summary went into hiding. Maybe it exists in another dimension?
+            {{ error.statusMessage || 'The summary went into hiding. Maybe it exists in another dimension?' }}
           </p>
           <Button v-umami="'summary-new'" variant="outline" @click="doAnother">Try another URL</Button>
         </div>

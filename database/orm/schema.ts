@@ -125,6 +125,8 @@ export const summaries = pgTable(
     totalTokens: integer("total_tokens"),
     isPublic: boolean("is_public").notNull().default(true),
     isHidden: boolean("is_hidden").notNull().default(false),
+    isBlocked: boolean("is_blocked").notNull().default(false),
+    blockReason: text("block_reason"),
     wordCount: integer("word_count"), // Output word count (what user receives)
     responseTimeMs: integer("response_time_ms"),
     status: text("status", { enum: statusEnum }).notNull().default("pending"),

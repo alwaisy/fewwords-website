@@ -31,6 +31,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Handle blocked summaries
+  if (summary.isBlocked) {
+    const defaultMessage = 'This summary has been blocked by moderators due to content policy violations.';
+    throw createError({
+      statusCode: 451,
+      statusMessage: summary.blockReason || defaultMessage,
+    })
+  }
+
   // Return public fields - hide only internal implementation details
   return {
     summaryId: summary.summaryId,

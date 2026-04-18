@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
-import { summaries, UserRole } from "~~/database/orm/schema";
+
+import type { UserRole } from "~~/database/orm/schema";
+import { summaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   // 1. Verify admin role
@@ -25,13 +27,21 @@ export default defineEventHandler(async (event) => {
   const db = await useDb(event);
 
   // 3. Update summary
-  const updateData: any = {};
+  const updateData: Partial<typeof summaries.$inferInsert> = {};
   if (typeof body.isHidden === "boolean") {
     updateData.isHidden = body.isHidden;
   }
   
   if (typeof body.isPublic === "boolean") {
     updateData.isPublic = body.isPublic;
+  }
+  
+  if (typeof body.isBlocked === "boolean") {
+    updateData.isBlocked = body.isBlocked;
+  }
+  
+  if (typeof body.blockReason === "string" || body.blockReason === null) {
+    updateData.blockReason = body.blockReason;
   }
 
   if (Object.keys(updateData).length === 0) {
