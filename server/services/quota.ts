@@ -42,16 +42,20 @@ export function getRequiredCredits(
   essence: "article" | "youtube" | "reddit",
   durationMinutes?: number,
 ): number {
+  // Defensive check: ensure plan is valid
+  const planKey = (plan && PLAN_CREDIT_COSTS[plan]) ? plan : "skim";
+  const costs = PLAN_CREDIT_COSTS[planKey];
+
   if (essence === "article" || essence === "reddit") {
-    return PLAN_CREDIT_COSTS[plan].article;
+    return costs.article;
   }
 
   if (essence === "youtube") {
-    if (!durationMinutes) return PLAN_CREDIT_COSTS[plan].yt_short; // Default to short
+    if (!durationMinutes) return costs.yt_short; // Default to short
 
-    if (durationMinutes <= 20) return PLAN_CREDIT_COSTS[plan].yt_short;
-    if (durationMinutes <= 60) return PLAN_CREDIT_COSTS[plan].yt_medium;
-    return PLAN_CREDIT_COSTS[plan].yt_long;
+    if (durationMinutes <= 20) return costs.yt_short;
+    if (durationMinutes <= 60) return costs.yt_medium;
+    return costs.yt_long;
   }
 
   return 1; // Fallback
