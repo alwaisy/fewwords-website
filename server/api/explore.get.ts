@@ -19,7 +19,8 @@ export default defineEventHandler(async (event) => {
         eq(summaries.status, 'completed'),
         isNotNull(summaries.summary),
         isNull(summaries.errorMessage),
-        eq(summaries.isPublic, true)
+        eq(summaries.isPublic, true),
+        eq(summaries.isHidden, false)
       )
     );
 
@@ -40,7 +41,8 @@ export default defineEventHandler(async (event) => {
         eq(summaries.status, 'completed'),
         isNotNull(summaries.summary),
         isNull(summaries.errorMessage),
-        eq(summaries.isPublic, true)
+        eq(summaries.isPublic, true),
+        eq(summaries.isHidden, false)
       )
     )
     .orderBy(desc(summaries.createdAt))

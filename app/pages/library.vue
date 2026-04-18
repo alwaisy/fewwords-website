@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUmamiIdentity } from '~/composables/use-umami-identity'
 import { extractDomain, formatDate, getEssenceLabel } from '~/lib/summary'
+import { parseInlineMarkdown } from '~/lib/markdown'
 
 const siteUrl = useSiteConfig().url;
 
@@ -186,9 +187,10 @@ function goToSummary(summaryId: string) {
              @click="goToSummary(summary.summaryId)"
            >
             <!-- Title -->
-            <h3 class="font-medium text-foreground truncate mb-2">
-              {{ summary.title || 'Untitled' }}
-            </h3>
+            <h3 
+              class="font-medium text-foreground truncate mb-2 summary-title-list"
+              v-html="parseInlineMarkdown(summary.title || 'Untitled')"
+            />
 
             <!-- Metadata row -->
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -241,3 +243,19 @@ function goToSummary(summaryId: string) {
     </section>
   </main>
 </template>
+
+<style scoped>
+.summary-title-list :deep(em) {
+  font-style: italic;
+}
+.summary-title-list :deep(strong) {
+  font-weight: 700;
+}
+.summary-title-list :deep(code) {
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+  font-size: 0.9em;
+}
+</style>

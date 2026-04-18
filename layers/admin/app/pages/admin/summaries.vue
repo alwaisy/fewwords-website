@@ -338,6 +338,7 @@ const toggleColumnVisibility = (id: string, value: boolean) => {
         :data="summaries"
         :column-visibility="columnVisibility"
         @update:column-visibility="(v) => columnVisibility = v as typeof columnVisibility"
+        @updated="refresh"
       />
     </div>
 

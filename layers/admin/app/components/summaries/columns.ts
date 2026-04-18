@@ -100,6 +100,25 @@ export const createColumns = (
       },
     },
 
+    // Visibility column - visible by default
+    {
+      id: "visibility",
+      header: "Visibility",
+      cell: ({ row }) => {
+        const isPublic = row.original.isPublic;
+        const isHidden = (row.original as any).isHidden;
+        
+        return h("div", { class: "flex flex-col gap-1" }, [
+          isPublic 
+            ? h(Badge, { variant: "outline", class: "w-fit text-[10px] py-0 px-1 border-primary/30 text-primary" }, () => "Public")
+            : h(Badge, { variant: "secondary", class: "w-fit text-[10px] py-0 px-1" }, () => "Private"),
+          isHidden
+            ? h(Badge, { variant: "destructive", class: "w-fit text-[10px] py-0 px-1" }, () => "Hidden")
+            : null
+        ]);
+      },
+    },
+
     // Actions column - visible by default
     {
       id: "actions",

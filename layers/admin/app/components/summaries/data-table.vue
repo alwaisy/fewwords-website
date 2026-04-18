@@ -24,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:columnVisibility": [value: VisibilityState];
+  "updated": [];
 }>();
 
 const sorting = ref<SortingState>([]);
@@ -126,6 +127,7 @@ defineExpose({ openDrawer });
       :summary="selectedSummary"
       :open="isDrawerOpen"
       @update:open="isDrawerOpen = $event"
+      @updated="emit('updated')"
     />
   </div>
 </template>

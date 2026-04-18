@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ExternalLink } from "lucide-vue-next";
-import { computed } from "vue";
+import { ExternalLink, Eye, EyeOff, Loader2 } from "lucide-vue-next";
+import { computed, ref } from "vue";
+import { toast } from "vue-sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,12 +20,37 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
+  "updated": []; // Added updated event
 }>();
 
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit("update:open", value),
 });
+
+// Moderation state
+const isUpdating = ref(false);
+
+const toggleHidden = async () => {
+  if (isUpdating.value) return;
+  
+  isUpdating.value = true;
+  try {
+    const newHiddenValue = !(props.summary as any).isHidden;
+    
+    await $fetch(`/api/admin/summaries/${props.summary.id}`, {
+      method: "PATCH",
+      body: { isHidden: newHiddenValue },
+    });
+    
+    toast.success(newHiddenValue ? "Summary hidden from Explore" : "Summary visible in Explore");
+    emit("updated");
+  } catch (error: any) {
+    toast.error(error.statusMessage || "Failed to update summary");
+  } finally {
+    isUpdating.value = false;
+  }
+};
 
 // Count words from summary text
 const summaryWordCount = computed(() => countWords(props.summary.summary));
@@ -202,6 +228,28 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
                 {{ formatTime(step.value) }}
               </span>
             </div>
+          </div>
+        </div>
+
+        <!-- Moderation -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-medium">Moderation</h3>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              :variant="(summary as any).isHidden ? 'default' : 'outline'"
+              size="sm"
+              :disabled="isUpdating"
+              @click="toggleHidden"
+            >
+              <template v-if="isUpdating">
+                <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </template>
+              <template v-else>
+                <component :is="(summary as any).isHidden ? Eye : EyeOff" class="mr-2 h-4 w-4" />
+                {{ (summary as any).isHidden ? 'Show in Explore' : 'Hide from Explore' }}
+              </template>
+            </Button>
           </div>
         </div>
 
