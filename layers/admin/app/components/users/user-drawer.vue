@@ -7,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const props = defineProps<{
   user: AdminUser;
@@ -15,6 +22,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
+  "updated": [];
 }>();
 
 const isOpen = computed({
@@ -29,11 +37,29 @@ const avatarUrl = computed(() => {
 const isEditingUsage = ref(false);
 const editCreditsUsed = ref(0);
 const editCreditsLimit = ref(0);
+const editPlan = ref<string>("skim");
+
+const planOptions = ["skim", "read", "digest", "deep"];
+const planLimits: Record<string, number> = {
+  skim: 8,
+  read: 30,
+  digest: 90,
+  deep: 225,
+};
 
 const startEditUsage = () => {
   editCreditsUsed.value = props.user.creditsUsed;
   editCreditsLimit.value = props.user.creditsLimit;
+  editPlan.value = props.user.plan;
   isEditingUsage.value = true;
+};
+
+const onPlanChange = (newPlan: unknown) => {
+  if (!newPlan) return;
+  const planStr = String(newPlan);
+  editPlan.value = planStr;
+  // Auto-update limit to plan default
+  editCreditsLimit.value = planLimits[planStr] || 8;
 };
 
 const saveUsage = async () => {
@@ -43,9 +69,11 @@ const saveUsage = async () => {
       body: {
         creditsUsed: editCreditsUsed.value,
         creditsLimit: editCreditsLimit.value,
+        plan: editPlan.value,
       },
     });
-    // In a real app, you'd trigger a refresh of the users list here
+    
+    emit("updated");
     isEditingUsage.value = false;
   } catch (error) {
     console.error("Failed to update usage:", error);
@@ -133,6 +161,19 @@ const cancelEditUsage = () => {
             </div>
             <div v-if="isEditingUsage" class="space-y-4 pt-2">
               <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5 col-span-2">
+                  <Label class="text-xs">Plan</Label>
+                  <Select v-model="editPlan" @update:model-value="onPlanChange">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="opt in planOptions" :key="opt" :value="opt" class="capitalize">
+                        {{ opt }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div class="space-y-1.5">
                   <Label class="text-xs">Credits Used</Label>
                   <Input

@@ -1,6 +1,8 @@
 
 import { count, desc, eq, sql } from "drizzle-orm";
 
+import { syncUserQuota } from "../../services/quota";
+
 import type { UserRole } from "~~/database/orm/schema";
 import { summaries, users } from "~~/database/orm/schema";
 
@@ -81,8 +83,16 @@ export default defineEventHandler(async (event) => {
   const totalPages = Math.ceil(total / pageSize);
   const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
 
+  // Sync quota for current page users to reflect lazy reset in admin panel
+  const syncedUsers = await Promise.all(
+    paginatedUsers.map(async (u) => {
+      const creditsUsed = await syncUserQuota(event, u);
+      return { ...u, creditsUsed };
+    }),
+  );
+
   return {
-    data: paginatedUsers,
+    data: syncedUsers,
     meta: {
       total,
       page,

@@ -26,6 +26,10 @@ const sorting = ref<SortingState>([]);
 const selectedUser = ref<AdminUser | null>(null);
 const isDrawerOpen = ref(false);
 
+const emit = defineEmits<{
+  "updated": [];
+}>();
+
 const openDrawer = (user: AdminUser) => {
   selectedUser.value = user;
   isDrawerOpen.value = true;
@@ -95,6 +99,7 @@ defineExpose({ openDrawer });
       :user="selectedUser"
       :open="isDrawerOpen"
       @update:open="isDrawerOpen = $event"
+      @updated="emit('updated')"
     />
   </div>
 </template>

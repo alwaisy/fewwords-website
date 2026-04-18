@@ -217,6 +217,7 @@ const hasActiveFilters = computed(() => {
         ref="dataTableRef"
         :columns="columns"
         :data="usersData"
+        @updated="refresh"
       />
     </div>
 

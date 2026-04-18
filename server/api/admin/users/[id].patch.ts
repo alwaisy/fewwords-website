@@ -33,6 +33,10 @@ export default defineEventHandler(async (event) => {
     updateFields.creditsLimit = body.creditsLimit;
   }
 
+  if (body.plan) {
+    updateFields.plan = body.plan;
+  }
+
   if (Object.keys(updateFields).length === 0) {
     throw createError({
       statusCode: 400,

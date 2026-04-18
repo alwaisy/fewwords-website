@@ -62,6 +62,32 @@ export function getRequiredCredits(
 }
 
 /**
+ * Lazy Credit Reset
+ * Resets creditsUsed if the billing period has ended.
+ * Returns the current (possibly reset) creditsUsed.
+ */
+export async function syncUserQuota(event: H3Event, user: { id: string; creditsUsed: number; periodResetAt: Date | null }): Promise<number> {
+  if (user.periodResetAt && new Date() > new Date(user.periodResetAt)) {
+    const db = await useDb(event);
+    console.log(`[Quota] Period ended for ${user.id}. Resetting credits...`);
+    
+    // Calculate next reset (usually +1 month from current reset)
+    const nextReset = new Date(user.periodResetAt);
+    nextReset.setMonth(nextReset.getMonth() + 1);
+    
+    await db.update(users)
+      .set({
+        creditsUsed: 0,
+        periodResetAt: nextReset,
+      })
+      .where(eq(users.id, user.id));
+    
+    return 0;
+  }
+  return user.creditsUsed;
+}
+
+/**
  * Check if a user/anonymous session can create a new summary.
  */
 export async function checkQuota(
@@ -75,6 +101,7 @@ export async function checkQuota(
     const db = await useDb(event);
     const userRows = await db
       .select({
+        id: users.id,
         plan: users.plan,
         creditsUsed: users.creditsUsed,
         creditsLimit: users.creditsLimit,
@@ -98,23 +125,7 @@ export async function checkQuota(
     }
 
     // 0. Lazy Credit Reset (Check if current period ended)
-    let currentCreditsUsed = user.creditsUsed;
-    if (user.periodResetAt && new Date() > new Date(user.periodResetAt)) {
-      console.log(`[Quota] Period ended for ${userId}. Resetting credits...`);
-      
-      // Calculate next reset (usually +1 month from current reset)
-      const nextReset = new Date(user.periodResetAt);
-      nextReset.setMonth(nextReset.getMonth() + 1);
-      
-      await db.update(users)
-        .set({
-          creditsUsed: 0,
-          periodResetAt: nextReset,
-        })
-        .where(eq(users.id, userId));
-      
-      currentCreditsUsed = 0;
-    }
+    const currentCreditsUsed = await syncUserQuota(event, user);
 
     // 1. Check Paddle Status (Block if payment failed or subscription ended)
     const blockedStatuses = ["past_due", "deleted", "paused"];
