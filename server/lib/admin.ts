@@ -15,6 +15,7 @@ export type FlattenedLlmUsage = {
   summaryModel: string | null;
   summaryPromptId: string | null;
   summaryTimeMs: number | null;
+  actualSummarizationTimeMs: number | null;
   summaryPromptTokens: number | null;
   summaryCompletionTokens: number | null;
   summaryTotalTokens: number | null;
@@ -76,6 +77,7 @@ export function flattenLlmUsage(
     transcriptTotalTokens: null,
     wordCount: countWords(summary.summary),
     totalTimeMs: null,
+    actualSummarizationTimeMs: summary.responseTimeMs, // Default to responseTimeMs
   };
 
   if (summary.essence === "youtube" && youtube) {
@@ -83,6 +85,12 @@ export function flattenLlmUsage(
       (base.summaryTotalTokens || 0) +
       (youtube.classifierTotalTokens || 0) +
       (youtube.transcriptTotalTokens || 0);
+    
+    // Calculate actual summarization time by subtracting known stages
+    if (summary.responseTimeMs) {
+      base.actualSummarizationTimeMs = summary.responseTimeMs - (youtube.classifierTimeMs || 0) - (youtube.transcriptTimeMs || 0);
+    }
+
     base.classifierModel = youtube.classifierModel;
     base.classifierTimeMs = youtube.classifierTimeMs;
     base.classifierPromptTokens = youtube.classifierPromptTokens;
@@ -101,6 +109,12 @@ export function flattenLlmUsage(
     base.holisticTotalTokens =
       (base.summaryTotalTokens || 0) +
       (article.classifierTotalTokens || 0);
+
+    // Calculate actual summarization time by subtracting known stages
+    if (summary.responseTimeMs) {
+      base.actualSummarizationTimeMs = summary.responseTimeMs - (article.classifierTimeMs || 0);
+    }
+
     base.classifierModel = article.classifierModel;
     base.classifierTimeMs = article.classifierTimeMs;
     base.classifierPromptTokens = article.classifierPromptTokens;

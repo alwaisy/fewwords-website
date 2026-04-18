@@ -12,7 +12,7 @@ This is not a summary. This is confirmation. The reader should know exactly what
 
 ### OUTPUT FORMAT
 
-**TITLE:** [Clear, honest headline - rewrite the original to describe what it actually is, not the clickbait]
+TITLE: [Clear, honest headline - rewrite the original to describe what it actually is, not the clickbait]
 
 **[*For each body section, keep this section head dynamic. Keep it conversational and max 3 words. Use casual language. Unlike \`The {xyz}\`, do not use \`The {xyz}\` pattern*]
 
@@ -51,4 +51,5 @@ export const PROMPT_META = {
   ID: "article-decision-v1.5",
   ESSENCE: "article",
   TYPE: "DECISION",
+  NOTES: "Changed TITLE instruction to plain text and updated parser regex to fix cases where AI bolded the entire line, preventing extraction.",
 };

@@ -11,6 +11,33 @@ export function sanitizeMarkdown(markdown: string): string {
 }
 
 /**
+ * Parses markdown to sanitized HTML, but for inline content (no wrapping <p>).
+ */
+export function parseInlineMarkdown(markdown: string): string {
+  const html = marked.parseInline(markdown) as string;
+  return import.meta.client ? DOMPurify.sanitize(html) : html;
+}
+
+/**
+ * Strips markdown formatting to return plain text.
+ * Useful for SEO meta tags and page titles.
+ */
+export function stripMarkdown(markdown: string): string {
+  if (!markdown) return "";
+  
+  // Basic markdown stripping regexes
+  return markdown
+    .replace(/\*\*(.*?)\*\*/g, "$1") // Bold
+    .replace(/\*(.*?)\*/g, "$1")   // Italic
+    .replace(/__(.*?)__/g, "$1")   // Bold
+    .replace(/_(.*?)_/g, "$1")     // Italic
+    .replace(/`{1,3}(.*?)`{1,3}/g, "$1") // Code
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1") // Links
+    .replace(/[#*>-]/g, "")        // Special chars at start of lines (approximate)
+    .trim();
+}
+
+/**
  * Converts YouTube timestamps in markdown to clickable links
  * Example: "02:01" becomes "[02:01](https://www.youtube.com/watch?v=VIDEO_ID&t=121)"
  */

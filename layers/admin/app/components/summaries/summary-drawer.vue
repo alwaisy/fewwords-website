@@ -4,6 +4,7 @@ import { computed } from "vue";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatTime } from "../../lib/formatters";
 import { countWords } from "~/lib/utils";
 import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 import { parseErrorLog } from "~~/server/lib/errors";
@@ -36,6 +37,33 @@ const domain = computed(() => {
   } catch {
     return props.summary.source.replace(/^https?:\/\/(www\.)?/, "");
   }
+});
+
+// Calculate the final AI summarization step by subtracting known stages
+const actualAiSummarizingTimeMs = computed(() => {
+  if (!props.summary.responseTimeMs) return null;
+  const classifierTime = props.summary.youtube?.classifierTimeMs || props.summary.article?.classifierTimeMs || 0;
+  const transcriptTime = props.summary.youtube?.transcriptTimeMs || 0;
+  return props.summary.responseTimeMs - classifierTime - transcriptTime;
+});
+
+// Dynamic timeline steps for sequential numbering
+const timelineSteps = computed(() => {
+  const steps = [];
+  
+  if (props.summary.youtube?.transcriptTimeMs) {
+    steps.push({ label: 'Transcript', value: props.summary.youtube.transcriptTimeMs });
+  }
+  
+  if (props.summary.youtube?.classifierTimeMs || props.summary.article?.classifierTimeMs) {
+    steps.push({ label: 'Classifying', value: props.summary.youtube?.classifierTimeMs || props.summary.article?.classifierTimeMs });
+  }
+  
+  if (actualAiSummarizingTimeMs.value) {
+    steps.push({ label: 'Summarizing', value: actualAiSummarizingTimeMs.value });
+  }
+  
+  return steps;
 });
 
 const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
@@ -151,6 +179,29 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
           </div>
           <div class="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
             {{ summary.summary }}
+          </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div v-if="summary.status === 'completed'" class="space-y-3">
+          <h3 class="text-sm font-medium">Performance Breakdown</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono">
+             <div v-if="summary.essence === 'youtube' || summary.essence === 'article'">
+              <span class="text-muted-foreground block mb-1 uppercase">Total Wait Time</span>
+              <span class="text-foreground font-semibold">
+                {{ formatTime(summary.youtube?.totalTimeMs || summary.article?.totalTimeMs) }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-foreground block mb-1 uppercase">Total AI Processing</span>
+              <span class="text-foreground font-semibold">{{ formatTime(summary.responseTimeMs) }}</span>
+            </div>
+            <div v-for="(step, index) in timelineSteps" :key="index">
+              <span class="text-muted-foreground block mb-1 uppercase">Step {{ index + 1 }}: {{ step.label }}</span>
+              <span class="text-foreground font-semibold">
+                {{ formatTime(step.value) }}
+              </span>
+            </div>
           </div>
         </div>
 

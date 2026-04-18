@@ -3,6 +3,7 @@ import { useErrorMessage } from "./composables/use-error-message";
 import { useSummaryProcessing } from "./composables/use-summary-processing";
 
 import { createOgImage } from "~/lib/seo/og-image";
+import { stripMarkdown } from "~/lib/markdown";
 
 const route = useRoute();
 const router = useRouter();
@@ -69,7 +70,7 @@ const { currentMessage, currentIcon, watchStatusChanges, liveElapsedTime, totalT
 const isDev = computed(() => import.meta.dev);
 
 // Setup reactive meta fields
-const summaryTitle = computed(() => summary.value?.title || "");
+const summaryTitle = computed(() => summary.value?.title ? stripMarkdown(summary.value.title) : "");
 const metaDescription = computed(() => {
   if (!summary.value || summary.value.status !== "completed" || !summary.value.title) return "";
 
@@ -90,9 +91,11 @@ const metaDescription = computed(() => {
     platformName = "";
   }
 
+  const cleanTitle = stripMarkdown(summary.value.title);
+
   return platformName 
-    ? `Read this concise ${typeLabel} summary from ${platformName}. ${summary.value.title}. Summarised by Fewwords in 60 seconds.`
-    : `Read this concise ${typeLabel} summary. ${summary.value.title}. Summarised by Fewwords in 60 seconds.`;
+    ? `Read this concise ${typeLabel} summary from ${platformName}. ${cleanTitle}. Summarised by Fewwords in 60 seconds.`
+    : `Read this concise ${typeLabel} summary. ${cleanTitle}. Summarised by Fewwords in 60 seconds.`;
 });
 
 const ogImageUrl = computed(() => {
@@ -107,7 +110,7 @@ const ogImageUrl = computed(() => {
   }
 
   return createOgImage({
-    title: summary.value.title,
+    title: stripMarkdown(summary.value.title),
     meta: `${platformName} · summarised by Fewwords`,
   });
 });

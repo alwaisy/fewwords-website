@@ -75,16 +75,15 @@ export async function summarize(url: string): Promise<ArticleResult> {
     },
   })
 
-  // Extract title from LLM response (handles both TITLE: and **TITLE:** formats)
-  const titleMatch = llmResult.content ? llmResult.content.match(/^\*\*TITLE:\*\*\s*(.+)$/m) || llmResult.content.match(/^TITLE:\s*(.+)$/m) : null
+  // Extract title from LLM response (handles TITLE:, **TITLE:**, and **TITLE: Title** formats)
+  // We use a non-greedy match for the content and only strip bolding from the very start/end of the line
+  const TITLE_REGEX = /^(?:\*\*)?TITLE:\s*(.*?)(?:\*\*)?$/im
+  const titleMatch = llmResult.content ? llmResult.content.match(TITLE_REGEX) : null
   const title = titleMatch ? titleMatch[1]?.trim() : undefined
 
-  // Remove TITLE line from summary for display (handles both formats)
+  // Remove TITLE line from summary for display
   const summary = llmResult.content
-    ? llmResult.content
-        .replace(/^\*\*TITLE:\*\*\s*.+\n?/m, '')
-        .replace(/^TITLE:\s*.+\n?/m, '')
-        .trim()
+    ? llmResult.content.replace(TITLE_REGEX, '').trim()
     : ""
 
   return {

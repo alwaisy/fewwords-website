@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { parseInlineMarkdown } from '~/lib/markdown';
+
 interface Props {
   title?: string;
   sourceUrl?: string;
@@ -13,15 +15,21 @@ defineEmits<{
   openSource: [];
 }>();
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+const renderedTitle = computed(() => {
+  if (!props.title) return "";
+  return parseInlineMarkdown(props.title);
+});
 </script>
 
 <template>
   <div class="space-y-6">
     <!-- Title -->
-    <h1 class="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
-      {{ title }}
-    </h1>
+    <h1 
+      class="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight summary-title"
+      v-html="renderedTitle"
+    />
 
     <!-- Actions -->
     <div
@@ -67,3 +75,19 @@ defineProps<Props>();
     </div>
   </div>
 </template>
+
+<style scoped>
+.summary-title :deep(em) {
+  font-style: italic;
+}
+.summary-title :deep(strong) {
+  font-weight: 700;
+}
+.summary-title :deep(code) {
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+</style>
