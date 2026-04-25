@@ -331,8 +331,7 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
             <div v-if="summary.isBlocked" class="space-y-2">
                <div class="flex items-center justify-between">
                  <label class="text-[10px] uppercase font-semibold text-destructive">Summary Blocked</label>
-                 <Button variant="ghost" size="xs" class="h-6 text-[10px]" :disabled="isUpdating" @click="toggleBlocked">
-                   Unblock Access
+                 <Button variant="ghost" size="sm" class="h-6 text-[10px]" :disabled="isUpdating" @click="toggleBlocked">                   Unblock Access
                  </Button>
                </div>
                <p v-if="summary.blockReason" class="text-xs text-destructive bg-destructive/5 p-2 rounded border border-destructive/10 italic">

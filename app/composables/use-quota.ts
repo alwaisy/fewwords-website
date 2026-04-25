@@ -8,6 +8,8 @@ interface QuotaState {
   plan: string;
   isLoggedIn: boolean;
   allowed: boolean;
+  cancelAtPeriodEnd?: boolean;
+  periodResetAt?: string | null;
 }
 
 export function useQuota() {
@@ -18,6 +20,8 @@ export function useQuota() {
     plan: 'skim',
     isLoggedIn: isLoggedIn.value,
     allowed: true,
+    cancelAtPeriodEnd: false,
+    periodResetAt: null,
   });
   const isLoading = ref(false);
 

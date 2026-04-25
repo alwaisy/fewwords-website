@@ -55,7 +55,7 @@ function isActive(path: string): boolean {
             Home
           </NuxtLink>
          <NuxtLink
-           v-if="config.public.paddleApproved"
+           v-if="config.public.polarServer"
            v-umami="{
              name: 'nav-pricing',
              ...identity
@@ -132,7 +132,7 @@ function isActive(path: string): boolean {
            Home
          </NuxtLink>
          <NuxtLink
-           v-if="config.public.paddleApproved"
+           v-if="config.public.polarServer"
            v-umami="{
              name: 'nav-pricing',
              ...identity
@@ -255,7 +255,7 @@ function isActive(path: string): boolean {
                    Home
                  </NuxtLink>
                </DrawerClose>
-               <DrawerClose v-if="config.public.paddleApproved" as-child>
+               <DrawerClose v-if="config.public.polarServer" as-child>
                  <NuxtLink
                    v-umami="{
                      name: 'nav-pricing-mobile',
@@ -341,7 +341,7 @@ function isActive(path: string): boolean {
                    Home
                  </NuxtLink>
                </DrawerClose>
-               <DrawerClose v-if="config.public.paddleApproved" as-child>
+               <DrawerClose v-if="config.public.polarServer" as-child>
                  <NuxtLink
                    v-umami="{
                      name: 'nav-pricing-mobile',

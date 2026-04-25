@@ -2,7 +2,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -11,62 +10,106 @@ import pricingCopy from "~/content/pricing-copy";
 
 const { isLoggedIn } = useAuth();
 const { quota, refresh: refreshQuota } = useQuota();
-const { upgrade, isUpgrading, fetchPrices } = usePaddle();
+const { upgrade, isUpgrading } = usePolar();
 const config = useRuntimeConfig();
 
-const dynamicPrices = ref<Record<string, string>>({});
+const { data: products, pending } = useFetch('/api/prices');
 
 onMounted(async () => {
   await refreshQuota(); // Ensure we have the latest plan from DB
-  const prices = await fetchPrices();
-  console.log('[Paddle] Dynamic Prices Loaded:', prices);
-  prices.forEach((p) => {
-    dynamicPrices.value[p.id] = p.formatted;
-  });
 });
-
-const getPrice = (priceId: string | null, fallback: string) => {
-  if (!priceId) return fallback;
-  return dynamicPrices.value[priceId] || fallback;
-};
 
 // Use quota.plan as the source of truth for "current plan"
 const isCurrentPlan = (planName: string) => {
   return quota.value.plan.toLowerCase() === planName.toLowerCase();
 };
 
-const plans = computed(() => pricingCopy.plans.map(plan => {
-  const prices = config.public.prices as Record<string, string>;
-  const priceId = (plan.priceIdKey ? prices[plan.priceIdKey] : null) ?? null;
-  return {
-    ...plan,
-    price: getPrice(priceId, plan.fallbackPrice),
-    priceId
-  };
-}));
+const formatPrice = (amount: number, currency: string) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+  }).format(amount / 100);
+};
 
-const costs = pricingCopy.costs;
+interface PolarPrice {
+  price_amount?: number;
+  priceAmount?: number;
+  price_currency?: string;
+  priceCurrency?: string;
+}
 
-const showDeepPlan = ref(false); 
-const deepPlan = computed(() => {
-  const plan = pricingCopy.deep_plan;
-  const prices = config.public.prices as Record<string, string>;
-  const priceId = prices[plan.priceIdKey] ?? null;
-  return {
-    ...plan,
-    price: getPrice(priceId, plan.fallbackPrice),
-    priceId
+interface PolarProduct {
+  id: string;
+  name: string;
+  description?: string | null;
+  prices: PolarPrice[];
+}
+
+interface PlanUI {
+  name: string;
+  description: string;
+  price: string;
+  credits: number;
+  features: string[];
+  popular: boolean;
+  cta: string;
+  productId: string | null;
+  priceRaw: number;
+}
+
+const plans = computed<PlanUI[]>(() => {
+  const skimCopy = pricingCopy.plans.find(p => p.name === 'Skim')!;
+  const skimPlan: PlanUI = {
+    name: skimCopy.name,
+    description: skimCopy.description,
+    price: "$0",
+    credits: skimCopy.credits,
+    features: skimCopy.features,
+    popular: skimCopy.popular,
+    cta: skimCopy.cta,
+    productId: null,
+    priceRaw: 0
   };
+
+  if (!products.value) return [skimPlan];
+
+  const paidPlans = (products.value as unknown as PolarProduct[]).map(product => {
+    // Find matching copy from pricingCopy based on name
+    const copy = pricingCopy.plans.find(p => p.name.toLowerCase() === product.name.toLowerCase());
+
+    const firstPrice = product.prices?.[0];
+    const priceAmount = firstPrice?.priceAmount ?? firstPrice?.price_amount ?? 0;
+    const priceCurrency = firstPrice?.priceCurrency ?? firstPrice?.price_currency ?? 'USD';
+
+    return {
+      name: product.name,
+      description: product.description || (copy?.description || ""),
+      price: formatPrice(priceAmount, priceCurrency),
+      priceRaw: priceAmount,
+      credits: copy?.credits || 0,
+      features: copy?.features || [],
+      popular: copy?.popular || false,
+      cta: copy?.cta || "Upgrade",
+      productId: product.id
+    };
+  });
+
+  // Sort paid plans by price ascending
+  paidPlans.sort((a, b) => a.priceRaw - b.priceRaw);
+
+  return [skimPlan, ...paidPlans];
 });
 
+const costs = pricingCopy.costs;
 const faqs = pricingCopy.faqs;
 </script>
 
 <template>
   <div class="min-h-screen bg-background py-16 px-4">
     <div class="max-w-6xl mx-auto">
-      <!-- Fallback Content (When not approved) -->
-      <template v-if="!config.public.paddleApproved">
+      <!-- Fallback Content (When not configured) -->
+      <template v-if="!config.public.isPolarConfigured">
         <div class="max-w-2xl mx-auto text-center py-20">
           <div class="inline-flex items-center justify-center p-3 mb-8 rounded-full bg-primary/10 text-primary">
             <Icon name="lucide:rocket" class="size-8" />
@@ -75,10 +118,10 @@ const faqs = pricingCopy.faqs;
             Paid Plans Coming Soon
           </h1>
           <p class="text-lg text-muted-foreground mb-8">
-            Fewwords is currently in closed beta while I finalize the payment systems. 
+            Fewwords is currently in closed beta while I finalize the payment systems.
             All core features are available to explore for free right now.
           </p>
-          
+
           <div class="grid gap-6">
             <Card class="bg-muted/30 border-dashed text-left">
               <CardHeader>
@@ -112,9 +155,12 @@ const faqs = pricingCopy.faqs;
         </div>
 
         <ClientOnly>
-          <div class="grid md:grid-cols-3 gap-8 mb-24 items-stretch">
-            <Card 
-              v-for="plan in plans" 
+          <div v-if="pending" class="grid md:grid-cols-3 gap-8 mb-24">
+            <Skeleton v-for="i in 3" :key="i" class="h-[500px] rounded-lg" />
+          </div>
+          <div v-else class="grid md:grid-cols-3 gap-4 mb-24 items-stretch">
+            <Card
+              v-for="plan in plans"
               :key="plan.name"
               :class="[
                 'relative flex flex-col transition-colors',
@@ -124,16 +170,16 @@ const faqs = pricingCopy.faqs;
               <div v-if="plan.popular" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-medium">
                 Most Popular
               </div>
-              
+
               <CardHeader>
                 <CardTitle class="text-xl">{{ plan.name }}</CardTitle>
-                <CardDescription>{{ plan.description }}</CardDescription>
+                <!-- <CardDescription>{{ plan.description }}</CardDescription> -->
               </CardHeader>
 
               <CardContent class="flex-grow">
                 <div class="mb-6">
                   <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-bold">${{ plan.price }}</span>
+                    <span class="text-3xl font-bold">{{ plan.price }}</span>
                     <span class="text-muted-foreground text-sm">/month</span>
                   </div>
                   <div class="mt-1 text-primary font-medium text-xs">
@@ -150,35 +196,19 @@ const faqs = pricingCopy.faqs;
               </CardContent>
 
               <CardFooter>
-                <Button 
+                <Button
                   :variant="isCurrentPlan(plan.name) ? 'outline' : (plan.popular ? 'default' : 'outline')"
-                  class="w-full" 
+                  class="w-full"
                   :disabled="isCurrentPlan(plan.name) || isUpgrading"
-                  @click="upgrade(plan.priceId, plan.name)"
+                  @click="upgrade(plan.productId, plan.name)"
                 >
                   <Icon v-if="isUpgrading" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
                   {{ isCurrentPlan(plan.name) ? "Current Plan" : (isUpgrading ? "Processing..." : plan.cta) }}
                 </Button>
               </CardFooter>
             </Card>
-
-            <Card v-if="showDeepPlan" class="border-dashed flex flex-col items-center justify-center text-center">
-              <CardHeader class="pb-2">
-                <Icon name="lucide:zap" class="w-8 h-8 mb-3 text-muted-foreground mx-auto" />
-                <CardTitle class="text-lg">Need even more?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p class="text-muted-foreground text-xs">Our Deep plan offers 225 credits for power users.</p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="ghost" size="sm" :disabled="isUpgrading" @click="upgrade(deepPlan.priceId, deepPlan.name)">
-                  <Icon v-if="isUpgrading" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
-                  Contact for Access
-                </Button>
-              </CardFooter>
-            </Card>
           </div>
-          
+
           <template #fallback>
             <div class="grid md:grid-cols-3 gap-8 mb-24">
               <Skeleton v-for="i in 3" :key="i" class="h-96 rounded-lg" />
@@ -235,7 +265,7 @@ const faqs = pricingCopy.faqs;
         <div class="mt-24 text-center p-12 rounded-lg bg-muted/30 border border-border">
           <h2 class="text-3xl font-bold mb-4">{{ pricingCopy.footer_cta.headline }}</h2>
           <p class="text-muted-foreground mb-8">{{ pricingCopy.footer_cta.subheadline }}</p>
-          
+
           <ClientOnly>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button v-if="!isLoggedIn" variant="default" @click="navigateTo('/auth/login')">

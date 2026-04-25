@@ -52,7 +52,7 @@ I'll review it and respond within 5 business days.
 
 ### Payment Processing
 
-Payments are processed by Paddle, my merchant of record. Paddle handles billing, taxes, and payment disputes. If you request a chargeback through your bank, Paddle's dispute process applies.
+Payments are processed by Polar, my merchant of record. Polar handles billing, taxes, and payment disputes. If you request a chargeback through your bank, Polar's dispute process applies.
 
 ---
 

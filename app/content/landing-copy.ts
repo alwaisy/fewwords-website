@@ -15,7 +15,7 @@ const landingCopy = {
 
   // 2. PROBLEM SECTION - Why current solutions fail
   problem_section: {
-    headline: "Your browser has 47 tabs. You will read none of them.",
+    headline: "You save interesting stuff. You never get to it.",
     supporting_copy:
       "I do it too. Save interesting articles, bookmark videos, tell myself I will get to them later. That later never comes.",
     steps: [
@@ -182,10 +182,10 @@ const landingCopy = {
   founder_note: {
     headline: "Built because I needed it",
     body: [
-      "I have 200 unread tabs. I cannot focus through a 45-minute video. I was tired of copy-pasting into ChatGPT just to avoid the filler.",
+      "I cannot focus through a 45-minute video. I was tired of copy-pasting into ChatGPT just to avoid the filler.",
       "Fewwords is the tool I wanted. Paste a URL, get what matters, move on with my day.",
       "It classifies content automatically, so a research paper gets structured sections while a news article gets key facts. You do not have to think about it.",
-      "If it helps you close even one tab today, it was worth building.",
+      "If it saves you from one video you did not want to watch, it was worth building.",
     ],
     cta: "Try it free",
     ps: "8 summaries free. No credit card needed.",
@@ -206,8 +206,7 @@ const landingCopy = {
     faqs: [
       {
         question: "Is it really free to start?",
-        answer:
-          "Yes. You get 8 summaries free. No credit card needed.",
+        answer: "Yes. You get 8 summaries free. No credit card needed.",
       },
       {
         question: "How do credits work?",

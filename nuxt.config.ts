@@ -43,21 +43,22 @@ export default defineNuxtConfig({
       resendApiKey: process.env.RESEND_API_KEY,
       adminEmail: process.env.ADMIN_EMAIL,
       redisUrl: process.env.REDIS_URL,
-      paddleKey: process.env.PADDLE_API_KEY,
-      paddleWebhookSecret: process.env.PADDLE_WEBHOOK_SECRET,
+      // Polar (Official documentation recommendation)
+      polarAccessToken: process.env.NUXT_POLAR_ACCESS_TOKEN || process.env.POLAR_ACCESS_TOKEN,
+      polarWebhookSecret: process.env.NUXT_POLAR_WEBHOOK_SECRET || process.env.POLAR_WEBHOOK_SECRET,
+      polarServer: (process.env.NUXT_POLAR_SERVER || process.env.POLAR_SERVER || "sandbox") as "sandbox" | "production",
+      polarSuccessUrl: process.env.NUXT_POLAR_SUCCESS_URL || process.env.POLAR_SUCCESS_URL,
+      polarOrganizationId: process.env.NUXT_POLAR_ORGANIZATION_ID || process.env.POLAR_ORGANIZATION_ID,
     },
+
     // Public: exposed to client (use NUXT_PUBLIC_ prefix to override at runtime)
     public: {
       siteUrl: process.env.NUXT_SITE_URL,
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL,
-      paddleClientToken: process.env.NUXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-      paddleEnv: process.env.NUXT_PUBLIC_PADDLE_ENV || "sandbox",
-      paddleApproved: process.env.NUXT_PUBLIC_PADDLE_APPROVED === "true",
-      prices: {
-        read: process.env.NUXT_PUBLIC_PADDLE_READ_PRICE_ID || "pri_01kpbkr2t50zgm86r48eg0va4z",
-        digest: process.env.NUXT_PUBLIC_PADDLE_DIGEST_PRICE_ID || "pri_01kpbks9p49r4wjbgpgcs22h0y",
-        deep: process.env.NUXT_PUBLIC_PADDLE_DEEP_PRICE_ID || "pri_01kpbkth15y62e0vzg33ntkwyg",
-      },
+      // Polar
+      polarServer: process.env.POLAR_SERVER || "sandbox",
+      isPolarConfigured: !!(process.env.NUXT_POLAR_ACCESS_TOKEN || process.env.POLAR_ACCESS_TOKEN),
+      polarOrganizationId: process.env.NUXT_POLAR_ORGANIZATION_ID || process.env.POLAR_ORGANIZATION_ID,
     },
     session: {
       password: process.env.NUXT_SESSION_PASSWORD,
@@ -94,6 +95,7 @@ export default defineNuxtConfig({
     "nuxt-ssr-api-logger",
     "nuxt-umami",
     "@nuxtjs/seo",
+    "@polar-sh/nuxt",
   ],
 
   processor: {
@@ -116,7 +118,7 @@ export default defineNuxtConfig({
     enabled: true,
     autoTrack: true,
     useDirective: true,
-    ignoreLocalhost: false
+    ignoreLocalhost: true
   },
 
   colorMode: {

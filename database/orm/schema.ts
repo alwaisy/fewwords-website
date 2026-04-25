@@ -63,12 +63,21 @@ export const users = pgTable(
     wordsUsed: integer("words_used").notNull().default(0),
     wordsLimit: integer("words_limit").notNull().default(2500),
 
-    // Paddle billing
+    // Paddle billing (Legacy)
     paddleCustomerId: text("paddle_customer_id"),
     paddleSubscriptionId: text("paddle_subscription_id"),
     paddlePriceId: text("paddle_price_id"),
     paddleStatus: text("paddle_status"), // active, trialing, past_due, deleted, paused
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+
+    // Polar billing
+    polarCustomerId: text("polar_customer_id"),
+    polarSubscriptionId: text("polar_subscription_id"),
+    polarProductId: text("polar_product_id"),
+    polarStatus: text("polar_status"), // active, trialing, past_due, deleted, paused
+    // We can reuse cancelAtPeriodEnd or add polarCancelAtPeriodEnd if needed, 
+    // but the logic is shared so one field might suffice if we sync both providers to it.
+    // To be safe and clean, let's use the existing one but keep in mind it's shared.
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

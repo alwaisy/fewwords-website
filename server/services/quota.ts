@@ -32,6 +32,8 @@ export interface QuotaResult {
   creditsUsed: number;
   creditsLimit: number;
   isLoggedIn: boolean;
+  cancelAtPeriodEnd?: boolean;
+  periodResetAt?: Date | null;
 }
 
 /**
@@ -105,7 +107,8 @@ export async function checkQuota(
         plan: users.plan,
         creditsUsed: users.creditsUsed,
         creditsLimit: users.creditsLimit,
-        paddleStatus: users.paddleStatus,
+        polarStatus: users.polarStatus,
+        cancelAtPeriodEnd: users.cancelAtPeriodEnd,
         periodResetAt: users.periodResetAt,
       })
       .from(users)
@@ -127,9 +130,9 @@ export async function checkQuota(
     // 0. Lazy Credit Reset (Check if current period ended)
     const currentCreditsUsed = await syncUserQuota(event, user);
 
-    // 1. Check Paddle Status (Block if payment failed or subscription ended)
-    const blockedStatuses = ["past_due", "deleted", "paused"];
-    if (user.paddleStatus && blockedStatuses.includes(user.paddleStatus)) {
+    // 1. Check Polar Status (Block if payment failed or subscription ended)
+    const blockedStatuses = ["past_due", "deleted", "paused", "inactive", "revoked"];
+    if (user.polarStatus && blockedStatuses.includes(user.polarStatus)) {
       return {
         allowed: false,
         reason: "Your subscription is inactive. Please check your billing status.",
@@ -137,6 +140,8 @@ export async function checkQuota(
         creditsUsed: user.creditsUsed,
         creditsLimit: user.creditsLimit,
         isLoggedIn: true,
+        cancelAtPeriodEnd: user.cancelAtPeriodEnd ?? false,
+        periodResetAt: user.periodResetAt,
       };
     }
 
@@ -149,6 +154,8 @@ export async function checkQuota(
         creditsUsed: currentCreditsUsed,
         creditsLimit: user.creditsLimit,
         isLoggedIn: true,
+        cancelAtPeriodEnd: user.cancelAtPeriodEnd ?? false,
+        periodResetAt: user.periodResetAt,
       };
     }
 
@@ -164,6 +171,8 @@ export async function checkQuota(
         creditsUsed: currentCreditsUsed,
         creditsLimit: user.creditsLimit,
         isLoggedIn: true,
+        cancelAtPeriodEnd: user.cancelAtPeriodEnd ?? false,
+        periodResetAt: user.periodResetAt,
       };
     }
 
@@ -173,6 +182,8 @@ export async function checkQuota(
       creditsUsed: currentCreditsUsed,
       creditsLimit: user.creditsLimit,
       isLoggedIn: true,
+      cancelAtPeriodEnd: user.cancelAtPeriodEnd ?? false,
+      periodResetAt: user.periodResetAt,
     };
   }
 

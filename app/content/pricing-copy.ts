@@ -5,7 +5,7 @@ const pricingCopy = {
     headline: "Simple Pricing",
     subheadline: "No complicated tiers or hidden fees. Buy the time you want to save.",
   },
-  
+
   plans: [
     {
       name: "Skim",
@@ -33,7 +33,7 @@ const pricingCopy = {
         "History saved forever"
       ],
       cta: "Start 30 credits",
-      popular: true,
+      popular: false,
       priceIdKey: "read",
       fallbackPrice: "4"
     },
@@ -51,24 +51,24 @@ const pricingCopy = {
       popular: false,
       priceIdKey: "digest",
       fallbackPrice: "9"
+    },
+    {
+      name: "Deep",
+      credits: 225,
+      description: "For power users treating Fewwords as a daily system.",
+      features: [
+        "225 Articles OR",
+        "75 Short YouTube videos",
+        "45 Medium YouTube videos",
+        "17 Long YouTube videos",
+        "Direct dev support"
+      ],
+      cta: "Go Deep",
+      popular: false,
+      priceIdKey: "deep",
+      fallbackPrice: "18"
     }
   ],
-
-  deep_plan: {
-    name: "Deep",
-    credits: 225,
-    description: "For power users treating Fewwords as a daily system.",
-    features: [
-      "225 Articles OR",
-      "75 Short YouTube videos",
-      "45 Medium YouTube videos",
-      "17 Long YouTube videos",
-      "Direct dev support"
-    ],
-    cta: "Go Deep",
-    priceIdKey: "deep",
-    fallbackPrice: "18"
-  },
 
   costs: [
     { type: "Article or Reddit", cost: "1 credit", note: "Any length" },
@@ -92,7 +92,7 @@ const pricingCopy = {
     },
     {
       q: "Can I cancel anytime?",
-      a: "Yes. No contracts or complex cancellation processes. You can manage your subscription and billing directly through the Paddle Customer Portal in your settings."
+      a: "Yes. No contracts or complex cancellation processes. You can manage your subscription and billing directly through the Polar Customer Portal in your settings."
     },
     {
       q: "Who is behind Fewwords?",

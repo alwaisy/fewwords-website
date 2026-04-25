@@ -31,7 +31,7 @@ const config = useRuntimeConfig();
     <!-- <HomeSolutionSection /> -->
     <HomeUspSection />
     <HomeFeaturesSection />
-    <HomePricingSection v-if="config.public.paddleApproved" />
+    <HomePricingSection v-if="config.public.polarServer" />
     <HomeBookmarkletSection />
     <HomeFaqSection />
     <HomeFinalCta />

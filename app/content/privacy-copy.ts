@@ -59,7 +59,7 @@ Fewwords relies on external providers to work. Here's who processes your data:
 
 These providers have their own privacy policies. I pick services that take data protection seriously.
 
-**Future billing:** When I add paid plans through Paddle, Paddle will process your payment information. Paddle acts as the merchant of record and handles billing data independently. I won't store your credit card details.
+**Future billing:** When I add paid plans through Polar, Polar will process your payment information. Polar acts as the merchant of record and handles billing data independently. I won't store your credit card details.
 
 ---
 
