@@ -173,7 +173,7 @@ const faqs = pricingCopy.faqs;
 
               <CardHeader>
                 <CardTitle class="text-xl">{{ plan.name }}</CardTitle>
-                <!-- <CardDescription>{{ plan.description }}</CardDescription> -->
+                 <CardDescription>{{ plan.description }}</CardDescription>
               </CardHeader>
 
               <CardContent class="flex-grow">
