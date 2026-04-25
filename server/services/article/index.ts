@@ -76,8 +76,8 @@ export async function summarize(url: string): Promise<ArticleResult> {
   })
 
   // Extract title from LLM response (handles TITLE:, **TITLE:**, and **TITLE: Title** formats)
-  // We use a non-greedy match for the content and only strip bolding from the very start/end of the line
-  const TITLE_REGEX = /^(?:\*\*)?TITLE:\s*(.*?)(?:\*\*)?$/im
+  // We use a more robust regex to handle various bolding and separator combinations
+  const TITLE_REGEX = /^(?:\*\*)?TITLE[:\s*]+(?:\*\*)?\s*(.*?)(?:\*\*)?$/im
   const titleMatch = llmResult.content ? llmResult.content.match(TITLE_REGEX) : null
   const title = titleMatch ? titleMatch[1]?.trim() : undefined
 

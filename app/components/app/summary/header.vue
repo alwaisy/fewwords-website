@@ -19,7 +19,20 @@ const props = defineProps<Props>();
 
 const renderedTitle = computed(() => {
   if (!props.title) return "";
-  return parseInlineMarkdown(props.title);
+  
+  // Clean up any leaked markdown markers from existing DB records
+  // Strip leading/trailing ** and clean up spaces
+  let cleanTitle = props.title.trim();
+  
+  // If title starts and ends with **, strip them
+  if (cleanTitle.startsWith('**') && cleanTitle.endsWith('**')) {
+    cleanTitle = cleanTitle.slice(2, -2).trim();
+  } else if (cleanTitle.startsWith('**')) {
+    // If it only starts with **, check if it's a leaked label part like "** Self-Hosting"
+    cleanTitle = cleanTitle.replace(/^\*\*+/, '').trim();
+  }
+  
+  return parseInlineMarkdown(cleanTitle);
 });
 </script>
 

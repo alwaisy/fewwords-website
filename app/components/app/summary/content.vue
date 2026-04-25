@@ -23,6 +23,8 @@ const transformedContent = computed(() => {
 
   // Strip the label and wrap content in blockquote
   const patterns: Array<[RegExp, string]> = [
+    // TITLE line - remove entirely if it leaked into summary
+    [/^(?:\*\*)?TITLE[:\s*]+.*?(?:\*\*)?$/im, ""],
     // ## Main Idea heading - remove entirely
     [/^##\s*Main Idea\s*[\n\r]+/gm, ""],
     // **Final Take:** content (bold format)
