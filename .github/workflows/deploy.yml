@@ -51,6 +51,10 @@ jobs:
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}
             NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}
+            NUXT_POLAR_ACCESS_TOKEN=${{ secrets.NUXT_POLAR_ACCESS_TOKEN }}
+            NUXT_POLAR_ORGANIZATION_ID=${{ secrets.NUXT_POLAR_ORGANIZATION_ID }}
+            NUXT_POLAR_SERVER=${{ secrets.NUXT_POLAR_SERVER }}
+            NUXT_POLAR_WEBHOOK_SECRET=${{ secrets.NUXT_POLAR_WEBHOOK_SECRET }}
 
       - name: Create .env file for VPS
         run: |
@@ -71,6 +75,10 @@ jobs:
            echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
            echo "NUXT_UMAMI_HOST=${{ secrets.NUXT_UMAMI_HOST }}" >> .env
            echo "NUXT_UMAMI_ID=${{ secrets.NUXT_UMAMI_ID }}" >> .env
+           echo "NUXT_POLAR_ACCESS_TOKEN=${{ secrets.NUXT_POLAR_ACCESS_TOKEN }}" >> .env
+           echo "NUXT_POLAR_ORGANIZATION_ID=${{ secrets.NUXT_POLAR_ORGANIZATION_ID }}" >> .env
+           echo "NUXT_POLAR_SERVER=${{ secrets.NUXT_POLAR_SERVER }}" >> .env
+           echo "NUXT_POLAR_WEBHOOK_SECRET=${{ secrets.NUXT_POLAR_WEBHOOK_SECRET }}" >> .env
 
       - name: Transfer deployment files to VPS
         uses: appleboy/scp-action@v0.1.7
