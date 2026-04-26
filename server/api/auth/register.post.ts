@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
 import { otpEmail } from "../../templates/emails";
-import { captureRequestFootprint } from "../../utils/attribution";
+import { captureRequestFootprint, packAttributionData } from "../../utils/attribution";
 
 import { users } from "~~/database/orm/schema";
 
@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const { email, name, username, attribution } = body;
     const footprint = captureRequestFootprint(event);
+    const packedAttribution = packAttributionData(footprint, attribution);
 
     if (!email || !name || !username) {
       throw createError({
@@ -41,16 +42,10 @@ export default defineEventHandler(async (event) => {
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       // Update username only if they provided a different one
-      const updateData: {
-        otpCode: string;
-        otpExpiresAt: Date;
-        name?: string;
-        username?: string;
-      } = {
+      const updateData: Record<string, unknown> = {
         otpCode,
         otpExpiresAt: expiresAt,
-        ...(attribution || {}),
-        ...footprint,
+        ...packedAttribution,
       };
 
       // Only update name if provided
@@ -126,8 +121,7 @@ export default defineEventHandler(async (event) => {
       username,
       otpCode,
       otpExpiresAt: expiresAt,
-      ...(attribution || {}),
-      ...footprint,
+      ...packedAttribution,
     });
 
     const config = useRuntimeConfig();

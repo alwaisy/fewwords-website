@@ -6,6 +6,7 @@ import {
   boolean,
   index,
   numeric,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -79,18 +80,13 @@ export const users = pgTable(
     // but the logic is shared so one field might suffice if we sync both providers to it.
     // To be safe and clean, let's use the existing one but keep in mind it's shared.
 
-    // Attribution & Metadata
+    // Attribution & Metadata (Hybrid JSONB approach)
     ipAddress: text("ip_address"),
-    userAgent: text("user_agent"),
     countryCode: text("country_code"),
     city: text("city"),
-    utmSource: text("utm_source"),
-    utmMedium: text("utm_medium"),
-    utmCampaign: text("utm_campaign"),
-    utmContent: text("utm_content"),
-    utmTerm: text("utm_term"),
-    referrer: text("referrer"),
-    umamiSessionId: text("umami_session_id"),
+    utmSource: text("utm_source"), // Native for fast filtering/charts
+    attribution: jsonb("attribution"), // Stores medium, campaign, content, term, referrer, umamiSessionId
+    metadata: jsonb("metadata"), // Stores deviceId, browser traits, User Agent
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -157,18 +153,13 @@ export const summaries = pgTable(
     userId: text("user_id").references(() => users.id),
     isBackgroundJob: boolean("is_background_job").notNull().default(false),
     
-    // Attribution & Metadata
+    // Attribution & Metadata (Hybrid JSONB approach)
     ipAddress: text("ip_address"),
-    userAgent: text("user_agent"),
     countryCode: text("country_code"),
     city: text("city"),
-    utmSource: text("utm_source"),
-    utmMedium: text("utm_medium"),
-    utmCampaign: text("utm_campaign"),
-    utmContent: text("utm_content"),
-    utmTerm: text("utm_term"),
-    referrer: text("referrer"),
-    umamiSessionId: text("umami_session_id"),
+    utmSource: text("utm_source"), // Native for fast filtering/charts
+    attribution: jsonb("attribution"), // Stores medium, campaign, content, term, referrer, umamiSessionId
+    metadata: jsonb("metadata"), // Stores deviceId, browser traits, User Agent
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -19,16 +19,21 @@ export type AdminUser = {
   createdAt: Date;
   summaryCount: number;
   ipAddress: string | null;
-  userAgent: string | null;
   countryCode: string | null;
   city: string | null;
   utmSource: string | null;
-  utmMedium: string | null;
-  utmCampaign: string | null;
-  utmContent: string | null;
-  utmTerm: string | null;
-  referrer: string | null;
-  umamiSessionId: string | null;
+  attribution: {
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    utmContent?: string | null;
+    utmTerm?: string | null;
+    referrer?: string | null;
+    umamiSessionId?: string | null;
+  } | null;
+  metadata: {
+    deviceId?: string | null;
+    userAgent?: string | null;
+  } | null;
 };
 
 export const createUserColumns = (

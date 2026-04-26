@@ -11,10 +11,9 @@ import {
   useVueTable,
 } from "@tanstack/vue-table";
 
-import SummaryDrawer from "./summary-drawer.vue";
+import SummaryDrawer, { type FullSummary } from "./summary-drawer.vue";
 
 import { valueUpdater } from "@/components/ui/table/utils";
-import type { Summary } from "~~/database/orm/schema";
 
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[];
@@ -52,10 +51,10 @@ const columnVisibility = computed({
 });
 
 // Drawer state
-const selectedSummary = ref<Summary | null>(null);
+const selectedSummary = ref<FullSummary | null>(null);
 const isDrawerOpen = ref(false);
 
-const openDrawer = (summary: Summary) => {
+const openDrawer = (summary: FullSummary) => {
   selectedSummary.value = summary;
   isDrawerOpen.value = true;
 };

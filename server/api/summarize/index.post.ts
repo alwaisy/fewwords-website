@@ -78,6 +78,7 @@ export default defineEventHandler(async (event) => {
 
     // Resolve final userId (handles anonymous shadow users)
     const userId = await resolveUserIdentity(db, userIdFromSession, footprint, attribution);
+    const packedAttribution = packAttributionData(footprint, attribution);
 
     if (!url) {
       throw createError({ statusCode: 400, statusMessage: 'URL is required' })
@@ -112,8 +113,7 @@ export default defineEventHandler(async (event) => {
         essence,
         status: 'processing',
         userId,
-        ...(attribution || {}),
-        ...footprint,
+        ...packedAttribution,
       }).returning({ id: summaries.id, summaryId: summaries.summaryId })
 
       const insertedRecord = insertResult[0]

@@ -6,27 +6,48 @@ import { formatTime } from "../../lib/formatters";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { countWords } from "~/lib/utils";
 import type { Article, Summary, YouTube } from "~~/database/orm/schema";
 import { parseErrorLog } from "~~/server/lib/errors";
 
+// Define a more specific type for the summary with all relations and JSONB fields
+export interface FullSummary extends Summary {
+  youtube?: YouTube | null;
+  article?: Article | null;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+  } | null;
+  attribution: {
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    utmContent?: string | null;
+    utmTerm?: string | null;
+    referrer?: string | null;
+    umamiSessionId?: string | null;
+  } | null;
+  metadata: {
+    deviceId?: string | null;
+    userAgent?: string | null;
+  } | null;
+}
+
 const props = defineProps<{
-  summary: Summary & {
-    youtube?: YouTube | null;
-    article?: Article | null;
-    user?: {
-      id: string;
-      email: string;
-      name: string;
-    } | null;
-  };
+  summary: FullSummary;
   open: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
-  "updated": []; // Added updated event
+  "updated": [];
 }>();
 
 const isOpen = computed({
@@ -47,16 +68,16 @@ watch(() => props.summary.id, () => {
 
 const toggleHidden = async () => {
   if (isUpdating.value) return;
-  
+
   isUpdating.value = true;
   try {
     const newHiddenValue = !props.summary.isHidden;
-    
+
     await $fetch(`/api/admin/summaries/${props.summary.id}`, {
       method: "PATCH",
       body: { isHidden: newHiddenValue },
     });
-    
+
     useToastify(newHiddenValue ? "Summary hidden from Explore" : "Summary visible in Explore", { type: "success" });
     emit("updated");
   } catch (error: unknown) {
@@ -75,19 +96,19 @@ const toggleBlocked = async () => {
     showBlockInput.value = true;
     return;
   }
-  
+
   isUpdating.value = true;
   try {
     const newBlockedValue = !props.summary.isBlocked;
-    
+
     await $fetch(`/api/admin/summaries/${props.summary.id}`, {
       method: "PATCH",
-      body: { 
+      body: {
         isBlocked: newBlockedValue,
-        blockReason: newBlockedValue ? blockReason.value : null 
+        blockReason: newBlockedValue ? blockReason.value : null
       },
     });
-    
+
     useToastify(newBlockedValue ? "Summary blocked" : "Summary unblocked", { type: "success" });
     showBlockInput.value = false;
     emit("updated");
@@ -123,19 +144,19 @@ const actualAiSummarizingTimeMs = computed(() => {
 // Dynamic timeline steps for sequential numbering
 const timelineSteps = computed(() => {
   const steps = [];
-  
+
   if (props.summary.youtube?.transcriptTimeMs) {
     steps.push({ label: 'Transcript', value: props.summary.youtube.transcriptTimeMs });
   }
-  
+
   if (props.summary.youtube?.classifierTimeMs || props.summary.article?.classifierTimeMs) {
     steps.push({ label: 'Classifying', value: props.summary.youtube?.classifierTimeMs || props.summary.article?.classifierTimeMs });
   }
-  
+
   if (actualAiSummarizingTimeMs.value) {
     steps.push({ label: 'Summarizing', value: actualAiSummarizingTimeMs.value });
   }
-  
+
   return steps;
 });
 
@@ -155,233 +176,252 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
       </DrawerHeader>
 
       <div class="flex-1 overflow-y-auto px-4 min-h-0">
-        <div class="space-y-6 pb-6">
+        <div class="space-y-4 pb-6">
         <!-- Metadata -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-medium">Metadata</h3>
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-muted-foreground">Type</span>
-              <div class="mt-1">
-                <Badge
-                  :variant="
-                    summary.essence === 'article'
-                      ? 'default'
-                      : summary.essence === 'youtube'
-                        ? 'secondary'
-                        : 'outline'
-                  "
-                >
-                  {{
-                    summary.essence.charAt(0).toUpperCase() +
-                    summary.essence.slice(1)
-                  }}
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <span class="text-muted-foreground">Status</span>
-              <div class="mt-1">
-                <Badge
-                  :variant="
-                    summary.status === 'completed'
-                      ? 'default'
-                      : summary.status === 'failed'
-                        ? 'destructive'
-                        : summary.status === 'processing'
+        <Card>
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Metadata</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="text-muted-foreground">Type</span>
+                <div class="mt-1">
+                  <Badge
+                    :variant="
+                      summary.essence === 'article'
+                        ? 'default'
+                        : summary.essence === 'youtube'
                           ? 'secondary'
                           : 'outline'
-                  "
-                >
-                  {{
-                    summary.status.charAt(0).toUpperCase() +
-                    summary.status.slice(1)
-                  }}
-                </Badge>
+                    "
+                  >
+                    {{
+                      summary.essence.charAt(0).toUpperCase() +
+                      summary.essence.slice(1)
+                    }}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Status</span>
+                <div class="mt-1">
+                  <Badge
+                    :variant="
+                      summary.status === 'completed'
+                        ? 'default'
+                        : summary.status === 'failed'
+                          ? 'destructive'
+                          : summary.status === 'processing'
+                            ? 'secondary'
+                            : 'outline'
+                    "
+                  >
+                    {{
+                      summary.status.charAt(0).toUpperCase() +
+                      summary.status.slice(1)
+                    }}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Visibility</span>
+                <div class="mt-1">
+                  <Badge
+                    v-if="summary.isBlocked"
+                    variant="destructive"
+                    class="!bg-red-600 !text-white border-transparent"
+                  >
+                    Blocked
+                  </Badge>
+                  <Badge
+                    v-else-if="summary.isHidden"
+                    variant="destructive"
+                  >
+                    Hidden
+                  </Badge>
+                  <Badge
+                    v-else-if="summary.isPublic"
+                    variant="outline"
+                    class="border-primary/30 text-primary"
+                  >
+                    Public
+                  </Badge>
+                  <Badge
+                    v-else
+                    variant="secondary"
+                  >
+                    Private
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Source</span>
+                <div class="mt-1 flex items-center gap-1">
+                  <a
+                    :href="summary.source"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-foreground hover:underline truncate"
+                  >
+                    {{ domain }}
+                  </a>
+                  <ExternalLink
+                    class="h-3 w-3 flex-shrink-0 text-muted-foreground"
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <span class="text-muted-foreground">Visibility</span>
-              <div class="mt-1">
-                <Badge
-                  v-if="summary.isBlocked"
-                  variant="destructive"
-                  class="!bg-red-600 !text-white border-transparent"
-                >
-                  Blocked
-                </Badge>
-                <Badge
-                  v-else-if="summary.isHidden"
-                  variant="destructive"
-                >
-                  Hidden
-                </Badge>
-                <Badge
-                  v-else-if="summary.isPublic"
-                  variant="outline"
-                  class="border-primary/30 text-primary"
-                >
-                  Public
-                </Badge>
-                <Badge
-                  v-else
-                  variant="secondary"
-                >
-                  Private
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <span class="text-muted-foreground">Source</span>
-              <div class="mt-1 flex items-center gap-1">
-                <a
-                  :href="summary.source"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-foreground hover:underline truncate"
-                >
-                  {{ domain }}
-                </a>
-                <ExternalLink
-                  class="h-3 w-3 flex-shrink-0 text-muted-foreground"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Creator Metadata & Attribution -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-medium">Creator Metadata & Attribution</h3>
-          
-          <!-- Identity -->
-          <div class="col-span-2 border-b pb-3 mb-1">
-            <span class="text-muted-foreground block text-xs uppercase font-medium mb-1">Created By</span>
-            <div v-if="summary.user" class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="size-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                  {{ summary.user.name.charAt(0).toUpperCase() }}
+        <Card>
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Creator Metadata & Attribution</CardTitle>
+          </CardHeader>
+          <CardContent class="space-y-4 px-4 pb-4">
+            <!-- Identity -->
+            <div class="border-b pb-3">
+              <span class="text-muted-foreground block text-xs uppercase font-medium mb-1">Created By</span>
+              <div v-if="summary.user" class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="size-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                    {{ summary.user.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="text-sm">
+                    <span class="font-medium text-foreground">{{ summary.user.name }}</span>
+                    <span class="text-muted-foreground ml-2">({{ summary.user.email }})</span>
+                  </div>
                 </div>
-                <div class="text-sm">
-                  <span class="font-medium text-foreground">{{ summary.user.name }}</span>
-                  <span class="text-muted-foreground ml-2">({{ summary.user.email }})</span>
-                </div>
+                <Button variant="ghost" size="sm" class="h-6 text-[10px]" as-child>
+                  <NuxtLink :to="`/admin/users?userId=${summary.user.id}`">
+                    View Profile
+                  </NuxtLink>
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" class="h-6 text-[10px]" as-child>
-                <NuxtLink :to="`/admin/users?userId=${summary.user.id}`">
-                  View Profile
-                </NuxtLink>
-              </Button>
-            </div>
-            <div v-else-if="summary.userId" class="text-sm italic text-muted-foreground flex items-center gap-2">
-              <div class="size-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">?</div>
-              <span>Anonymous User (ID: {{ summary.userId }})</span>
-            </div>
-            <div v-else class="text-sm italic text-muted-foreground">
-              Unknown (Old Record)
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-            <div v-if="summary.ipAddress">
-              <span class="block text-xs uppercase mb-1">IP Address</span>
-              <span class="text-foreground font-mono">{{ summary.ipAddress }}</span>
-            </div>
-            <div v-if="summary.countryCode || summary.city">
-              <span class="block text-xs uppercase mb-1">Location</span>
-              <span class="text-foreground">{{ summary.city ? summary.city + ', ' : '' }}{{ summary.countryCode }}</span>
-            </div>
-            <div v-if="summary.utmSource || summary.utmMedium || summary.utmCampaign">
-              <span class="block text-xs uppercase mb-1">UTM Tracking</span>
-              <span class="text-foreground">
-                <Badge v-if="summary.utmSource" variant="secondary" class="font-mono text-[10px] mr-1">src: {{ summary.utmSource }}</Badge>
-                <Badge v-if="summary.utmMedium" variant="secondary" class="font-mono text-[10px] mr-1">med: {{ summary.utmMedium }}</Badge>
-                <Badge v-if="summary.utmCampaign" variant="secondary" class="font-mono text-[10px]">cmp: {{ summary.utmCampaign }}</Badge>
-              </span>
-            </div>
-            <div v-if="summary.referrer">
-              <span class="block text-xs uppercase mb-1">Referrer</span>
-              <span class="text-foreground truncate max-w-[200px] block" :title="summary.referrer">{{ summary.referrer }}</span>
-            </div>
-            <div v-if="summary.umamiSessionId" class="col-span-2">
-              <span class="block text-xs uppercase mb-1">Umami Session ID</span>
-              <div class="flex items-center gap-2">
-                <code class="text-foreground bg-muted px-2 py-1 rounded">{{ summary.umamiSessionId }}</code>
-                <span class="text-xs italic text-muted-foreground">Copy to search in Umami Analytics</span>
+              <div v-else-if="summary.userId" class="text-sm italic text-muted-foreground flex items-center gap-2">
+                <div class="size-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">?</div>
+                <span>Anonymous User (ID: {{ summary.userId }})</span>
+              </div>
+              <div v-else class="text-sm italic text-muted-foreground">
+                Unknown (Old Record)
               </div>
             </div>
-            <div v-if="summary.userAgent" class="col-span-2">
-              <span class="block text-xs uppercase mb-1">User Agent</span>
-              <span class="text-foreground text-xs break-all">{{ summary.userAgent }}</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- YouTube specific metadata -->
-        <div v-if="summary.essence === 'youtube'" class="space-y-3">
-          <h3 class="text-sm font-medium">Content Details</h3>
-          <div class="text-sm text-muted-foreground space-y-1">
-            <div v-if="summary.youtube?.duration">
-              Duration: {{ Number(summary.youtube.duration).toFixed(1) }} minutes
+            <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+              <div v-if="summary.ipAddress">
+                <span class="block text-xs uppercase mb-1 font-medium">IP Address</span>
+                <span class="text-foreground font-mono">{{ summary.ipAddress }}</span>
+              </div>
+              <div v-if="summary.countryCode || summary.city">
+                <span class="block text-xs uppercase mb-1 font-medium">Location</span>
+                <span class="text-foreground">{{ summary.city ? summary.city + ', ' : '' }}{{ summary.countryCode }}</span>
+              </div>
+              <div v-if="summary.utmSource || summary.attribution?.utmMedium || summary.attribution?.utmCampaign">
+                <span class="block text-xs uppercase mb-1 font-medium">UTM Tracking</span>
+                <span class="text-foreground">
+                  <Badge v-if="summary.utmSource" variant="secondary" class="font-mono text-[10px] mr-1">src: {{ summary.utmSource }}</Badge>
+                  <Badge v-if="summary.attribution?.utmMedium" variant="secondary" class="font-mono text-[10px] mr-1">med: {{ summary.attribution.utmMedium }}</Badge>
+                  <Badge v-if="summary.attribution?.utmCampaign" variant="secondary" class="font-mono text-[10px]">cmp: {{ summary.attribution.utmCampaign }}</Badge>
+                </span>
+              </div>
+              <div v-if="summary.attribution?.referrer">
+                <span class="block text-xs uppercase mb-1 font-medium">Referrer</span>
+                <span class="text-foreground truncate max-w-[200px] block" :title="summary.attribution.referrer">{{ summary.attribution.referrer }}</span>
+              </div>
+              <div v-if="summary.attribution?.umamiSessionId" class="col-span-2">
+                <span class="block text-xs uppercase mb-1 font-medium">Umami Session ID</span>
+                <div class="flex items-center gap-2">
+                  <code class="text-foreground bg-muted px-2 py-1 rounded text-xs">{{ summary.attribution.umamiSessionId }}</code>
+                </div>
+              </div>
+              <div v-if="summary.metadata?.deviceId" class="col-span-2">
+                <span class="block text-xs uppercase mb-1 font-medium">Device ID</span>
+                <code class="text-foreground bg-muted px-2 py-1 rounded text-xs">{{ summary.metadata.deviceId }}</code>
+              </div>
+              <div v-if="summary.metadata?.userAgent" class="col-span-2">
+                <span class="block text-xs uppercase mb-1 font-medium">User Agent</span>
+                <span class="text-foreground text-xs break-all leading-tight">{{ summary.metadata.userAgent }}</span>
+              </div>
             </div>
-            <div v-if="summary.youtube?.category">
-              Category: {{ summary.youtube.category }}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <!-- Article specific metadata -->
-        <div v-if="summary.essence === 'article'" class="space-y-3">
-          <h3 class="text-sm font-medium">Content Details</h3>
-          <div class="text-sm text-muted-foreground space-y-1">
-            <div v-if="summary.article?.readingTimeMinutes">
-              Reading Time: {{ summary.article.readingTimeMinutes }} minutes
+        <!-- Content Details -->
+        <Card v-if="summary.essence === 'youtube' || summary.essence === 'article'">
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Content Details</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="text-sm text-muted-foreground space-y-1">
+              <template v-if="summary.essence === 'youtube'">
+                <div v-if="summary.youtube?.duration">
+                  Duration: {{ Number(summary.youtube.duration).toFixed(1) }} minutes
+                </div>
+                <div v-if="summary.youtube?.category">
+                  Category: {{ summary.youtube.category }}
+                </div>
+              </template>
+              <template v-else-if="summary.essence === 'article'">
+                <div v-if="summary.article?.readingTimeMinutes">
+                  Reading Time: {{ summary.article.readingTimeMinutes }} minutes
+                </div>
+              </template>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Summary -->
-        <div v-if="summary.summary" class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-medium">Summary</h3>
+        <Card v-if="summary.summary">
+          <CardHeader class="pb-3 flex flex-row items-center justify-between space-y-0 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Summary</CardTitle>
             <span class="text-xs text-muted-foreground">
               {{ summaryWordCount.toLocaleString() }} words
             </span>
-          </div>
-          <div class="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
-            {{ summary.summary }}
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="text-sm whitespace-pre-wrap bg-muted/30 p-3 rounded-md border">
+              {{ summary.summary }}
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- Performance Metrics -->
-        <div v-if="summary.status === 'completed'" class="space-y-3">
-          <h3 class="text-sm font-medium">Performance Breakdown</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono">
-             <div v-if="summary.essence === 'youtube' || summary.essence === 'article'">
-              <span class="text-muted-foreground block mb-1 uppercase">Total Wait Time</span>
-              <span class="text-foreground font-semibold">
-                {{ formatTime(summary.youtube?.totalTimeMs || summary.article?.totalTimeMs) }}
-              </span>
+        <Card v-if="summary.status === 'completed'">
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Performance Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono">
+               <div v-if="summary.essence === 'youtube' || summary.essence === 'article'">
+                <span class="text-muted-foreground block mb-1 uppercase text-[10px] font-medium">Total Wait Time</span>
+                <span class="text-foreground font-semibold">
+                  {{ formatTime(summary.youtube?.totalTimeMs || summary.article?.totalTimeMs) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-muted-foreground block mb-1 uppercase text-[10px] font-medium">Total AI Processing</span>
+                <span class="text-foreground font-semibold">{{ formatTime(summary.responseTimeMs) }}</span>
+              </div>
+              <div v-for="(step, index) in timelineSteps" :key="index">
+                <span class="text-muted-foreground block mb-1 uppercase text-[10px] font-medium">Step {{ index + 1 }}: {{ step.label }}</span>
+                <span class="text-foreground font-semibold">
+                  {{ formatTime(step.value) }}
+                </span>
+              </div>
             </div>
-            <div>
-              <span class="text-muted-foreground block mb-1 uppercase">Total AI Processing</span>
-              <span class="text-foreground font-semibold">{{ formatTime(summary.responseTimeMs) }}</span>
-            </div>
-            <div v-for="(step, index) in timelineSteps" :key="index">
-              <span class="text-muted-foreground block mb-1 uppercase">Step {{ index + 1 }}: {{ step.label }}</span>
-              <span class="text-foreground font-semibold">
-                {{ formatTime(step.value) }}
-              </span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Moderation -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-medium">Moderation</h3>
-          <div class="space-y-4">
-            <!-- Explore Visibility Toggle -->
-            <div class="flex items-center gap-2">
+        <Card>
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Moderation</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="flex flex-row items-center gap-2 flex-wrap">
+              <!-- Explore Visibility Toggle -->
               <Button
                 :variant="summary.isHidden ? 'default' : 'outline'"
                 size="sm"
@@ -397,110 +437,112 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
                   {{ summary.isHidden ? 'Show in Explore' : 'Hide from Explore' }}
                 </template>
               </Button>
-            </div>
 
-            <!-- Blocking UI -->
-            <div v-if="summary.isBlocked" class="space-y-2">
-               <div class="flex items-center justify-between">
-                 <label class="text-[10px] uppercase font-semibold text-destructive">Summary Blocked</label>
-                 <Button variant="ghost" size="sm" class="h-6 text-[10px]" :disabled="isUpdating" @click="toggleBlocked">                   Unblock Access
-                 </Button>
-               </div>
-               <p v-if="summary.blockReason" class="text-xs text-destructive bg-destructive/5 p-2 rounded border border-destructive/10 italic">
-                 "{{ summary.blockReason }}"
-               </p>
-            </div>
+              <!-- Blocking UI -->
+              <template v-if="summary.isBlocked">
+                 <div class="flex flex-row items-center gap-2 bg-destructive/5 px-2 py-1 rounded border border-destructive/10">
+                   <label class="text-[10px] uppercase font-semibold text-destructive">Blocked</label>
+                   <p v-if="summary.blockReason" class="text-[10px] text-destructive italic truncate max-w-[150px]">
+                     "{{ summary.blockReason }}"
+                   </p>
+                   <Button variant="ghost" size="sm" class="h-7 text-[10px] text-destructive hover:bg-destructive/10" :disabled="isUpdating" @click="toggleBlocked">
+                     Unblock
+                   </Button>
+                 </div>
+              </template>
 
-            <div v-else class="space-y-3">
-              <!-- Initial Block Button -->
-              <Button
-                v-if="!showBlockInput"
-                variant="outline"
-                size="sm"
-                class="hover:bg-destructive hover:text-white"
-                @click="showBlockInput = true"
-              >
-                <Ban class="mr-2 h-4 w-4" />
-                Block Access...
-              </Button>
+              <template v-else>
+                <!-- Initial Block Button -->
+                <Button
+                  v-if="!showBlockInput"
+                  variant="outline"
+                  size="sm"
+                  class="hover:bg-destructive hover:text-white"
+                  @click="showBlockInput = true"
+                >
+                  <Ban class="mr-2 h-4 w-4" />
+                  Block...
+                </Button>
 
-              <!-- Block Reason Input (Revealed) -->
-              <div v-else class="space-y-3 p-3 bg-muted/50 rounded-lg border animate-in fade-in slide-in-from-top-1">
-                <div class="space-y-1.5">
-                  <label class="text-[10px] uppercase font-bold text-foreground">Specify Block Reason</label>
-                  <Input 
-                    v-model="blockReason" 
-                    placeholder="e.g. Hate speech, NSFW content..." 
-                    class="h-8 text-sm bg-background"
+                <!-- Block Reason Input (Revealed) -->
+                <div v-else class="flex flex-row items-center gap-2 flex-1 min-w-[300px] animate-in fade-in slide-in-from-left-1">
+                  <Input
+                    v-model="blockReason"
+                    placeholder="Reason (NSFW, etc.)"
+                    class="h-9 text-xs flex-1"
                     autofocus
                     @keyup.enter="toggleBlocked"
                   />
-                  <p class="text-[10px] text-muted-foreground">This message will be shown to users who visit the link.</p>
-                </div>
-                <div class="flex gap-2">
-                  <Button variant="destructive" size="sm" :disabled="isUpdating" @click="toggleBlocked">
+                  <Button variant="destructive" size="sm" class="h-9 px-3" :disabled="isUpdating" @click="toggleBlocked">
                     <template v-if="isUpdating">
-                      <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-                      Blocking...
+                      <Loader2 class="h-3 w-3 animate-spin" />
                     </template>
                     <template v-else>
-                      Confirm Block
+                      Confirm
                     </template>
                   </Button>
-                  <Button variant="ghost" size="sm" :disabled="isUpdating" @click="showBlockInput = false">
+                  <Button variant="ghost" size="sm" class="h-9 px-3 text-xs" :disabled="isUpdating" @click="showBlockInput = false">
                     Cancel
                   </Button>
                 </div>
-              </div>
+              </template>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Timestamps -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-medium">Timestamps</h3>
-          <div class="text-sm text-muted-foreground space-y-1">
-            <div>
-              Created: {{ new Date(summary.createdAt).toLocaleString() }}
+        <Card>
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium">Timestamps</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="text-sm text-muted-foreground space-y-1">
+              <div>
+                Created: {{ new Date(summary.createdAt).toLocaleString() }}
+              </div>
+              <div v-if="summary.completedAt">
+                Completed: {{ new Date(summary.completedAt).toLocaleString() }}
+              </div>
             </div>
-            <div v-if="summary.completedAt">
-              Completed: {{ new Date(summary.completedAt).toLocaleString() }}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Error Log -->
-        <div v-if="errorLog.length" class="space-y-3">
-          <h3 class="text-sm font-medium text-destructive">
-            Errors ({{ errorLog.length }})
-          </h3>
-          <div
-            v-for="(error, i) in errorLog"
-            :key="i"
-            class="p-3 bg-destructive/10 rounded-md space-y-1"
-          >
-            <div class="flex items-center gap-2">
-              <Badge :variant="error.type === 'email' ? 'secondary' : 'destructive'">
-                {{ error.type }}
-              </Badge>
-              <span v-if="error.retryCount" class="text-xs text-muted-foreground">
-                retry #{{ error.retryCount }}
-              </span>
+        <Card v-if="errorLog.length" class="border-destructive/30">
+          <CardHeader class="pb-3 px-4 pt-4">
+            <CardTitle class="text-sm font-medium text-destructive">Errors ({{ errorLog.length }})</CardTitle>
+          </CardHeader>
+          <CardContent class="px-4 pb-4">
+            <div class="space-y-3">
+              <div
+                v-for="(error, i) in errorLog"
+                :key="i"
+                class="p-3 bg-destructive/10 rounded-md space-y-1 border border-destructive/10"
+              >
+                <div class="flex items-center gap-2">
+                  <Badge :variant="error.type === 'email' ? 'secondary' : 'destructive'">
+                    {{ error.type }}
+                  </Badge>
+                  <span v-if="error.retryCount" class="text-xs text-muted-foreground">
+                    retry #{{ error.retryCount }}
+                  </span>
+                </div>
+                <p class="text-sm text-destructive font-medium">{{ error.message }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ new Date(error.timestamp).toLocaleString() }}
+                </p>
+                <pre
+                  v-if="error.raw"
+                  class="text-xs text-muted-foreground mt-1 p-2 bg-muted rounded overflow-x-auto border text-[10px]"
+                >{{ error.raw }}</pre>
+              </div>
             </div>
-            <p class="text-sm text-destructive">{{ error.message }}</p>
-            <p class="text-xs text-muted-foreground">
-              {{ new Date(error.timestamp).toLocaleString() }}
-            </p>
-            <pre
-              v-if="error.raw"
-              class="text-xs text-muted-foreground mt-1 p-2 bg-muted rounded overflow-x-auto"
-            >{{ error.raw }}</pre>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
         </div>
       </div>
 
-      <DrawerFooter class="shrink-0 px-4 pb-6">
+      <DrawerFooter class="shrink-0 px-4 pb-6 border-t pt-4">
         <Button
           variant="outline"
           as="a"

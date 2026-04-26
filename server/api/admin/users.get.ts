@@ -59,16 +59,11 @@ export default defineEventHandler(async (event) => {
       createdAt: users.createdAt,
       summaryCount: sql<number>`COALESCE(${summaryCounts.summaryCount}, 0)`,
       ipAddress: users.ipAddress,
-      userAgent: users.userAgent,
       countryCode: users.countryCode,
       city: users.city,
       utmSource: users.utmSource,
-      utmMedium: users.utmMedium,
-      utmCampaign: users.utmCampaign,
-      utmContent: users.utmContent,
-      utmTerm: users.utmTerm,
-      referrer: users.referrer,
-      umamiSessionId: users.umamiSessionId,
+      attribution: users.attribution,
+      metadata: users.metadata,
     })
     .from(users)
     .leftJoin(summaryCounts, eq(users.id, summaryCounts.userId))
