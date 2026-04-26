@@ -184,7 +184,16 @@ const { data: historyData, status: historyStatus } = useFetch(() => `/api/admin/
                 </div>
                 <div v-if="user.countryCode || user.city">
                   <span class="block text-xs uppercase mb-1 font-medium">Location</span>
-                  <span class="text-foreground">{{ user.city ? user.city + ', ' : '' }}{{ user.countryCode }}</span>
+                  <span class="text-foreground">
+                    {{ user.city ? user.city + ', ' : '' }}
+                    {{ user.attribution?.region ? user.attribution.region + ', ' : '' }}
+                    {{ user.countryCode }}
+                    <span v-if="user.attribution?.postalCode" class="ml-1 text-[10px] font-mono">({{ user.attribution.postalCode }})</span>
+                  </span>
+                </div>
+                <div v-if="user.attribution?.isp">
+                  <span class="block text-xs uppercase mb-1 font-medium">ISP / Network</span>
+                  <span class="text-foreground text-xs">{{ user.attribution.isp }}</span>
                 </div>
                 <div v-if="user.utmSource || user.attribution?.utmMedium || user.attribution?.utmCampaign">
                   <span class="block text-xs uppercase mb-1 font-medium">UTM Tracking</span>

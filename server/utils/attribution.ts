@@ -8,6 +8,9 @@ export interface RequestFootprint {
   userAgent: string | null;
   countryCode: string | null;
   city: string | null;
+  region?: string | null;
+  postalCode?: string | null;
+  isp?: string | null;
 }
 
 export interface MarketingAttribution {
@@ -29,7 +32,7 @@ export function captureRequestFootprint(event: H3Event): RequestFootprint {
   // 2. Extract User Agent
   const userAgent = getRequestHeader(event, 'user-agent') || null;
 
-  // 3. Extract Geo-Location
+  // 3. Extract Geo-Location (from common proxy headers like Cloudflare, Vercel, etc.)
   const countryCode = 
     getRequestHeader(event, 'cf-ipcountry') || 
     getRequestHeader(event, 'x-vercel-ip-country') || 
@@ -40,11 +43,23 @@ export function captureRequestFootprint(event: H3Event): RequestFootprint {
     getRequestHeader(event, 'x-vercel-ip-city') || 
     null;
 
+  // 4. Advanced Geo-Location (Region, Postal Code, ISP)
+  // Cloudflare specific headers
+  const region = getRequestHeader(event, 'cf-region') || getRequestHeader(event, 'x-vercel-ip-country-region') || null;
+  const postalCode = getRequestHeader(event, 'cf-postal-code') || null;
+  
+  // ISP detection (sometimes provided by proxies as 'cf-as-number' or organization)
+  const asn = getRequestHeader(event, 'cf-as-number') || null;
+  const isp = asn ? `ASN-${asn}` : null;
+
   return {
     ipAddress,
     userAgent,
     countryCode,
     city,
+    region,
+    postalCode,
+    isp,
   };
 }
 
@@ -67,6 +82,10 @@ export function packAttributionData(footprint: RequestFootprint, attribution: Ma
       utmTerm: attribution?.utmTerm || null,
       referrer: attribution?.referrer || null,
       umamiSessionId: attribution?.umamiSessionId || null,
+      // Store expanded geo in the attribution blob
+      region: footprint.region || null,
+      postalCode: footprint.postalCode || null,
+      isp: footprint.isp || null,
     },
     metadata: {
       deviceId: attribution?.deviceId || null,

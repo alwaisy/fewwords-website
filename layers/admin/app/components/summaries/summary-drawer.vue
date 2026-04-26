@@ -33,6 +33,10 @@ export interface FullSummary extends Summary {
     utmTerm?: string | null;
     referrer?: string | null;
     umamiSessionId?: string | null;
+    // Expanded Geo
+    region?: string | null;
+    postalCode?: string | null;
+    isp?: string | null;
   } | null;
   metadata: {
     deviceId?: string | null;
@@ -47,7 +51,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
-  "updated": [];
+  "updated": []; // Added updated event
 }>();
 
 const isOpen = computed({
@@ -175,14 +179,14 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
         </DrawerDescription>
       </DrawerHeader>
 
-      <div class="flex-1 overflow-y-auto min-h-0">
+      <div class="flex-1 overflow-y-auto px-4 min-h-0">
         <div class="space-y-4 pb-6">
         <!-- Metadata -->
         <Card>
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Metadata</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-muted-foreground">Type</span>
@@ -277,10 +281,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Creator Metadata & Attribution -->
         <Card>
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Creator Metadata & Attribution</CardTitle>
           </CardHeader>
-          <CardContent class="space-y-4 ">
+          <CardContent class="space-y-4 px-4 pb-4">
             <!-- Identity -->
             <div class="border-b pb-3">
               <span class="text-muted-foreground block text-xs uppercase font-medium mb-1">Created By</span>
@@ -316,7 +320,16 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
               </div>
               <div v-if="summary.countryCode || summary.city">
                 <span class="block text-xs uppercase mb-1 font-medium">Location</span>
-                <span class="text-foreground">{{ summary.city ? summary.city + ', ' : '' }}{{ summary.countryCode }}</span>
+                <span class="text-foreground">
+                  {{ summary.city ? summary.city + ', ' : '' }}
+                  {{ summary.attribution?.region ? summary.attribution.region + ', ' : '' }}
+                  {{ summary.countryCode }}
+                  <span v-if="summary.attribution?.postalCode" class="ml-1 text-[10px] font-mono">({{ summary.attribution.postalCode }})</span>
+                </span>
+              </div>
+              <div v-if="summary.attribution?.isp">
+                <span class="block text-xs uppercase mb-1 font-medium">ISP / Network</span>
+                <span class="text-foreground text-xs">{{ summary.attribution.isp }}</span>
               </div>
               <div v-if="summary.utmSource || summary.attribution?.utmMedium || summary.attribution?.utmCampaign">
                 <span class="block text-xs uppercase mb-1 font-medium">UTM Tracking</span>
@@ -350,10 +363,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Content Details -->
         <Card v-if="summary.essence === 'youtube' || summary.essence === 'article'">
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Content Details</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="text-sm text-muted-foreground space-y-1">
               <template v-if="summary.essence === 'youtube'">
                 <div v-if="summary.youtube?.duration">
@@ -374,13 +387,13 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Summary -->
         <Card v-if="summary.summary">
-          <CardHeader class="flex flex-row items-center justify-between space-y-0">
+          <CardHeader class="pb-3 flex flex-row items-center justify-between space-y-0 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Summary</CardTitle>
             <span class="text-xs text-muted-foreground">
               {{ summaryWordCount.toLocaleString() }} words
             </span>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="text-sm whitespace-pre-wrap bg-muted/30 p-3 rounded-md border">
               {{ summary.summary }}
             </div>
@@ -389,10 +402,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Performance Metrics -->
         <Card v-if="summary.status === 'completed'">
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Performance Breakdown</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono">
                <div v-if="summary.essence === 'youtube' || summary.essence === 'article'">
                 <span class="text-muted-foreground block mb-1 uppercase text-[10px] font-medium">Total Wait Time</span>
@@ -416,10 +429,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Moderation -->
         <Card>
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Moderation</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="flex flex-row items-center gap-2 flex-wrap">
               <!-- Explore Visibility Toggle -->
               <Button
@@ -493,10 +506,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Timestamps -->
         <Card>
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium">Timestamps</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="text-sm text-muted-foreground space-y-1">
               <div>
                 Created: {{ new Date(summary.createdAt).toLocaleString() }}
@@ -510,10 +523,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Error Log -->
         <Card v-if="errorLog.length" class="border-destructive/30">
-          <CardHeader class="">
+          <CardHeader class="pb-3 px-4 pt-4">
             <CardTitle class="text-sm font-medium text-destructive">Errors ({{ errorLog.length }})</CardTitle>
           </CardHeader>
-          <CardContent class="">
+          <CardContent class="px-4 pb-4">
             <div class="space-y-3">
               <div
                 v-for="(error, i) in errorLog"

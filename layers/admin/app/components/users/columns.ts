@@ -29,6 +29,9 @@ export type AdminUser = {
     utmTerm?: string | null;
     referrer?: string | null;
     umamiSessionId?: string | null;
+    region?: string | null;
+    postalCode?: string | null;
+    isp?: string | null;
   } | null;
   metadata: {
     deviceId?: string | null;
