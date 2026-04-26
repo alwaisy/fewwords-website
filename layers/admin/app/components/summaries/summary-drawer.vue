@@ -175,14 +175,14 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
         </DrawerDescription>
       </DrawerHeader>
 
-      <div class="flex-1 overflow-y-auto px-4 min-h-0">
+      <div class="flex-1 overflow-y-auto min-h-0">
         <div class="space-y-4 pb-6">
         <!-- Metadata -->
         <Card>
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Metadata</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-muted-foreground">Type</span>
@@ -277,10 +277,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Creator Metadata & Attribution -->
         <Card>
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Creator Metadata & Attribution</CardTitle>
           </CardHeader>
-          <CardContent class="space-y-4 px-4 pb-4">
+          <CardContent class="space-y-4 ">
             <!-- Identity -->
             <div class="border-b pb-3">
               <span class="text-muted-foreground block text-xs uppercase font-medium mb-1">Created By</span>
@@ -350,10 +350,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Content Details -->
         <Card v-if="summary.essence === 'youtube' || summary.essence === 'article'">
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Content Details</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="text-sm text-muted-foreground space-y-1">
               <template v-if="summary.essence === 'youtube'">
                 <div v-if="summary.youtube?.duration">
@@ -374,13 +374,13 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Summary -->
         <Card v-if="summary.summary">
-          <CardHeader class="pb-3 flex flex-row items-center justify-between space-y-0 px-4 pt-4">
+          <CardHeader class="flex flex-row items-center justify-between space-y-0">
             <CardTitle class="text-sm font-medium">Summary</CardTitle>
             <span class="text-xs text-muted-foreground">
               {{ summaryWordCount.toLocaleString() }} words
             </span>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="text-sm whitespace-pre-wrap bg-muted/30 p-3 rounded-md border">
               {{ summary.summary }}
             </div>
@@ -389,10 +389,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Performance Metrics -->
         <Card v-if="summary.status === 'completed'">
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Performance Breakdown</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono">
                <div v-if="summary.essence === 'youtube' || summary.essence === 'article'">
                 <span class="text-muted-foreground block mb-1 uppercase text-[10px] font-medium">Total Wait Time</span>
@@ -416,15 +416,16 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Moderation -->
         <Card>
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Moderation</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="flex flex-row items-center gap-2 flex-wrap">
               <!-- Explore Visibility Toggle -->
               <Button
                 :variant="summary.isHidden ? 'default' : 'outline'"
                 size="sm"
+                class="min-w-[150px]"
                 :disabled="isUpdating || showBlockInput"
                 @click="toggleHidden"
               >
@@ -440,13 +441,13 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
               <!-- Blocking UI -->
               <template v-if="summary.isBlocked">
-                 <div class="flex flex-row items-center gap-2 bg-destructive/5 px-2 py-1 rounded border border-destructive/10">
-                   <label class="text-[10px] uppercase font-semibold text-destructive">Blocked</label>
-                   <p v-if="summary.blockReason" class="text-[10px] text-destructive italic truncate max-w-[150px]">
+                 <div class="flex flex-row items-center gap-2 bg-destructive/5 px-3 py-1 rounded border border-destructive/10">
+                   <label class="text-[10px] uppercase font-bold text-destructive">Blocked</label>
+                   <p v-if="summary.blockReason" class="text-xs text-destructive italic truncate max-w-[200px]">
                      "{{ summary.blockReason }}"
                    </p>
-                   <Button variant="ghost" size="sm" class="h-7 text-[10px] text-destructive hover:bg-destructive/10" :disabled="isUpdating" @click="toggleBlocked">
-                     Unblock
+                   <Button variant="ghost" size="sm" class="h-7 text-[10px] text-destructive hover:bg-destructive/10 px-3" :disabled="isUpdating" @click="toggleBlocked">
+                     Unblock Access
                    </Button>
                  </div>
               </template>
@@ -457,28 +458,28 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
                   v-if="!showBlockInput"
                   variant="outline"
                   size="sm"
-                  class="hover:bg-destructive hover:text-white"
+                  class="hover:bg-destructive hover:text-white min-w-[150px]"
                   @click="showBlockInput = true"
                 >
                   <Ban class="mr-2 h-4 w-4" />
-                  Block...
+                  Block Access
                 </Button>
 
                 <!-- Block Reason Input (Revealed) -->
-                <div v-else class="flex flex-row items-center gap-2 flex-1 min-w-[300px] animate-in fade-in slide-in-from-left-1">
+                <div v-else class="flex flex-row items-center gap-2 flex-1 min-w-[350px] animate-in fade-in slide-in-from-left-1">
                   <Input
                     v-model="blockReason"
-                    placeholder="Reason (NSFW, etc.)"
+                    placeholder="Reason for blocking (e.g. NSFW, Spam)"
                     class="h-9 text-xs flex-1"
                     autofocus
                     @keyup.enter="toggleBlocked"
                   />
-                  <Button variant="destructive" size="sm" class="h-9 px-3" :disabled="isUpdating" @click="toggleBlocked">
+                  <Button variant="destructive" size="sm" class="h-9 px-4 min-w-[100px]" :disabled="isUpdating" @click="toggleBlocked">
                     <template v-if="isUpdating">
                       <Loader2 class="h-3 w-3 animate-spin" />
                     </template>
                     <template v-else>
-                      Confirm
+                      Confirm Block
                     </template>
                   </Button>
                   <Button variant="ghost" size="sm" class="h-9 px-3 text-xs" :disabled="isUpdating" @click="showBlockInput = false">
@@ -492,10 +493,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Timestamps -->
         <Card>
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium">Timestamps</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="text-sm text-muted-foreground space-y-1">
               <div>
                 Created: {{ new Date(summary.createdAt).toLocaleString() }}
@@ -509,10 +510,10 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
 
         <!-- Error Log -->
         <Card v-if="errorLog.length" class="border-destructive/30">
-          <CardHeader class="pb-3 px-4 pt-4">
+          <CardHeader class="">
             <CardTitle class="text-sm font-medium text-destructive">Errors ({{ errorLog.length }})</CardTitle>
           </CardHeader>
-          <CardContent class="px-4 pb-4">
+          <CardContent class="">
             <div class="space-y-3">
               <div
                 v-for="(error, i) in errorLog"
