@@ -1,18 +1,10 @@
-import { OpenRouter } from "@openrouter/sdk";
-
 const config = useRuntimeConfig();
-const client = new OpenRouter({
-  apiKey: config.private.openrouterKey!,
-  xTitle: "Fewwords",
-  httpReferer: "https://fewwords.app",
-});
 
-// Define a local interface for the SDK's message structure
-// to avoid using 'any' when accessing custom fields like 'reasoning'
+// Define a local interface for the API's message structure
 interface OpenRouterMessageResponse {
   role?: string;
   content?: string | Array<{ type: string; text?: string }>;
-  reasoning?: string; // This is the field we specifically need
+  reasoning?: string;
 }
 
 export type Role = "system" | "user" | "assistant" | "tool";
@@ -63,7 +55,7 @@ export interface OpenRouterOptions {
   maxTokens?: number;
   topP?: number;
   reasoning?: ReasoningOptions;
-  tools?: Record<string, unknown>[]; // Fixed 'any' here
+  tools?: Record<string, unknown>[]; 
   toolChoice?:
     | "auto"
     | "none"
@@ -78,7 +70,7 @@ export interface OpenRouterOptions {
 }
 
 export interface OpenRouterResult {
-  content: string; // Changed from string | null
+  content: string;
   model: string;
   reasoning?: string;
   finishReason: string | null;
@@ -101,12 +93,13 @@ export async function callOpenRouter(
   options: OpenRouterOptions,
 ): Promise<OpenRouterResult> {
   try {
-    const sdkMessages = options.messages.map((msg) => {
+    const apiMessages = options.messages.map((msg) => {
       if (typeof msg.content === "string") {
         return { role: msg.role, content: msg.content };
       }
 
       const contentParts = msg.content.map((part) => {
+        // Map our video_url custom format back to what the API expects or handles
         if (part.type === "video_url") {
           return {
             type: "input_video" as const,
@@ -119,44 +112,53 @@ export async function callOpenRouter(
       return { role: msg.role, content: contentParts };
     });
 
-    // Build params object - use type assertion to satisfy SDK's internal types
-    const generationParams: Record<string, unknown> = {
+    const body: Record<string, unknown> = {
       model: withNitro(options.model, options.nitro !== false),
-      messages: sdkMessages,
+      messages: apiMessages,
       stream: false,
-      temperature: options.temperature,
-      max_tokens: options.maxTokens,
-      top_p: options.topP,
     };
 
-    if (options.reasoning) generationParams.reasoning = options.reasoning;
-    if (options.tools) generationParams.tools = options.tools;
-    if (options.toolChoice) generationParams.tool_choice = options.toolChoice;
-    if (options.provider) generationParams.provider = options.provider;
+    if (options.temperature !== undefined) body.temperature = options.temperature;
+    if (options.maxTokens !== undefined) body.max_tokens = options.maxTokens;
+    if (options.topP !== undefined) body.top_p = options.topP;
+    if (options.reasoning) body.reasoning = options.reasoning;
+    if (options.tools) body.tools = options.tools;
+    if (options.toolChoice) body.tool_choice = options.toolChoice;
+    if (options.provider) body.provider = options.provider;
 
-    const completion = (await client.chat.send({
-      chatGenerationParams: generationParams as unknown as Parameters<
-        typeof client.chat.send
-      >[0]["chatGenerationParams"],
-    })) as {
-      choices: Array<{ message: unknown; finishReason?: string }>;
+    const response = await $fetch<{
+      choices?: Array<{
+        message?: unknown;
+        finishReason?: string;
+      }>;
       usage?: {
-        promptTokens?: number;
-        completionTokens?: number;
-        totalTokens?: number;
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+        completion_tokens_details?: {
+          reasoning_tokens?: number;
+        };
       };
-    };
+    }>('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.private.openrouterKey}`,
+        'HTTP-Referer': 'https://fewwords.app',
+        'X-Title': 'Fewwords',
+        'Content-Type': 'application/json'
+      },
+      body
+    });
 
-    if (!completion?.choices?.length) {
+    if (!response?.choices?.length) {
       throw new Error("OpenRouter returned an empty response.");
     }
 
-    const choice = completion.choices[0];
+    const choice = response.choices[0];
     if (!choice) {
       throw new Error("OpenRouter returned undefined choice.");
     }
 
-    // Cast to our local interface to safely access 'reasoning'
     const message = choice.message as OpenRouterMessageResponse;
 
     let contentString: string | null = null;
@@ -175,23 +177,19 @@ export async function callOpenRouter(
       reasoning: message.reasoning || undefined,
       finishReason: choice.finishReason || null,
       usage: {
-        promptTokens: completion.usage?.promptTokens || 0,
-        completionTokens: completion.usage?.completionTokens || 0,
-        totalTokens: completion.usage?.totalTokens || 0,
-        reasoningTokens: (completion.usage as { reasoningTokens?: number })
-          ?.reasoningTokens,
+        promptTokens: response.usage?.prompt_tokens || 0,
+        completionTokens: response.usage?.completion_tokens || 0,
+        totalTokens: response.usage?.total_tokens || 0,
+        reasoningTokens: response.usage?.completion_tokens_details?.reasoning_tokens,
       },
     };
   } catch (error: unknown) {
-    // Use unknown for errors
-    if (error && typeof error === "object" && "data" in error) {
-      const errorWithData = error as { data: unknown };
-      console.error(
-        "❌ OpenRouter SDK Validation Error:",
-        JSON.stringify(errorWithData.data, null, 2),
-      );
+    if (error && typeof error === 'object' && 'data' in error) {
+      const errWithData = error as { data: { error?: { message?: string } } };
+      console.error("❌ OpenRouter API Error Response:", JSON.stringify(errWithData.data, null, 2));
+      throw new Error(errWithData.data?.error?.message || "OpenRouter API request failed");
     } else if (error instanceof Error) {
-      console.error("❌ OpenRouter API Error:", error.message);
+      console.error("❌ OpenRouter Request Error:", error.message);
     }
     throw error;
   }

@@ -22,6 +22,7 @@ const { upgrade, openPortal, isUpgrading } = usePolar();
 const config = useRuntimeConfig();
 
 const { data: products } = useFetch("/api/prices");
+const { data: historyData, status: historyStatus } = useFetch('/api/user/credit-history');
 
 interface PolarProduct {
   id: string;
@@ -184,6 +185,40 @@ onMounted(() => {
                 <span class="text-xs uppercase tracking-wider font-bold"
                   >Secure Billing via Polar</span
                 >
+              </CardContent>
+            </Card>
+
+            <Card class="shadow-sm">
+              <CardHeader>
+                <CardTitle class="text-lg font-bold">Credit History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div v-if="historyStatus === 'pending'" class="flex justify-center py-4">
+                  <Icon name="lucide:loader-2" class="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+                <div v-else-if="historyData?.history?.length === 0" class="text-center py-4 text-sm text-muted-foreground">
+                  No credit usage history yet.
+                </div>
+                <div v-else class="space-y-4">
+                  <div
+                    v-for="log in historyData?.history"
+                    :key="log.id"
+                    class="flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <div class="font-medium capitalize">{{ log.action }}</div>
+                      <div class="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
+                        {{ log.title || log.summaryId || 'N/A' }}
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-bold text-destructive">-{{ log.amount }}</div>
+                      <div class="text-xs text-muted-foreground">
+                        {{ new Intl.DateTimeFormat('en-GB', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(log.createdAt)) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

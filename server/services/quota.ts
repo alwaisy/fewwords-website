@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { H3Event } from "h3";
 
-import { users, type Plan } from "~~/database/orm/schema";
+import { users, creditUsageLogs, type Plan } from "~~/database/orm/schema";
 
 // Anonymous threshold: gate at 5 articles (1 credit per article)
 const ANON_CREDIT_LIMIT = 5;
@@ -230,6 +230,7 @@ export async function deductCredits(
   userId: string | null,
   essence: "article" | "youtube" | "reddit",
   durationMinutes?: number,
+  summaryId?: string,
 ): Promise<void> {
   if (userId) {
     const db = await useDb(event);
@@ -251,6 +252,15 @@ export async function deductCredits(
       })
       .where(eq(users.id, userId));
 
+    if (cost > 0) {
+      await db.insert(creditUsageLogs).values({
+        userId,
+        amount: cost,
+        action: essence,
+        summaryId: summaryId || null,
+      });
+    }
+
     // Update session with new count
     const updatedRows = await db
       .select({ creditsUsed: users.creditsUsed })
@@ -259,15 +269,19 @@ export async function deductCredits(
       .limit(1);
 
     const current = updatedRows[0];
-    if (current) {
-      const session = await getUserSession(event);
-      await setUserSession(event, {
-        ...session,
-        user: {
-          ...(session?.user as object),
-          creditsUsed: current.creditsUsed,
-        },
-      } as typeof session extends undefined ? never : typeof session);
+    if (current && event.node?.req) {
+      try {
+        const session = await getUserSession(event);
+        await setUserSession(event, {
+          ...session,
+          user: {
+            ...(session?.user as object),
+            creditsUsed: current.creditsUsed,
+          },
+        } as typeof session extends undefined ? never : typeof session);
+      } catch (err) {
+        console.warn("[Quota] Failed to update session after deducting credits", err);
+      }
     }
   } else {
     // Anonymous: update server session (only articles allowed)

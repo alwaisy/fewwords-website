@@ -360,3 +360,30 @@ export const waitlist = pgTable(
 
 export type Waitlist = typeof waitlist.$inferSelect;
 export type NewWaitlist = typeof waitlist.$inferInsert;
+
+// Credit Usage Logs table for tracking history
+export const creditUsageLogs = pgTable(
+  "CreditUsageLog",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    amount: integer("amount").notNull(),
+    action: text("action").notNull(), // e.g. "article", "youtube", "reddit"
+    summaryId: text("summary_id").references(() => summaries.summaryId), // Public summary ID (few-XYZ)
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("CreditUsageLog_user_id_idx").on(table.userId),
+    createdAtIdx: index("CreditUsageLog_created_at_idx").on(table.createdAt),
+  }),
+);
+
+export type CreditUsageLog = typeof creditUsageLogs.$inferSelect;
+export type NewCreditUsageLog = typeof creditUsageLogs.$inferInsert;
+

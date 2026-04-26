@@ -120,7 +120,7 @@ export default defineWorker<
         
         const durationStr = ytRecord[0]?.duration || "0";
         const durationMinutes = parseFloat(durationStr);
-        await deductCredits(event, userId, "youtube", durationMinutes);
+        await deductCredits(event, userId, "youtube", durationMinutes, summaryId);
       }
 
       // Belt and suspenders: ensure status is "completed"

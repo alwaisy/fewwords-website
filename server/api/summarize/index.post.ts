@@ -172,7 +172,7 @@ export default defineEventHandler(async (event) => {
         const durationStr = ytData[0]?.duration || "0";
         durationMinutes = parseFloat(durationStr);
       }
-      await deductCredits(event, userId, essence, durationMinutes);
+      await deductCredits(event, userId, essence, durationMinutes, updateSummaryId);
 
       // Store Metadata for Articles
       if (isArticleResult(result) && summaryInternalId) {
