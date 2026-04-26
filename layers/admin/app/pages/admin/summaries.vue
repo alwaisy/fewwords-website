@@ -27,9 +27,10 @@ useHead({
 const page = ref(0);
 const pageSize = ref(10);
 
-// Read initial search from query params (e.g. from LLM Usage table link)
+// Read initial search and userId from query params
 const route = useRoute();
 const initialSearch = (route.query.search as string) || "";
+const userIdFilter = ref((route.query.userId as string) || "");
 
 // Server-side filter state (use "all" for Select compatibility, convert to "" for API)
 const search = ref(initialSearch);
@@ -54,7 +55,7 @@ const apiStatusFilter = computed(() => statusFilter.value === "all" ? "" : statu
 const apiModelFilter = computed(() => modelFilter.value === "all" ? "" : modelFilter.value);
 
 // Reset page when filters change
-watch([debouncedSearch, essenceFilter, statusFilter, modelFilter], () => {
+watch([debouncedSearch, essenceFilter, statusFilter, modelFilter, userIdFilter], () => {
   page.value = 0;
 });
 
@@ -68,8 +69,9 @@ const { data, pending, error, refresh } = await useFetch("/api/admin/summaries",
     essence: apiEssenceFilter,
     status: apiStatusFilter,
     model: apiModelFilter,
+    userId: userIdFilter,
   },
-  watch: [page, pageSize, debouncedSearch, apiEssenceFilter, apiStatusFilter, apiModelFilter],
+  watch: [page, pageSize, debouncedSearch, apiEssenceFilter, apiStatusFilter, apiModelFilter, userIdFilter],
   keepalive: true,
   transform: (response) => {
     if (!response?.data) return response
@@ -125,6 +127,7 @@ const clearFilters = () => {
   essenceFilter.value = "all"
   statusFilter.value = "all"
   modelFilter.value = "all"
+  userIdFilter.value = ""
 }
 
 // Check if any filters are active
@@ -133,7 +136,8 @@ const hasActiveFilters = computed(() => {
     search.value !== "" ||
     essenceFilter.value !== "all" ||
     statusFilter.value !== "all" ||
-    modelFilter.value !== "all"
+    modelFilter.value !== "all" ||
+    userIdFilter.value !== ""
   );
 })
 

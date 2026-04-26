@@ -20,11 +20,21 @@ async function handleSubmit() {
 
   try {
     // Create pending record
+    const { getStoredAttribution } = await import('~/utils/attribution');
+    const { useUmamiIdentity } = await import('~/composables/use-umami-identity');
+    const { identity } = useUmamiIdentity();
+
     const response = await $fetch<CreatePendingResponse>(
       "/api/summarize/create-pending",
       {
         method: "POST",
-        body: { url: inputUrl.value },
+        body: { 
+          url: inputUrl.value,
+          attribution: {
+            ...getStoredAttribution(),
+            umamiSessionId: identity.value.sessionId || null,
+          }
+        },
       },
     );
 

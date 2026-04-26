@@ -5,6 +5,7 @@ import { summarize as summarizeArticle, type ArticleResult } from '../../service
 import { deductCredits } from '../../services/quota'
 import { summarize as summarizeReddit, type RedditResult } from '../../services/reddit'
 import { summarize as summarizeYouTube, type YouTubeResult } from '../../services/youtube'
+import { captureRequestFootprint, resolveUserIdentity } from '../../utils/attribution'
 
 import { summaries, articles, youtube } from '~~/database/orm/schema'
 
@@ -62,7 +63,8 @@ function detectContentType(url: string): 'article' | 'youtube' | 'reddit' {
 export default defineEventHandler(async (event) => {
   const db = await useDb(event)
   const session = await getUserSession(event)
-  const userId = session?.user ? (session.user as { id: string }).id : null
+  const userIdFromSession = session?.user ? (session.user as { id: string }).id : null
+  const footprint = captureRequestFootprint(event)
   const startTime = Date.now()
 
   let updateSummaryId: string | undefined
@@ -72,6 +74,10 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     updateSummaryId = body.updateSummaryId
     url = body.url
+    const attribution = body.attribution
+
+    // Resolve final userId (handles anonymous shadow users)
+    const userId = await resolveUserIdentity(db, userIdFromSession, footprint, attribution);
 
     if (!url) {
       throw createError({ statusCode: 400, statusMessage: 'URL is required' })
@@ -106,6 +112,8 @@ export default defineEventHandler(async (event) => {
         essence,
         status: 'processing',
         userId,
+        ...(attribution || {}),
+        ...footprint,
       }).returning({ id: summaries.id, summaryId: summaries.summaryId })
 
       const insertedRecord = insertResult[0]

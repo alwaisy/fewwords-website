@@ -14,9 +14,19 @@ const videos = [
 ]
 
 async function handleClick(url: string) {
+  const { getStoredAttribution } = await import('~/utils/attribution');
+  const { useUmamiIdentity } = await import('~/composables/use-umami-identity');
+  const { identity } = useUmamiIdentity();
+
   const response = await $fetch<{summaryId: string}>('/api/summarize', {
     method: 'POST',
-    body: { url }
+    body: { 
+      url,
+      attribution: {
+        ...getStoredAttribution(),
+        umamiSessionId: identity.value.sessionId || null,
+      }
+    }
   })
 
   if (response?.summaryId) {

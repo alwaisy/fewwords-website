@@ -15,6 +15,11 @@ const props = defineProps<{
   summary: Summary & {
     youtube?: YouTube | null;
     article?: Article | null;
+    user?: {
+      id: string;
+      email: string;
+      name: string;
+    } | null;
   };
   open: boolean;
 }>();
@@ -241,6 +246,73 @@ const errorLog = computed(() => parseErrorLog(props.summary.errorMessage));
                   class="h-3 w-3 flex-shrink-0 text-muted-foreground"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creator Metadata & Attribution -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-medium">Creator Metadata & Attribution</h3>
+          
+          <!-- Identity -->
+          <div class="col-span-2 border-b pb-3 mb-1">
+            <span class="text-muted-foreground block text-xs uppercase font-medium mb-1">Created By</span>
+            <div v-if="summary.user" class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="size-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                  {{ summary.user.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="text-sm">
+                  <span class="font-medium text-foreground">{{ summary.user.name }}</span>
+                  <span class="text-muted-foreground ml-2">({{ summary.user.email }})</span>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" class="h-6 text-[10px]" as-child>
+                <NuxtLink :to="`/admin/users?userId=${summary.user.id}`">
+                  View Profile
+                </NuxtLink>
+              </Button>
+            </div>
+            <div v-else-if="summary.userId" class="text-sm italic text-muted-foreground flex items-center gap-2">
+              <div class="size-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">?</div>
+              <span>Anonymous User (ID: {{ summary.userId }})</span>
+            </div>
+            <div v-else class="text-sm italic text-muted-foreground">
+              Unknown (Old Record)
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+            <div v-if="summary.ipAddress">
+              <span class="block text-xs uppercase mb-1">IP Address</span>
+              <span class="text-foreground font-mono">{{ summary.ipAddress }}</span>
+            </div>
+            <div v-if="summary.countryCode || summary.city">
+              <span class="block text-xs uppercase mb-1">Location</span>
+              <span class="text-foreground">{{ summary.city ? summary.city + ', ' : '' }}{{ summary.countryCode }}</span>
+            </div>
+            <div v-if="summary.utmSource || summary.utmMedium || summary.utmCampaign">
+              <span class="block text-xs uppercase mb-1">UTM Tracking</span>
+              <span class="text-foreground">
+                <Badge v-if="summary.utmSource" variant="secondary" class="font-mono text-[10px] mr-1">src: {{ summary.utmSource }}</Badge>
+                <Badge v-if="summary.utmMedium" variant="secondary" class="font-mono text-[10px] mr-1">med: {{ summary.utmMedium }}</Badge>
+                <Badge v-if="summary.utmCampaign" variant="secondary" class="font-mono text-[10px]">cmp: {{ summary.utmCampaign }}</Badge>
+              </span>
+            </div>
+            <div v-if="summary.referrer">
+              <span class="block text-xs uppercase mb-1">Referrer</span>
+              <span class="text-foreground truncate max-w-[200px] block" :title="summary.referrer">{{ summary.referrer }}</span>
+            </div>
+            <div v-if="summary.umamiSessionId" class="col-span-2">
+              <span class="block text-xs uppercase mb-1">Umami Session ID</span>
+              <div class="flex items-center gap-2">
+                <code class="text-foreground bg-muted px-2 py-1 rounded">{{ summary.umamiSessionId }}</code>
+                <span class="text-xs italic text-muted-foreground">Copy to search in Umami Analytics</span>
+              </div>
+            </div>
+            <div v-if="summary.userAgent" class="col-span-2">
+              <span class="block text-xs uppercase mb-1">User Agent</span>
+              <span class="text-foreground text-xs break-all">{{ summary.userAgent }}</span>
             </div>
           </div>
         </div>

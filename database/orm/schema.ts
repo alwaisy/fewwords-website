@@ -79,6 +79,19 @@ export const users = pgTable(
     // but the logic is shared so one field might suffice if we sync both providers to it.
     // To be safe and clean, let's use the existing one but keep in mind it's shared.
 
+    // Attribution & Metadata
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    countryCode: text("country_code"),
+    city: text("city"),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmContent: text("utm_content"),
+    utmTerm: text("utm_term"),
+    referrer: text("referrer"),
+    umamiSessionId: text("umami_session_id"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -143,6 +156,20 @@ export const summaries = pgTable(
     errorMessage: text("error_message"),
     userId: text("user_id").references(() => users.id),
     isBackgroundJob: boolean("is_background_job").notNull().default(false),
+    
+    // Attribution & Metadata
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    countryCode: text("country_code"),
+    city: text("city"),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmContent: text("utm_content"),
+    utmTerm: text("utm_term"),
+    referrer: text("referrer"),
+    umamiSessionId: text("umami_session_id"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

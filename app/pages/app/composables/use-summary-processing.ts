@@ -210,11 +210,19 @@ export function useSummaryProcessing(
     if (!summary.value?.source || !summary.value?.summaryId) return;
 
     try {
+      const { getStoredAttribution } = await import('~/utils/attribution');
+      const { useUmamiIdentity } = await import('~/composables/use-umami-identity');
+      const { identity } = useUmamiIdentity();
+
       await $fetch("/api/summarize", {
         method: "POST",
         body: {
           url: summary.value.source,
           updateSummaryId: summary.value.summaryId,
+          attribution: {
+            ...getStoredAttribution(),
+            umamiSessionId: identity.value.sessionId || null,
+          }
         },
       });
       await refresh();

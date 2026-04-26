@@ -18,12 +18,17 @@ useHead({
 const page = ref(0);
 const pageSize = ref(10);
 
+// Read initial search and userId from query params
+const route = useRoute();
+const initialSearch = (route.query.search as string) || "";
+const userIdFilter = ref((route.query.userId as string) || "");
+
 // Server-side filter state
-const search = ref("");
+const search = ref(initialSearch);
 const roleFilter = ref("all");
 
 // Debounced search for API calls
-const debouncedSearch = ref("");
+const debouncedSearch = ref(initialSearch);
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 watch(search, (newVal) => {
@@ -37,7 +42,7 @@ watch(search, (newVal) => {
 const apiRoleFilter = computed(() => roleFilter.value === "all" ? "" : roleFilter.value);
 
 // Reset page when filters change
-watch([debouncedSearch, roleFilter], () => {
+watch([debouncedSearch, roleFilter, userIdFilter], () => {
   page.value = 0;
 });
 
@@ -48,8 +53,9 @@ const { data, pending, error, refresh } = await useFetch("/api/admin/users", {
     pageSize,
     search: debouncedSearch,
     role: apiRoleFilter,
+    userId: userIdFilter,
   },
-  watch: [page, pageSize, debouncedSearch, apiRoleFilter],
+  watch: [page, pageSize, debouncedSearch, apiRoleFilter, userIdFilter],
   transform: (response) => {
     if (!response?.data) return response;
     return {
@@ -94,10 +100,11 @@ const prevPage = () => {
 const clearFilters = () => {
   search.value = "";
   roleFilter.value = "all";
+  userIdFilter.value = "";
 };
 
 const hasActiveFilters = computed(() => {
-  return search.value !== "" || roleFilter.value !== "all";
+  return search.value !== "" || roleFilter.value !== "all" || userIdFilter.value !== "";
 });
 </script>
 

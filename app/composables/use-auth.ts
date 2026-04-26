@@ -60,9 +60,21 @@ export const useAuth = () => {
       isLoading.value = true
       error.value = null
 
+      let attributionData = {}
+      if (import.meta.client) {
+        const { getStoredAttribution } = await import('~/utils/attribution')
+        const { useUmamiIdentity } = await import('~/composables/use-umami-identity')
+        const { identity } = useUmamiIdentity()
+        
+        attributionData = {
+          ...getStoredAttribution(),
+          umamiSessionId: identity.value.sessionId || null,
+        }
+      }
+
       const response = await $fetch<{ success: boolean; exists: boolean; message: string }>('/api/auth/register', {
         method: 'POST',
-        body: { email, name, username },
+        body: { email, name, username, attribution: attributionData },
       })
 
       if (response.exists) {

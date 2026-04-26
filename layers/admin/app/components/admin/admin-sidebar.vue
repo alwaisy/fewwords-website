@@ -64,6 +64,7 @@ const sidebarData: SidebarData = {
           icon: "lucide:file-json",
         },
         { title: "Users", url: "/admin/users", icon: "lucide:users" },
+        { title: "Analytics", url: "/admin/analytics", icon: "lucide:line-chart" },
       ],
     },
   ],

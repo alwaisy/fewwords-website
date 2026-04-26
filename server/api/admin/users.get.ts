@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
   const pageSize = Number(query.pageSize) || 10;
   const search = (query.search as string) || "";
   const role = (query.role as string) || "";
+  const userIdFilter = (query.userId as string) || "";
 
   const db = await useDb(event);
 
@@ -57,6 +58,17 @@ export default defineEventHandler(async (event) => {
       periodResetAt: users.periodResetAt,
       createdAt: users.createdAt,
       summaryCount: sql<number>`COALESCE(${summaryCounts.summaryCount}, 0)`,
+      ipAddress: users.ipAddress,
+      userAgent: users.userAgent,
+      countryCode: users.countryCode,
+      city: users.city,
+      utmSource: users.utmSource,
+      utmMedium: users.utmMedium,
+      utmCampaign: users.utmCampaign,
+      utmContent: users.utmContent,
+      utmTerm: users.utmTerm,
+      referrer: users.referrer,
+      umamiSessionId: users.umamiSessionId,
     })
     .from(users)
     .leftJoin(summaryCounts, eq(users.id, summaryCounts.userId))
@@ -77,6 +89,10 @@ export default defineEventHandler(async (event) => {
 
   if (role) {
     filteredUsers = filteredUsers.filter((u) => u.role === role);
+  }
+
+  if (userIdFilter) {
+    filteredUsers = filteredUsers.filter((u) => u.id === userIdFilter);
   }
 
   const total = filteredUsers.length;

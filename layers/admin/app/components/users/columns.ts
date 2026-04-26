@@ -18,6 +18,17 @@ export type AdminUser = {
   periodResetAt: Date | null;
   createdAt: Date;
   summaryCount: number;
+  ipAddress: string | null;
+  userAgent: string | null;
+  countryCode: string | null;
+  city: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  utmTerm: string | null;
+  referrer: string | null;
+  umamiSessionId: string | null;
 };
 
 export const createUserColumns = (

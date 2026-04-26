@@ -3,6 +3,7 @@ import { Resend } from "resend";
 
 import { getSender } from "../../config/emails";
 import { otpEmail } from "../../templates/emails";
+import { captureRequestFootprint } from "../../utils/attribution";
 
 import { users } from "~~/database/orm/schema";
 
@@ -13,7 +14,9 @@ function generateOTP(): string {
 
 export default defineEventHandler(async (event) => {
   try {
-    const { email, name, username } = await readBody(event);
+    const body = await readBody(event);
+    const { email, name, username, attribution } = body;
+    const footprint = captureRequestFootprint(event);
 
     if (!email || !name || !username) {
       throw createError({
@@ -46,6 +49,8 @@ export default defineEventHandler(async (event) => {
       } = {
         otpCode,
         otpExpiresAt: expiresAt,
+        ...(attribution || {}),
+        ...footprint,
       };
 
       // Only update name if provided
@@ -121,6 +126,8 @@ export default defineEventHandler(async (event) => {
       username,
       otpCode,
       otpExpiresAt: expiresAt,
+      ...(attribution || {}),
+      ...footprint,
     });
 
     const config = useRuntimeConfig();

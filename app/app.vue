@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { getJsonLd } from "~/lib/seo/json-ld";
 import { getSeoMeta, getMetaHead } from "~/lib/seo/metadata";
+import { captureAndStoreAttribution } from "~/utils/attribution";
 
 const siteConfig = useSiteConfig();
 const siteUrl = siteConfig.url || "https://fewwords.app";
+
+onMounted(() => {
+  captureAndStoreAttribution();
+});
 
 useSeoMeta(getSeoMeta(siteUrl));
 

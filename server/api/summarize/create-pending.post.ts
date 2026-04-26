@@ -1,17 +1,22 @@
 import youtubeSummaryQueue from "../../queues/youtube-summary";
 import { checkQuota } from "../../services/quota";
 import { fetchYouTubeMetadata } from "../../services/youtube/metadata";
+import { captureRequestFootprint, resolveUserIdentity } from "../../utils/attribution";
 
 import { summaries } from "~~/database/orm/schema";
 
 export default defineEventHandler(async (event) => {
   const db = await useDb(event);
   const session = await getUserSession(event);
-  const userId = session?.user ? (session.user as { id: string }).id : null;
+  const userIdFromSession = session?.user ? (session.user as { id: string }).id : null;
+  const footprint = captureRequestFootprint(event);
 
   try {
     const body = await readBody(event);
-    const { url } = body;
+    const { url, attribution } = body;
+    
+    // Resolve final userId (handles anonymous shadow users)
+    const userId = await resolveUserIdentity(db, userIdFromSession, footprint, attribution);
 
     if (!url) {
       throw createError({
@@ -116,6 +121,8 @@ export default defineEventHandler(async (event) => {
             isBackgroundJob: true, // CRITICAL: Set immediately
             summary: "",
             userId,
+            ...(attribution || {}),
+            ...footprint,
           })
           .returning({ summaryId: summaries.summaryId });
 
@@ -155,6 +162,8 @@ export default defineEventHandler(async (event) => {
           isBackgroundJob: false,
           summary: "",
           userId,
+          ...(attribution || {}),
+          ...footprint,
         })
         .returning({ summaryId: summaries.summaryId });
 
@@ -182,6 +191,8 @@ export default defineEventHandler(async (event) => {
         isBackgroundJob: false,
         summary: "",
         userId,
+        ...(attribution || {}),
+        ...footprint,
       })
       .returning({ summaryId: summaries.summaryId });
 

@@ -144,13 +144,58 @@ const { data: historyData, status: historyStatus } = useFetch(() => `/api/admin/
                 </div>
               </div>
               <div>
-                <span class="text-muted-foreground text-xs">Summaries</span>
-                <div class="mt-1 font-mono font-bold">{{ user.summaryCount }}</div>
+                <span class="text-muted-foreground text-xs font-medium uppercase">Summaries</span>
+                <div class="mt-1 flex items-center gap-2">
+                  <span class="font-mono font-bold text-lg">{{ user.summaryCount }}</span>
+                  <Button variant="outline" size="sm" class="h-6 text-[10px] px-2" as-child>
+                    <NuxtLink :to="`/admin/summaries?userId=${user.id}`">
+                      View All
+                    </NuxtLink>
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
+              </div>
+              </div>
 
-          <!-- Usage -->
+              <!-- User Footprint -->
+              <div class="space-y-3">
+              <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Signup Footprint</h3>
+              <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+              <div v-if="user.ipAddress">
+                <span class="block text-xs uppercase mb-1">IP Address</span>
+                <span class="text-foreground font-mono">{{ user.ipAddress }}</span>
+              </div>
+              <div v-if="user.countryCode || user.city">
+                <span class="block text-xs uppercase mb-1">Location</span>
+                <span class="text-foreground">{{ user.city ? user.city + ', ' : '' }}{{ user.countryCode }}</span>
+              </div>
+              <div v-if="user.utmSource || user.utmMedium || user.utmCampaign">
+                <span class="block text-xs uppercase mb-1">UTM Tracking</span>
+                <span class="text-foreground">
+                  <Badge v-if="user.utmSource" variant="secondary" class="font-mono text-[10px] mr-1">src: {{ user.utmSource }}</Badge>
+                  <Badge v-if="user.utmMedium" variant="secondary" class="font-mono text-[10px] mr-1">med: {{ user.utmMedium }}</Badge>
+                  <Badge v-if="user.utmCampaign" variant="secondary" class="font-mono text-[10px]">cmp: {{ user.utmCampaign }}</Badge>
+                </span>
+              </div>
+              <div v-if="user.referrer">
+                <span class="block text-xs uppercase mb-1">Referrer</span>
+                <span class="text-foreground truncate max-w-[200px] block" :title="user.referrer">{{ user.referrer }}</span>
+              </div>
+              <div v-if="user.umamiSessionId" class="col-span-2">
+                <span class="block text-xs uppercase mb-1">Umami Session ID</span>
+                <div class="flex items-center gap-2">
+                  <code class="text-foreground bg-muted px-2 py-1 rounded">{{ user.umamiSessionId }}</code>
+                  <span class="text-xs italic text-muted-foreground">Copy to search in Umami Analytics</span>
+                </div>
+              </div>
+              <div v-if="user.userAgent" class="col-span-2">
+                <span class="block text-xs uppercase mb-1">User Agent</span>
+                <span class="text-foreground text-xs break-all">{{ user.userAgent }}</span>
+              </div>
+              </div>
+              </div>
+
+              <!-- Usage Management -->
           <div class="space-y-3">
             <div class="flex items-center justify-between border-b pb-2">
               <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Usage & Quota</h3>
