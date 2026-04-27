@@ -18,24 +18,27 @@ export const ARTICLE_PROMPTS = {
 } as const;
 
 // Type alias for backward compatibility with classifier
-export type PromptCategory = 'v1' | 'v2' | 'v3';
+export type PromptCategory = 'v1' | 'v2' | 'v3' | 'reject';
 
 // Map old category names to new folder names
-const CATEGORY_MAP: Record<PromptCategory, keyof typeof ARTICLE_PROMPTS> = {
+const CATEGORY_MAP: Record<PromptCategory, keyof typeof ARTICLE_PROMPTS | 'reject'> = {
   v1: 'structured',
   v2: 'dataShot',
   v3: 'decision',
+  reject: 'reject',
 } as const;
 
 // Get prompt by category (backward compatible)
 export function getPrompt(category: PromptCategory) {
-  const folder = CATEGORY_MAP[category];
+  if (category === 'reject') return null;
+  const folder = CATEGORY_MAP[category] as keyof typeof ARTICLE_PROMPTS;
   return ARTICLE_PROMPTS[folder]?.ARTICLE_PROMPT;
 }
 
 // Get meta by category (backward compatible)
 export function getPromptMeta(category: PromptCategory) {
-  const folder = CATEGORY_MAP[category];
+  if (category === 'reject') return { ID: 'reject', VERSION: '1.0' };
+  const folder = CATEGORY_MAP[category] as keyof typeof ARTICLE_PROMPTS;
   return ARTICLE_PROMPTS[folder]?.PROMPT_META;
 }
 
@@ -49,11 +52,12 @@ export function getLatestPromptMeta(category: PromptCategory) {
   return getPromptMeta(category);
 }
 
-// Legacy version mapping for backward compatibility
+// Legacy version mapping for backward compatibility with classifier
 export const PROMPT_VERSIONS: Record<PromptCategory, string> = {
   v1: 'v1.3',
   v2: 'v2.5',
   v3: 'v3.4',
+  reject: 'reject-v1',
 };
 
 // Default export (structured/v1 is the default)

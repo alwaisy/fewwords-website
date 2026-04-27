@@ -52,6 +52,10 @@ export async function summarize(url: string): Promise<ArticleResult> {
   // Step 2: Classify article to select best prompt version
   const classifierResult: ClassifierResult = await classifyArticle(content)
 
+  if (classifierResult.category === 'reject') {
+    throw new Error(`Site has bot protection - Jina returned Cloudflare page`)
+  }
+
   // Step 3: Get the appropriate prompt for this category
   const prompt = getPrompt(classifierResult.category)
   const promptMeta = getPromptMeta(classifierResult.category)

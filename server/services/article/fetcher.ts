@@ -78,6 +78,26 @@ export async function fetchWithJina(url: string): Promise<FetcherResponse> {
       throw new Error('Content too short, possibly blocked')
     }
 
+    // Explicit Cloudflare/Bot detection (Scoring system to avoid false positives)
+    const lowerContent = content.toLowerCase()
+    const indicators = [
+      'just a moment...',
+      'checking your browser',
+      'verify you are human',
+      'cloudflare ray id',
+      'ddos protection by cloudflare',
+      'enable cookies',
+      'please enable js'
+    ]
+    const matched = indicators.filter(i => lowerContent.includes(i))
+    
+    // We reject if:
+    // 1. Two or more distinct indicators are found (very high certainty)
+    // 2. One indicator is found AND the content is very short (likely a block page)
+    if (matched.length >= 2 || (matched.length >= 1 && content.length < 500)) {
+      throw new Error('Site has bot protection - Jina returned Cloudflare page')
+    }
+
     // Calculate content stats
     const wordCount = countWords(content)
     const readingTimeMinutes = calculateReadingTime(wordCount)
