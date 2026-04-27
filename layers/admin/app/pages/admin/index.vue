@@ -21,7 +21,7 @@ const userData = useAuth().user;
 </script>
 
 <template>
-  <div class="flex-1 space-y-4">
+  <div class="flex-1 space-y-4 p-4 md:p-8">
     <!-- Page Header -->
     <div class="flex items-center justify-between space-y-2">
       <h1 class="text-2xl font-bold tracking-tight">

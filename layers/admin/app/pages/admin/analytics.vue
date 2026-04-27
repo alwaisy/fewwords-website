@@ -32,7 +32,7 @@ const formatDate = (dateStr: string | number) => {
 </script>
 
 <template>
-  <div class="flex-1 space-y-6 p-4 md:p-8 pt-0">
+  <div class="flex-1 space-y-6 p-4 md:p-8">
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold tracking-tight">Attribution Analytics</h1>
     </div>
@@ -197,8 +197,8 @@ const formatDate = (dateStr: string | number) => {
                   <span>{{ item.count }}</span>
                 </div>
                 <div class="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    class="bg-primary h-full rounded-full" 
+                  <div
+                    class="bg-primary h-full rounded-full"
                     :style="{ width: (data?.deviceDistribution?.[0]?.count ? (item.count / data.deviceDistribution[0].count * 100) : 0) + '%' }"
                   />
                 </div>
