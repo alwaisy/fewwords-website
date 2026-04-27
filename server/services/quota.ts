@@ -105,6 +105,7 @@ export async function checkQuota(
       .select({
         id: users.id,
         plan: users.plan,
+        role: users.role,
         creditsUsed: users.creditsUsed,
         creditsLimit: users.creditsLimit,
         polarStatus: users.polarStatus,
@@ -124,6 +125,19 @@ export async function checkQuota(
         creditsUsed: 0,
         creditsLimit: 0,
         isLoggedIn: true,
+      };
+    }
+
+    // ADMIN BYPASS: Admins have unlimited credits and no restrictions
+    if (user.role === "admin") {
+      return {
+        allowed: true,
+        plan: user.plan,
+        creditsUsed: 0, // Always show 0 used for admins
+        creditsLimit: 999999, // Visual indicator of unlimited
+        isLoggedIn: true,
+        cancelAtPeriodEnd: false,
+        periodResetAt: user.periodResetAt,
       };
     }
 
@@ -235,13 +249,16 @@ export async function deductCredits(
   if (userId) {
     const db = await useDb(event);
     const userRows = await db
-      .select({ plan: users.plan })
+      .select({ plan: users.plan, role: users.role })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
 
     const user = userRows[0];
     if (!user) return;
+
+    // ADMIN BYPASS: Don't deduct credits or log usage for admins
+    if (user.role === "admin") return;
 
     const cost = getRequiredCredits(user.plan, essence, durationMinutes);
 

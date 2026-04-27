@@ -85,6 +85,19 @@ function isActive(path: string): boolean {
          >
            Explore
          </NuxtLink>
+         <NuxtLink
+           v-if="!isActive('/app')"
+           v-umami="{
+             name: 'nav-app',
+             ...identity
+           }"
+           to="/app"
+           :class="[
+             'text-sm font-medium transition-colors text-muted-foreground hover:text-primary',
+           ]"
+         >
+           App
+         </NuxtLink>
          <!-- <NuxtLink
            v-umami="{
              name: 'nav-about',
@@ -161,6 +174,19 @@ function isActive(path: string): boolean {
            ]"
          >
            Explore
+         </NuxtLink>
+         <NuxtLink
+           v-if="!isActive('/app')"
+           v-umami="{
+             name: 'nav-app',
+             ...identity
+           }"
+           to="/app"
+           :class="[
+             'text-sm font-medium transition-colors text-muted-foreground hover:text-primary',
+           ]"
+         >
+           App
          </NuxtLink>
          <!-- <NuxtLink
            v-umami="{
@@ -291,6 +317,21 @@ function isActive(path: string): boolean {
                    Explore
                  </NuxtLink>
                </DrawerClose>
+               <DrawerClose v-if="!isActive('/app')" as-child>
+                 <NuxtLink
+                   v-umami="{
+                     name: 'nav-app-mobile',
+                     ...identity
+                   }"
+                   to="/app"
+                   :class="[
+                     'text-lg font-medium transition-colors py-2 text-muted-foreground hover:text-primary',
+                   ]"
+                   @click="isMobileMenuOpen = false"
+                 >
+                   App
+                 </NuxtLink>
+               </DrawerClose>
                <DrawerClose as-child>
                  <NuxtLink
                    v-umami="{
@@ -375,6 +416,21 @@ function isActive(path: string): boolean {
                    @click="isMobileMenuOpen = false"
                  >
                    Explore
+                 </NuxtLink>
+               </DrawerClose>
+               <DrawerClose v-if="!isActive('/app')" as-child>
+                 <NuxtLink
+                   v-umami="{
+                     name: 'nav-app-mobile',
+                     ...identity
+                   }"
+                   to="/app"
+                   :class="[
+                     'text-lg font-medium transition-colors py-2 text-muted-foreground hover:text-primary',
+                   ]"
+                   @click="isMobileMenuOpen = false"
+                 >
+                   App
                  </NuxtLink>
                </DrawerClose>
                <DrawerClose as-child>
